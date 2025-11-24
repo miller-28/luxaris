@@ -10,5 +10,5 @@
 **/*.log
 **/.vscode/chrome-debug-profile/
 **/.vite
-**/design-*.md
+# **/design-*.md
 **/eslint-report.txt

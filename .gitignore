@@ -1,0 +1,14 @@
+# Ignore local development files
+**/.github/copilot-instructions.md
+**/.env.local
+**/.DS_Store
+**/node_modules/
+**/dist/
+**/coverage
+**/.env.local
+**/.git
+**/*.log
+**/.vscode/chrome-debug-profile/
+**/.vite
+**/design-*.md
+**/eslint-report.txt

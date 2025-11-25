@@ -27,6 +27,74 @@ const create_auth_routes = require('./contexts/system/interface/http/routes');
 const create_ops_routes = require('./contexts/system/interface/http/ops-routes');
 
 async function bootstrap() {
+  let system_logger = null;
+  let db_pool = null;
+  let cache_client = null;
+  let queue_connection = null;
+  let server = null;
+
+  // Graceful shutdown handler
+  const shutdown = async (signal) => {
+    console.log(`\n${signal} received, shutting down gracefully...`);
+
+    try {
+      if (system_logger) {
+        await system_logger.info(
+          'Application',
+          'Luxaris API shutting down',
+          { signal }
+        );
+      }
+
+      if (server) await server.stop();
+      
+      // Log successful shutdown BEFORE closing database
+      if (system_logger) {
+        await system_logger.info(
+          'Application',
+          'Luxaris API stopped successfully',
+          { signal }
+        );
+      }
+
+      // Now close all connections
+      if (db_pool) await db_pool.end();
+      if (cache_client) cache_client.end();
+      if (queue_connection) await queue_connection.close();
+
+      console.log('Luxaris API stopped');
+      process.exit(0);
+    } catch (shutdown_error) {
+      console.error('Error during shutdown:', shutdown_error);
+      process.exit(1);
+    }
+  };
+
+  // Register shutdown handlers early
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
+  process.on('SIGBREAK', () => shutdown('SIGBREAK')); // Windows Ctrl+Break
+  
+  // Handle process exit (for debugging stops)
+  process.on('exit', (code) => {
+    console.log(`Process exiting with code: ${code}`);
+  });
+
+  // Handle before exit (last chance for async operations)
+  process.on('beforeExit', async (code) => {
+    if (code === 0 && system_logger) {
+      try {
+        await system_logger.info(
+          'Application',
+          'Luxaris API process exiting',
+          { exit_code: code }
+        );
+      } catch (err) {
+        console.error('Failed to log process exit:', err);
+      }
+    }
+  });
+
   try {
     // Load and validate configuration
     const app_config = get_app_config();
@@ -37,19 +105,23 @@ async function bootstrap() {
     console.log(`Starting Luxaris API in ${app_config.node_env} mode...`);
 
     // Initialize database
-    const db_pool = create_database_pool();
+    db_pool = create_database_pool();
     await test_database_connection(db_pool);
 
+    // Initialize logger early so we can use it for error logging
+    system_logger = get_logger(db_pool);
+
     // Initialize cache
-    const cache_client = create_cache_client();
+    cache_client = create_cache_client();
     await test_cache_connection(cache_client);
 
     // Initialize queue
-    const { connection: queue_connection, channel: queue_channel } = await create_queue_connection();
+    const queue_result = await create_queue_connection();
+    queue_connection = queue_result.connection;
+    const queue_channel = queue_result.channel;
     await declare_queues(queue_channel);
 
-    // Initialize logging and event infrastructure
-    const system_logger = get_logger(db_pool);
+    // Initialize event infrastructure
     const event_registry = new EventRegistry(db_pool, system_logger);
     const request_logger = get_request_logger(db_pool);
 
@@ -61,7 +133,7 @@ async function bootstrap() {
     );
 
     // Initialize HTTP server
-    const server = new Server(app_config);
+    server = new Server(app_config);
 
     // Register request logger middleware
     server.register_middleware(request_logger.middleware());
@@ -103,30 +175,36 @@ async function bootstrap() {
       { port: app_config.port }
     );
 
-    // Graceful shutdown
-    const shutdown = async (signal) => {
-      console.log(`\n${signal} received, shutting down gracefully...`);
-
-      await system_logger.info(
-        'Application',
-        'Luxaris API shutting down',
-        { signal }
-      );
-
-      await server.stop();
-      await db_pool.end();
-      cache_client.end();
-      await queue_connection.close();
-
-      console.log('Luxaris API stopped');
-      process.exit(0);
-    };
-
-    process.on('SIGTERM', () => shutdown('SIGTERM'));
-    process.on('SIGINT', () => shutdown('SIGINT'));
-
   } catch (error) {
     console.error('Failed to start Luxaris API:', error);
+
+    // Log to system_logs if logger is available
+    if (system_logger) {
+      try {
+        await system_logger.critical(
+          'Application',
+          'Luxaris API failed to start',
+          error,
+          {
+            error_message: error.message,
+            error_stack: error.stack,
+            error_code: error.code
+          }
+        );
+      } catch (log_error) {
+        console.error('Failed to log startup error to database:', log_error);
+      }
+    }
+
+    // Cleanup resources
+    try {
+      if (db_pool) await db_pool.end();
+      if (cache_client) cache_client.end();
+      if (queue_connection) await queue_connection.close();
+    } catch (cleanup_error) {
+      console.error('Error during cleanup:', cleanup_error);
+    }
+
     process.exit(1);
   }
 }

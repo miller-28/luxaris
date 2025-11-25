@@ -67,6 +67,52 @@ services:
       timeout: 5s
       retries: 5
 
+  luxaris-api:
+    build:
+      context: ../luxaris-api
+      dockerfile: Dockerfile
+    container_name: luxaris-api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      API_VERSION: v1
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: luxaris_user
+      DB_PASSWORD: luxaris_password
+      DB_NAME: luxaris
+      DB_TEST_NAME: luxaris_test
+      DB_SCHEMA: luxaris
+      MEMCACHED_HOST: memcached
+      MEMCACHED_PORT: 11211
+      RABBITMQ_URL: amqp://luxaris_user:luxaris_password@rabbitmq:5672/luxaris
+      JWT_SECRET: dev-secret-key-change-in-production
+      JWT_EXPIRATION: 24h
+      JWT_REFRESH_EXPIRATION: 7d
+      GOOGLE_CLIENT_ID: your-google-client-id
+      GOOGLE_CLIENT_SECRET: your-google-client-secret
+      GOOGLE_REDIRECT_URI: http://localhost:3000/api/v1/auth/google/callback
+      LOG_LEVEL: debug
+      RATE_LIMIT_WINDOW_MS: 900000
+      RATE_LIMIT_MAX_REQUESTS: 100
+      CORS_ORIGIN: http://localhost:3001
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      memcached:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/v1/ops/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
 volumes:
   postgres_data:
     driver: local

@@ -1,4 +1,7 @@
 # Ignore local development files
+
+docker-services/backups/postgres
+**/.vscode/settings.json
 **/.github/copilot-instructions.md
 **/.env.local
 **/.DS_Store
@@ -8,7 +11,5 @@
 **/.env.local
 **/.git
 **/*.log
-**/.vscode/chrome-debug-profile/
 **/.vite
-# **/design-*.md
 **/eslint-report.txt

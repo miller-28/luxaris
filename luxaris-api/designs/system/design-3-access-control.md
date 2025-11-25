@@ -18,6 +18,17 @@ This model provides:
 - Direct permission grants for exceptional cases
 - Flexible permission evaluation with conditions
 
+**Database Schema Note:**
+
+All ACL-related tables use the `acl_` prefix to clearly distinguish them from other system tables:
+- `acl_permissions`
+- `acl_roles`
+- `acl_role_permissions`
+- `acl_principal_role_assignments`
+- `acl_principal_permission_grants`
+
+All tables reside in the `luxaris` schema, not in the default `public` schema.
+
 ---
 
 ## 2. Resources and Actions
@@ -79,7 +90,7 @@ Main fields:
 
 Relation table:
 
-- `role_permissions`:
+- `acl_role_permissions`:
   - `role_id`
   - `permission_id`
 
@@ -168,7 +179,7 @@ Where:
 
 Internally it aggregates:
 
-1. Roles assigned → role_permissions.
+1. Roles assigned → acl_role_permissions.
 2. Direct grants.
 3. Evaluates conditions (e.g. owner-only).
 
@@ -178,12 +189,12 @@ Other contexts (like Posts) call `can()` instead of reading ACL tables directly.
 
 ## 8. Summary of Access Control Entities
 
-Key entities:
+Key entities (all with `acl_` prefix in database):
 
-- `permissions`
-- `roles`
-- `role_permissions`
-- `principal_role_assignments`
-- `principal_permission_grants` (direct grants)
+- `acl_permissions`
+- `acl_roles`
+- `acl_role_permissions`
+- `acl_principal_role_assignments`
+- `acl_principal_permission_grants` (direct grants)
 
 These form the backbone for authorization and access control across all Luxaris contexts.

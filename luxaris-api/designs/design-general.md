@@ -92,6 +92,14 @@ Authorization is based on an ACL star model:
 
 The System context exposes permission-check functions that Posts and other contexts consume.
 
+**Database Schema:**
+All ACL tables use the `acl_` prefix and reside in the `luxaris` schema:
+- `acl_permissions` - Catalog of all permissions
+- `acl_roles` - Named permission bundles
+- `acl_role_permissions` - Role-to-permission mappings
+- `acl_principal_role_assignments` - User/ServiceAccount role assignments
+- `acl_principal_permission_grants` - Direct permission grants
+
 ### 4.3 Error Handling
 
 - Central Express/Fastify error middleware.

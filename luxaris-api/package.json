@@ -1,0 +1,74 @@
+{
+  "name": "luxaris-api",
+  "version": "0.1.0",
+  "description": "Backend REST API service for Luxaris social media management platform",
+  "author": {
+    "name": "Jonathan Miller",
+    "email": "jonathan@miller28.com",
+    "url": "https://www.linkedin.com/in/miller28/"
+  },
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "test": "jest --runInBand",
+    "test:watch": "jest --watch --runInBand",
+    "test:coverage": "jest --coverage --runInBand",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "migrate:up": "db-migrate up",
+    "migrate:down": "db-migrate down",
+    "migrate:create": "db-migrate create"
+  },
+  "keywords": [
+    "social-media",
+    "scheduling",
+    "api",
+    "rest"
+  ],
+  "dependencies": {
+    "amqplib": "^0.10.9",
+    "argon2": "^0.44.0",
+    "cors": "^2.8.5",
+    "db-migrate": "^0.11.14",
+    "db-migrate-pg": "^1.5.2",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "express-request-id": "^3.0.0",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "knex": "^3.1.0",
+    "luminara": "^1.2.2",
+    "luxon": "^3.7.2",
+    "memcached": "^2.2.2",
+    "pg": "^8.16.3",
+    "rate-limiter-flexible": "^8.3.0",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
+    "uuid": "^13.0.0",
+    "winston": "^3.18.3",
+    "zod": "^4.1.13"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "eslint": "^9.39.1",
+    "globals": "^16.5.0",
+    "jest": "^30.2.0",
+    "supertest": "^7.1.4"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "setupFilesAfterEnv": ["<rootDir>/tests/helpers/setup.js"],
+    "testMatch": ["**/tests/**/*.test.js"],
+    "collectCoverageFrom": [
+      "src/**/*.js",
+      "!src/index.js"
+    ],
+    "coverageDirectory": "coverage",
+    "coverageReporters": ["text", "lcov", "html"]
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "license": "MIT"
+}

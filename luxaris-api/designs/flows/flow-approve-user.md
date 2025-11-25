@@ -55,8 +55,8 @@ Authorization: Bearer access_token_value
    - Update `updated_at`
 
 6. **Assign Default Role**
-   - Query `roles` table for default role (e.g., "viewer")
-   - Create entry in `principal_role_assignments`
+   - Query `acl_roles` table for default role (e.g., "viewer")
+   - Create entry in `acl_principal_role_assignments`
    - Links approved user to basic permissions
 
 7. **Record System Event**
@@ -178,7 +178,7 @@ Authorization: Bearer access_token_value
 
 **Tables Modified:**
 - `users` - Update status, approved_by_user_id, approved_at
-- `principal_role_assignments` - Add default role assignment
+- `acl_principal_role_assignments` - Add default role assignment
 - `audit_logs` - Log approval event
 
 ---

@@ -34,10 +34,16 @@ The System context provides:
 
 **Key concepts:**
 - Users and service accounts as principals
-- Multiple authentication methods (sessions, JWT, API keys)
+- Multiple authentication methods:
+  - Password-based (email + hashed password)
+  - OAuth providers (Google, GitHub, etc.)
+  - Sessions (for web dashboard)
+  - JWT tokens (for API access)
+  - API keys (for programmatic access)
+- OAuth provider management and account linking
 - Password hashing and secure credential storage
 
-**Detailed design:** [`design-identity.md`](./design-identity.md)
+**Detailed design:** [`design-2-identity.md`](./design-2-identity.md)
 
 **Key entities:**
 - `users`
@@ -83,23 +89,34 @@ The System context provides:
 
 ### 2.3 Observability
 
-**Purpose:** Track what happens in the system for debugging, security, and compliance.
+**Purpose:** Track what happens in the system for debugging, analytics, security, and compliance.
 
 **Key concepts:**
-- Two-tier logging: system logs (technical) and audit logs (business)
+- **Four-tier observability**:
+  - **Request Logs**: HTTP request/response telemetry (timing, status, performance)
+  - **System Logs**: Persistent technical telemetry (errors, warnings, info) stored in database
+  - **System Events**: Business events tracking (user actions, post creation, schedule publishing)
+  - **Audit Logs**: Compliance and security tracking (append-only)
+- Centralized logging via `SystemLogger` class
+- HTTP telemetry via `RequestLogger` middleware
+- Centralized event tracking via `EventRegistry` class
 - Structured logging with correlation IDs
 - Request tracing across the application
-- Append-only audit trail
+- Database-persisted logs for long-term analysis
 
-**Detailed design:** [`design-observability.md`](./design-observability.md)
+**Detailed design:** [`design-4-observability.md`](./design-4-observability.md)
 
 **Key entities:**
-- `audit_logs` (persisted in DB)
-- System logs (streamed, not stored in DB)
+- `request_logs` – HTTP request/response telemetry (database-persisted)
+- `system_logs` – Technical telemetry (database-persisted)
+- `system_events` – Business events (database-persisted)
+- `audit_logs` – Compliance logs (database-persisted, append-only)
 
 **Exposed interfaces:**
-- `logger.debug|info|warn|error|fatal(message, meta)` – Log technical events
-- `auditLog(actor, action, resource, data)` – Record business event
+- `RequestLogger.middleware()` – Express middleware for request logging (automatic)
+- `SystemLogger.info|warning|error|critical(logger, message, context)` – Log technical events to database
+- `EventRegistry.record(eventType, eventName, options)` – Record business event
+- `auditLog(actor, action, resource, data)` – Record compliance event
 - `attachRequestId(req)` – Generate and attach correlation ID
 
 ---
@@ -210,12 +227,15 @@ All System context database entities:
 - `principal_permission_grants` – Direct permission grants
 
 ### Observability
-- `audit_logs` – Business-relevant event history
+- `request_logs` – HTTP request/response telemetry - database-persisted
+- `system_logs` – Technical telemetry (errors, warnings, info) - database-persisted
+- `system_events` – Business events tracking (user actions, posts, schedules) - database-persisted
+- `audit_logs` – Compliance and security event history - append-only
 
 ### Operations
 - `feature_flags` – Runtime feature toggles
 
-**Total:** 11 primary entities
+**Total:** 14 primary entities (11 original + request_logs + system_logs + system_events)
 
 ---
 
@@ -229,10 +249,12 @@ For detailed information on specific areas:
 - **Access Control** → [`design-access-control.md`](./design-access-control.md)
   - Permissions, roles, ACL model, permission checks
   
-- **Observability** → [`design-observability.md`](./design-observability.md)
-  - System logs, audit logs, request tracing
+- **Observability** → [`design-4-observability.md`](./design-4-observability.md)
+  - Request logs (HTTP telemetry), system logs (technical telemetry), system events (business), audit logs (compliance)
+  - RequestLogger middleware, SystemLogger class, EventRegistry class, request tracing
+  - See also: [`request-logger-guide.md`](./request-logger-guide.md) for complete middleware implementation
   
-- **Operations** → [`design-ops.md`](./design-ops.md)
+- **Operations** → [`design-5-ops.md`](./design-5-ops.md)
   - Feature flags, health checks, configuration
 
 ---
@@ -272,12 +294,22 @@ src/contexts/system/
     repositories/
       user_repository.js
       role_repository.js
+      system_log_repository.js
+      system_event_repository.js
       audit_log_repository.js
     auth/
       jwt_handler.js
       password_hasher.js
     cache/
       session_store.js
+  core/
+    logging/
+      system_logger.js   # Centralized technical logging
+    events/
+      event_registry.js  # Centralized event tracking
+    http/
+      middleware/
+        request_logger.js  # HTTP request/response telemetry
 ```
 
 ### 7.2 Service Exposure Pattern
@@ -296,6 +328,9 @@ module.exports = {
   assignRole: require('./application/services/permission_service').assignRole,
   
   // Observability
+  SystemLogger: require('./core/logging/system_logger'),
+  EventRegistry: require('./core/events/event_registry'),
+  RequestLogger: require('./core/http/middleware/request_logger'),
   auditLog: require('./application/services/audit_service').log,
   
   // Operations
@@ -307,10 +342,30 @@ module.exports = {
 Other contexts import from this single entry point:
 
 ```js
-const SystemServices = require('../system');
+const { SystemLogger, EventRegistry, RequestLogger, can } = require('../system');
 
 // Use in Posts context
-const canPublish = await SystemServices.can(principal, 'post', 'create');
+const canPublish = await can(principal, 'post', 'create');
+
+// Log technical information
+SystemLogger.info('posts.creation', 'Post created', {
+  request_id: req.id,
+  principal_id: principal.id
+});
+
+// Record business event
+await EventRegistry.record('post', 'POST_CREATED', {
+  principal_id: principal.id,
+  resource_type: 'post',
+  resource_id: post.id
+});
+
+// Request logging is automatic via middleware
+// But can query logs for analytics:
+const metrics = await RequestLogger.getMetrics({
+  path: '/api/v1/posts',
+  dateRange: { start: '2025-11-01', end: '2025-11-30' }
+});
 ```
 
 ---
@@ -379,9 +434,11 @@ describe('System Authentication', () => {
 ### 9.3 Observability Security
 
 - Never log sensitive data (passwords, tokens, PII)
-- Audit logs are append-only
+- System logs and events stored in database with retention policies
+- Audit logs are append-only (compliance requirement)
 - Request IDs prevent log correlation issues
 - Access to logs restricted by permissions
+- Log queries filtered by permission level
 
 ---
 
@@ -406,10 +463,13 @@ For Single Sign-On:
 ### 10.3 Advanced Observability
 
 For production scale:
+- Database log retention and archiving strategies
+- Partitioning system_logs and system_events by date
+- Separate read replicas for log queries
 - Integrate with distributed tracing (OpenTelemetry)
-- Ship logs to centralized aggregation (ELK, Datadog)
+- Real-time log streaming to analytics platforms
 - Add metrics collection (Prometheus)
-- Real-time alerting on critical events
+- Real-time alerting on critical events based on system_events
 
 ---
 

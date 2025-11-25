@@ -9,19 +9,19 @@ Luxaris empowers content creators, marketers, and businesses to streamline their
 ## What Luxaris Does
 
 **Content Creation & Management**
-Draft posts, create multiple variants for different platforms, and organize content with tags and campaigns. Posts can be authored manually or assisted by AI-powered generation tools that help create engaging, platform-optimized content.
+Draft posts, create multiple variants for different platforms, and organize content with tags and campaigns. Use AI-powered generation with customizable templates to create engaging, platform-optimized content. Each post can have channel-specific variants that adapt to different platform requirements.
 
 **Smart Scheduling**
-Plan your content calendar weeks or months in advance. Schedule posts for specific dates and times, respect different timezones, and ensure consistent engagement with your audience. The system handles the complexity of managing multiple channels, rate limits, and optimal posting times.
+Plan your content calendar weeks or months in advance. Schedule posts for specific dates and times with full timezone support. A two-runner architecture ensures reliable publishing: the scanner detects due schedules and the publisher executes delivery to social platforms. RabbitMQ message queue provides durability and retry logic for failed attempts.
 
 **Multi-Channel Publishing**
 Connect your social media accounts once and publish everywhere. Each platform has unique constraints—character limits, media support, formatting rules—and Luxaris automatically adapts your content to meet each channel's requirements while preserving your message's intent.
 
 **Team Collaboration & Security**
-Built for teams with role-based access control. Assign different permissions to team members—some can only draft, others can schedule, and administrators can publish and manage accounts. API keys enable automation and integration with external tools while maintaining security.
+Built for teams with role-based access control and a root user approval system. The first registered user becomes the platform administrator who approves new registrations. OAuth 2.0 authentication (Google, with support for more providers) makes sign-in seamless. Fine-grained permissions control who can draft, schedule, publish, and manage accounts.
 
 **Visibility & Control**
-Track what's happening with comprehensive audit logs showing who created, edited, or published content. Monitor system health, control feature rollouts with flags, and maintain compliance with detailed activity tracking.
+Four-tier observability provides complete visibility: HTTP request telemetry (performance, errors), system logs (technical debugging), business events (user actions, publishing), and compliance audit trails. All logs are database-persisted for long-term analysis. Monitor API health, track feature usage, and maintain complete audit trails for compliance.
 
 ## Platform Architecture
 
@@ -34,7 +34,7 @@ The backend REST API that handles all business logic, data persistence, authenti
 The web-based user interface for interacting with Luxaris. Provides an intuitive experience for creating posts, managing schedules, viewing calendars, connecting social accounts, and administering team permissions. Communicates with the API via HTTP.
 
 ### **luxaris-runner**
-The background job processor that executes scheduled tasks. Monitors the schedule queue, picks up posts that are due for publishing, and communicates with social media platform APIs to deliver content at the right time. Runs independently as a daemon process.
+The background publishing system with two independent workers: a schedule scanner that runs every minute to detect due posts and queue them via RabbitMQ, and publisher workers that consume the queue and execute actual delivery to social platforms. This architecture provides reliability, scalability, and automatic retry for failed publishing attempts.
 
 ## Self-Hosted & Cost-Effective
 
@@ -42,10 +42,16 @@ Unlike expensive third-party SaaS platforms, Luxaris runs entirely on your own i
 
 ## Getting Started
 
-Each service has its own directory with detailed setup instructions:
+Each component has its own directory with detailed information:
 
-- **API:** `./luxaris-api/README.md`
-- **Dashboard:** `./luxaris-dashboard/README.md`
-- **Runner:** `./luxaris-runner/README.md`
+- **API:** `./luxaris-api/README.md` - Core backend service
+- **Dashboard:** `./luxaris-dashboard/README.md` - User interface
+- **Runner:** `./luxaris-runner/README.md` - Publishing workers
+- **Admin Panel:** `./luxaris-admin/README.md` - Root user control center
+- **Public Site:** `./luxaris-site/README.md` - Project documentation and showcase
 
-Whether you're a solo creator managing personal accounts or an enterprise team coordinating multi-channel campaigns, Luxaris provides the foundation for efficient, scalable social media management.
+For complete architecture and design details, see `./luxaris-api/designs/`
+
+## Open Source
+
+Luxaris is open-source software (MIT License), free to use, modify, and self-host. Whether you're a solo creator managing personal accounts or an enterprise team coordinating multi-channel campaigns, Luxaris provides professional social media management without subscription fees or vendor lock-in.

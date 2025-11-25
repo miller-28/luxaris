@@ -100,6 +100,43 @@ Used heavily by the permission-check logic.
 
 ---
 
+## 6. Root User Access
+
+**Root User Privilege:**
+
+- Users with `is_root = true` bypass all ACL permission checks.
+- Root users have implicit permission for all resources and actions.
+- Permission checking logic must check `is_root` flag before evaluating roles/permissions.
+- Root users can access admin-only features:
+  - Approve pending user registrations
+  - Manage system-wide settings
+  - View all users and audit logs
+  - Override any access control
+
+**Implementation Note:**
+
+Permission check pseudocode:
+```javascript
+function hasPermission(principal, resource, action) {
+  // Root users bypass all checks
+  if (principal.is_root) return true;
+  
+  // Standard ACL evaluation
+  return evaluateRolesAndPermissions(principal, resource, action);
+}
+```
+
+**Admin Dashboard:**
+
+- Future implementation: Simple admin dashboard for root users only.
+- Features:
+  - List pending user registrations
+  - Approve/reject new users
+  - View system health and metrics
+  - Manage system-wide configuration
+
+---
+
 ## 6. Direct Grants (optional but useful)
 
 Sometimes you want to give one user custom capabilities.

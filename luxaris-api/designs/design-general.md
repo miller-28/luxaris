@@ -119,13 +119,97 @@ The System context exposes permission-check functions that Posts and other conte
   * 409 - conflict
   * 500 - unexpected server error 
 
-### 4.4 Logging
+### 4.4 Logging & Observability
 
-* Structured logging with context:
+The system implements **four-tier observability** with persistent storage:
 
-* timestamp, level, module, request id, user id, message, extra data.
-* No sensitive data in logs.
-* Errors always logged with stack trace at `ERROR` or `CRITICAL`.
+#### Request Logs (HTTP Telemetry)
+- **Purpose**: Track all HTTP requests/responses for performance monitoring and API usage analytics.
+- **Table**: `request_logs`
+- **Class**: `RequestLogger` (`src/core/http/middleware/request_logger.js`)
+- **Middleware**: Automatically captures all incoming requests
+- **Metrics Tracked**:
+  - Request method, path, status code
+  - Duration (response time in milliseconds)
+  - Request/response size
+  - Client IP, user agent
+  - Authenticated principal (user/service account)
+  - Error codes and messages
+- **Usage**: Automatic via Express middleware, no manual calls needed
+- **Example**:
+  ```javascript
+  // src/core/http/server.js
+  const requestLogger = require('./middleware/request_logger');
+  
+  app.use(requestLogger.middleware());
+  // All requests now automatically logged
+  ```
+
+#### System Logs (Technical Telemetry)
+- **Purpose**: Database-persisted technical logs (errors, warnings, info) for debugging and analysis.
+- **Table**: `system_logs`
+- **Class**: `SystemLogger` (`src/core/logging/system_logger.js`)
+- **Methods**:
+  - `debug(logger, message, context)` - Development diagnostics
+  - `info(logger, message, context)` - Informational messages
+  - `warning(logger, message, context)` - Recoverable issues
+  - `error(logger, message, error, context)` - Errors with stack traces
+  - `critical(logger, message, error, context)` - Critical failures
+- **Usage Example**:
+  ```javascript
+  const systemLogger = require('core/logging/system_logger');
+  
+  systemLogger.info('system.auth', 'User login successful', {
+    request_id: req.id,
+    principal_id: user.id,
+    principal_type: 'user'
+  });
+  
+  systemLogger.error('posts.creation', 'Failed to create post', error, {
+    request_id: req.id,
+    principal_id: req.user.id
+  });
+  ```
+
+#### System Events (Business Events)
+- **Purpose**: Track major business events across the platform (user registration, post creation, schedule publishing).
+- **Table**: `system_events`
+- **Class**: `EventRegistry` (`src/core/events/event_registry.js`)
+- **Methods**:
+  - `record(eventType, eventName, options)` - Record successful event
+  - `recordFailure(eventType, eventName, error, options)` - Record failed event
+  - `recordBatch(events)` - Bulk record events
+  - `query(filters)` - Query events for analytics
+- **Event Categories**: `auth`, `post`, `schedule`, `channel`, `template`, `system`
+- **Usage Example**:
+  ```javascript
+  const eventRegistry = require('core/events/event_registry');
+  
+  await eventRegistry.record('auth', 'USER_REGISTERED', {
+    principal_id: user.id,
+    principal_type: 'user',
+    resource_type: 'user',
+    resource_id: user.id,
+    metadata: { auth_method: 'password', is_root: user.is_root },
+    ip_address: req.ip,
+    user_agent: req.get('user-agent')
+  });
+  ```
+
+#### Audit Logs (Compliance & Security)
+- **Purpose**: Append-only compliance tracking for security and regulatory requirements.
+- **Table**: `audit_logs`
+- **Difference from System Events**: Audit logs never deleted (legal/compliance), System events can be archived.
+- **Usage**: Security reviews, compliance audits, GDPR requirements.
+
+**Best Practices**:
+- Never log sensitive data (passwords, tokens, PII)
+- Use correlation IDs (`request_id`) to trace requests across all three systems
+- Log all API requests/responses (excluding sensitive data)
+- Log all errors with stack traces
+- Include performance metrics (response time, query duration)
+
+**See**: `designs/system/design-4-observability.md` for complete details.
 
 ---
 
@@ -139,7 +223,14 @@ The System context exposes permission-check functions that Posts and other conte
 * **Database migrations**: `db-migrate` - Version-controlled schema changes.
 * **Cache / sessions**: Memcached with `memcached` client.
 * **Queues / background jobs**: RabbitMQ with `amqplib` client.
+
+**Background Processing Architecture:**
+- **Schedule Scanner Runner** (luxaris-runner): Heartbeat process (runs every minute) that queries for due schedules and publishes them to RabbitMQ queue.
+- **Publisher Runner** (luxaris-runner): Queue consumer that receives publishing jobs from RabbitMQ and executes actual posts to social media platforms.
+- **Queue**: Local RabbitMQ instance acts as reliable message broker between scanner and publisher, enabling retry logic and horizontal scaling.
+
 * **Authentication**: `jsonwebtoken` - JWT token generation and verification.
+* **OAuth Authentication**: Native OAuth 2.0 flow implementation (Google, extensible to GitHub, Microsoft, etc.).
 * **Password hashing**: `argon2` - Secure password hashing (OWASP recommended).
 * **Validation**: `zod` - Schema validation for request data.
 * **Logging**: `winston` - Structured logging with flexible transports.

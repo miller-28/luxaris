@@ -1,12 +1,12 @@
-import js from '@eslint/js';
-import globals from 'globals';
+const js = require('@eslint/js');
+const globals = require('globals');
 
-export default [
+module.exports = [
 	{
 		files: ['**/*.{js,mjs,cjs}'],
 		languageOptions: {
 			ecmaVersion: 2022,
-			sourceType: 'module',
+			sourceType: 'commonjs',
 			globals: {
 				...globals.browser,
 				...globals.node,
@@ -59,7 +59,7 @@ export default [
 	},
 	{
 		ignores: [
-      'eslint.config.js',
+			'eslint.config.js',
 			'node_modules/**',
 			'dist/**',
 			'*.min.js',

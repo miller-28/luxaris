@@ -94,7 +94,7 @@ class RoleRepository {
 			return this.find_by_id(role_id);
 		}
 
-		updates.push(`updated_at = NOW()`);
+		updates.push('updated_at = NOW()');
 		values.push(role_id);
 
 		const result = await this.db_pool.query(

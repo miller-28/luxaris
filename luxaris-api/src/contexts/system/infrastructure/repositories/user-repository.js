@@ -116,7 +116,7 @@ class UserRepository {
 			throw new Error('No fields to update');
 		}
 
-		fields.push(`updated_at = NOW()`);
+		fields.push('updated_at = NOW()');
 		values.push(user_id);
 
 		const query = `

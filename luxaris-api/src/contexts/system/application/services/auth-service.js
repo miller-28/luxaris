@@ -215,16 +215,16 @@ class AuthService {
 		const value = parseInt(exp_string.slice(0, -1));
 
 		switch (unit) {
-		case 'h':
-			return value * 3600;
-		case 'd':
-			return value * 86400;
-		case 'm':
-			return value * 60;
-		case 's':
-			return value;
-		default:
-			return 86400; // Default 24 hours
+			case 'h':
+				return value * 3600;
+			case 'd':
+				return value * 86400;
+			case 'm':
+				return value * 60;
+			case 's':
+				return value;
+			default:
+				return 86400; // Default 24 hours
 		}
 	}
 }

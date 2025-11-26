@@ -88,7 +88,7 @@ class PermissionRepository {
 			return this.find_by_id(permission_id);
 		}
 
-		updates.push(`updated_at = NOW()`);
+		updates.push('updated_at = NOW()');
 		values.push(permission_id);
 
 		const result = await this.db_pool.query(

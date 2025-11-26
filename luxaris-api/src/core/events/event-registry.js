@@ -148,9 +148,9 @@ class EventRegistry {
 		return this.record_event(event_type, entity_type, entity_id, event_data, user_id);
 	}
 
-  async record_system_event(event_type, entity_type, entity_id, event_data = {}, user_id = null) {
-    return this.record_event(event_type, entity_type, entity_id, event_data, user_id);
-  }
+	async record_system_event(event_type, entity_type, entity_id, event_data = {}, user_id = null) {
+		return this.record_event(event_type, entity_type, entity_id, event_data, user_id);
+	}
 }
 
 module.exports = EventRegistry;

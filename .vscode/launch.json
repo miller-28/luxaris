@@ -84,6 +84,66 @@
             "cwd": "${workspaceFolder}/luxaris-api",
             "console": "integratedTerminal",
             "skipFiles": ["<node_internals>/**"]
+        },
+        {
+            "name": "Luxaris - DB Migrate Up (Dev)",
+            "type": "node",
+            "request": "launch",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": ["run", "migrate:up"],
+            "cwd": "${workspaceFolder}/luxaris-api",
+            "console": "integratedTerminal",
+            "skipFiles": ["<node_internals>/**"]
+        },
+        {
+            "name": "Luxaris - DB Migrate Down (Dev)",
+            "type": "node",
+            "request": "launch",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": ["run", "migrate:down"],
+            "cwd": "${workspaceFolder}/luxaris-api",
+            "console": "integratedTerminal",
+            "skipFiles": ["<node_internals>/**"]
+        },
+        {
+            "name": "Luxaris - DB Migrate Reset (Dev)",
+            "type": "node",
+            "request": "launch",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": ["run", "migrate:reset"],
+            "cwd": "${workspaceFolder}/luxaris-api",
+            "console": "integratedTerminal",
+            "skipFiles": ["<node_internals>/**"]
+        },
+        {
+            "name": "Luxaris - DB Migrate Up (Test)",
+            "type": "node",
+            "request": "launch",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": ["run", "migrate:up", "--", "-e", "test"],
+            "cwd": "${workspaceFolder}/luxaris-api",
+            "console": "integratedTerminal",
+            "skipFiles": ["<node_internals>/**"]
+        },
+        {
+            "name": "Luxaris - DB Migrate Down (Test)",
+            "type": "node",
+            "request": "launch",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": ["run", "migrate:down", "--", "-e", "test"],
+            "cwd": "${workspaceFolder}/luxaris-api",
+            "console": "integratedTerminal",
+            "skipFiles": ["<node_internals>/**"]
+        },
+        {
+            "name": "Luxaris - DB Migrate Reset (Test)",
+            "type": "node",
+            "request": "launch",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": ["run", "migrate:reset", "--", "-e", "test"],
+            "cwd": "${workspaceFolder}/luxaris-api",
+            "console": "integratedTerminal",
+            "skipFiles": ["<node_internals>/**"]
         }
     ]
 }

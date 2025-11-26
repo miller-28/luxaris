@@ -34,7 +34,9 @@ class RequestLogger {
 
 			// On response finish, log to database
 			res.on('finish', async () => {
-				if (!this.repository) return;
+				if (!this.repository) {
+					return;
+				}
 
 				const duration = Date.now() - start_time;
 

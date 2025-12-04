@@ -31,7 +31,7 @@ Authorization: Bearer <jwt_token>
 
 ### 3. Check Permissions
 
-- Call System context: `can(user, 'channel', 'create')`
+- Call System domain ACL: `can(user, 'channel', 'create')`
 - Verify user can create channel connections
 
 ### 4. Validate Channel
@@ -204,6 +204,6 @@ https://dashboard.luxaris.com/channels?success=true&channel=x
 
 ## Context Dependencies
 
-- **System Context:** Authentication (JWT), authorization (ACL), audit logging
-- **Posts Context:** Channel repository, OAuth adapters
+- **System Domain:** Authentication (JWT), authorization (ACL), audit logging
+- **Channels Domain:** Channel repository, OAuth adapters, connection management
 - **External:** Platform OAuth APIs (X, LinkedIn, etc.)

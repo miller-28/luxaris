@@ -15,12 +15,23 @@ The Luxaris API is the core backend service that manages all business logic, dat
 - Four-tier observability (request logs, system logs, events, audit trails)
 - Health monitoring and feature flags
 
-**Content & Scheduling**
-- Post creation with AI-powered content generation
-- Multi-platform content variants and templates
+**Content Management**
+- Post creation and lifecycle management
+- Multi-platform content variants
+- AI-powered content generation with templates
+- Platform-specific formatting and validation
+
+**Channel Integration**
+- Social platform connections (X, LinkedIn, and more)
+- OAuth 2.0 authentication flows
+- Token management and refresh
+- Platform-specific constraints and limits
+
+**Scheduling & Publishing**
 - Schedule management with timezone support
-- Channel connections (X, LinkedIn, and more)
 - Two-runner publishing architecture (scanner + publisher via RabbitMQ)
+- Reliable background execution with retry logic
+- Publish event tracking and history
 
 **Security & Compliance**
 - JWT tokens with refresh mechanism
@@ -31,12 +42,20 @@ The Luxaris API is the core backend service that manages all business logic, dat
 
 ## Architecture
 
-Built as a modular monolith with clean separation between bounded contexts:
+Built as a modular monolith with **hexagonal architecture** and clear separation between five domains:
 
-- **System Context** – Identity, authentication, authorization, observability, operations
-- **Posts Context** – Content management, generation, scheduling, channels, publishing
+- **System** – Identity, authentication, authorization, observability, operations
+- **Posts** – Post creation, content management, multi-platform variants
+- **Channels** – Platform connections, OAuth integrations, social account management
+- **Generation** – AI-powered content generation, templates, suggestions
+- **Scheduling** – Time-based publishing, timezone support, background runners
 
-Uses hexagonal architecture with clear boundaries between domain logic, application use-cases, and infrastructure adapters. Designed to be extracted into microservices if needed in the future.
+Each domain follows hexagonal architecture with clear boundaries between:
+- **Domain logic** (business rules, entities)
+- **Application layer** (use-cases, orchestration)
+- **Infrastructure** (repositories, external adapters)
+
+Designed to be extracted into microservices if needed in the future.
 
 **Observability:** Four-tier logging system with request telemetry (automatic), system logs (technical), business events (analytics), and audit logs (compliance) - all database-persisted for long-term analysis.
 

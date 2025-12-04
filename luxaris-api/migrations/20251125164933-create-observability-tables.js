@@ -45,11 +45,11 @@ exports.up = async function(db) {
 	await db.runSql(`
 		CREATE TABLE system_events (
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-			event_type VARCHAR(50) NOT NULL,
-			event_name VARCHAR(100) NOT NULL,
+			event_type VARCHAR(100) NOT NULL,
+			event_name VARCHAR(200) NOT NULL,
 			principal_id UUID,
-			principal_type VARCHAR(50),
-			resource_type VARCHAR(50),
+			principal_type VARCHAR(100),
+			resource_type VARCHAR(100),
 			resource_id UUID,
 			status VARCHAR(20) NOT NULL DEFAULT 'success' CHECK (status IN ('success', 'failed', 'pending')),
 			metadata JSONB,

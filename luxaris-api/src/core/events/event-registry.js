@@ -118,7 +118,19 @@ class EventRegistry {
 
 	// Convenience methods for common event categories
 	async record_event(event_type, entity_type, entity_id, event_data = {}, user_id = null) {
-		// Legacy method for backward compatibility
+		// Handle object-style call (new format from generation domain)
+		if (typeof event_type === 'object') {
+			const event_obj = event_type;
+			return this.record(event_obj.event_type, event_obj.event_name, {
+				resource_type: event_obj.entity_type,
+				resource_id: event_obj.entity_id,
+				principal_id: event_obj.principal_id,
+				principal_type: event_obj.principal_id ? 'user' : 'system',
+				metadata: event_obj.metadata || {}
+			});
+		}
+		
+		// Legacy method for backward compatibility (individual parameters)
 		return this.record('legacy', event_type, {
 			resource_type: entity_type,
 			resource_id: entity_id,

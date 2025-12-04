@@ -45,7 +45,7 @@ PATCH /api/v1/posts/post-uuid-123
 
 4. **Check Permissions**
    - If post owner matches principal: allow
-   - Otherwise: call System context `can(principal, 'post', 'update')`
+   - Otherwise: call System domain ACL `can(principal, 'post', 'update')`
    - Return 403 if not authorized
 
 5. **Validate Update Rules**

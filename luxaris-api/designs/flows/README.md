@@ -219,7 +219,7 @@ All flow files follow the pattern: `flow-{operation}-{resource}.md`
 Each flow document contains:
 
 1. **Endpoint:** HTTP method and path
-2. **Context:** Which bounded context (System, Posts, etc.)
+2. **Domain:** Which domain (System, Posts, Channels, Generation, Scheduling)
 3. **Purpose:** Brief description of what the flow does
 4. **Request:** Example request body/parameters
 5. **Flow Steps:** Detailed step-by-step process
@@ -253,8 +253,8 @@ Each flow document contains:
 ## Related Documentation
 
 - **[../design-api-high-level.md](../design-api-high-level.md)** - Overall API architecture and tech stack
-- **[../system/design-1-overview.md](../system/design-1-overview.md)** - System context overview
-- **[../product/design-1-overview.md](../product/design-1-overview.md)** - Posts context overview
+- **[../system/design-1-overview.md](../system/design-1-overview.md)** - System domain overview
+- **[../product/design-1-overview.md](../product/design-1-overview.md)** - Product domains overview (Posts, Channels, Generation, Scheduling)
 
 ---
 

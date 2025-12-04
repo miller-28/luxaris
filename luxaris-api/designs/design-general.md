@@ -16,26 +16,48 @@ This document defines the high-level architecture of the Luxaris API for the Lux
 
 ---
 
-## 2. Modular Monolith & Bounded Contexts
+## 2. Modular Monolith & Domain Separation
 
-The Luxaris API is a **modular monolith** structured as multiple bounded contexts inside a single codebase:
+The Luxaris API is a **modular monolith** structured as five domains inside a single codebase:
 
-- **System context**  
-  Cross-cutting and auxiliary capabilities:
+- **System**  
+  Cross-cutting foundational capabilities:
   - Authentication and sessions
   - Authorization and permissions (ACL)
   - Users, roles, API keys
   - Logging and audit trails
   - Configuration, health checks, feature flags
 
-- **Posts context**  
-  Core product logic:
-  - Post templates and generated posts
-  - Schedules, calendars and timezones
-  - Channels / destinations (X, others in future)
-  - Generative workflows and status tracking
+- **Posts**  
+  Content creation and management:
+  - Post entities and lifecycle
+  - Multi-platform content variants
+  - Media attachments and metadata
+  - Post templates and reusable content
 
-Each context has its own modules, data access and use-cases, and communicates with others only through **well-defined interfaces** (ports), not by reaching directly into each other’s internal modules.
+- **Channels**  
+  Social platform integrations:
+  - Channel definitions and catalog
+  - User account connections
+  - OAuth flows and token management
+  - Platform-specific constraints
+
+- **Generation**  
+  AI-powered content creation:
+  - Generation sessions and workflows
+  - Content suggestions and variants
+  - Template-based generation
+  - LLM integration and prompt management
+
+- **Scheduling**  
+  Time-based publishing automation:
+  - Schedule management with timezone support
+  - Background runners (scanner + publisher)
+  - RabbitMQ queue integration
+  - Publish event tracking and history
+  - Retry logic and error handling
+
+Each context has its own modules, data access and use-cases, and communicates with others only through **well-defined interfaces** (ports), not by reaching directly into each other's internal modules.
 
 ---
 
@@ -90,7 +112,7 @@ Authorization is based on an ACL star model:
   - Roles map to permission sets.
   - Permissions are expressed as `(resource, action, condition?)`.
 
-The System context exposes permission-check functions that Posts and other contexts consume.
+The System domain exposes permission-check functions that product domains consume.
 
 **Database Schema:**
 All ACL tables use the `acl_` prefix and reside in the `luxaris` schema:
@@ -344,7 +366,7 @@ Global building blocks that are not tied to any specific domain.
 ### **`src/contexts/`**
 
 The modular monolith’s heart.
-Each subfolder here is a *bounded context*, with identical structure:
+Each subfolder here is a *domain*, with identical hexagonal architecture structure:
 
 ```
 interface → application → domain → infrastructure

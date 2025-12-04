@@ -1,8 +1,7 @@
 
-# Luxaris API – Content Generation
+# Luxaris API – Generation Domain
 
-This document describes **AI-Powered Content Generation** within the Posts context:  
-templates, generation sessions, and AI-assisted post creation.
+This document describes the **Generation domain**: AI-powered content creation, templates, generation sessions, and multi-variant suggestion workflows.
 
 ---
 

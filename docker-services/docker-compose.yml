@@ -82,7 +82,6 @@ services:
       DB_USER: luxaris_user
       DB_PASSWORD: luxaris_password
       DB_NAME: luxaris
-      DB_TEST_NAME: luxaris_test
       DB_SCHEMA: luxaris
       MEMCACHED_HOST: memcached
       MEMCACHED_PORT: 11211

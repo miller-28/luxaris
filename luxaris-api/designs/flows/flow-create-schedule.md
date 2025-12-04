@@ -23,7 +23,7 @@ Authorization: Bearer <jwt_token>
   "post_variant_id": "variant_uuid",
   "channel_connection_id": "connection_uuid",
   "run_at": "2025-11-26T15:00:00",
-  "timezone": "America/New_York"
+  "timezone": "America/New_York"  // Optional: defaults to user's timezone setting (users.timezone, defaults to 'UTC')
 }
 ```
 
@@ -34,7 +34,7 @@ Authorization: Bearer <jwt_token>
 
 ### 3. Check Permissions
 
-- Call System context: `can(user, 'schedule', 'create')`
+- Call System domain ACL: `can(user, 'schedule', 'create')`
 - Verify user has permission to create schedules
 
 ### 4. Validate Post Variant
@@ -55,7 +55,8 @@ Authorization: Bearer <jwt_token>
 
 Apply domain rules:
 
-- Convert `run_at` from provided timezone to UTC
+- If `timezone` not provided, use user's timezone setting (from `users.timezone`, defaults to 'UTC')
+- Convert `run_at` from provided/defaulted timezone to UTC
 - Verify `run_at` is in the future (> now)
 - Verify `run_at` is within maximum horizon (e.g., < now + 90 days)
 - Optional: Check rate limiting (max N posts per hour per connection)
@@ -236,6 +237,7 @@ Once created, the schedule enters the publishing pipeline:
 
 ## Context Dependencies
 
-- **System Context:** Authentication (JWT), authorization (ACL), audit logging
-- **Posts Context:** Post repository, schedule repository, validation rules
+- **System Domain:** Authentication (JWT), authorization (ACL), audit logging
+- **Posts Domain:** Post repository, post variant repository
+- **Scheduling Domain:** Schedule repository, validation rules, timezone handling
 - **External:** None (actual publishing happens later via runners)

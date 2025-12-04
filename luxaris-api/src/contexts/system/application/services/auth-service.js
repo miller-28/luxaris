@@ -43,6 +43,7 @@ class AuthService {
 			typ: 'user',
 			email: user.email,
 			name: user.name,
+			timezone: user.timezone,
 			is_root: user.is_root,
 			roles: roles,
 			iat: Math.floor(Date.now() / 1000),

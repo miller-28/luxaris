@@ -1,7 +1,7 @@
 
 # Luxaris API system – Identity and Authentication
 
-This document describes **Identity and Authentication** entities within the Luxaris System context:  
+This document describes **Identity and Authentication** entities within the Luxaris System domain:  
 users, service accounts, sessions, JWT tokens, and API keys.
 
 ---
@@ -37,10 +37,24 @@ Main fields:
 - `is_root` – boolean flag, marks root users with full system access.
 - `approved_by_user_id` – references user who approved registration (root user).
 - `approved_at` – timestamp of approval.
-- `created_at`, `updated_at`.
-- `last_login_at` – last successful auth time.
-- `timezone` – default user timezone (used as fallback for scheduling UX).
+- `created_at`, `updated_at` – stored as UTC timestamps.
+- `last_login_at` – last successful auth time (UTC).
+- `timezone` – user's preferred timezone for UI display (IANA timezone string, e.g., 'America/New_York', 'Europe/London'). **Defaults to 'UTC'** if not supplied during user creation. Used for:
+  - Converting UTC timestamps to user's local time in API responses
+  - Default timezone for scheduling operations (auto-populated in schedule creation UI)
+  - All UI datetime displays
 - `locale` – language preference (future use).
+
+**Timezone Handling:**
+
+- **Storage:** All timestamps in database stored as UTC (PostgreSQL TIMESTAMP WITH TIME ZONE).
+- **User Configuration:** Each user has `timezone` setting (IANA timezone string).
+- **API Behavior:** 
+  - Input: API accepts timestamps in ISO 8601 format with timezone info or uses user's timezone if not specified.
+  - Storage: Converts all timestamps to UTC before storing.
+  - Output: Returns timestamps in UTC (ISO 8601 with 'Z' suffix), but includes user's timezone in user profile.
+  - Client Responsibility: UI should convert UTC timestamps to user's timezone for display.
+- **Scheduling:** When creating schedules, `run_at` is provided in user's timezone but converted and stored as UTC. The original timezone is stored in `timezone` field for audit/UX purposes.
 
 **Authentication Methods:**
 
@@ -189,7 +203,7 @@ Suggested payload:
 - `iat`, `exp` – issued at / expiry.
 - `jti` – token id (for blacklist / revocation if you want).
 
-The System context exposes:
+The System domain exposes:
 
 - **`issueToken(principal, options)`**  
 - **`verifyToken(token)`**  

@@ -32,7 +32,7 @@ Authorization: Bearer <jwt_token>
 
 ### 3. Check Permissions
 
-- Call System context: `can(user, 'post', 'read')`
+- Call System domain ACL: `can(user, 'post', 'read')`
 - Determine if user can read own posts vs all posts
 - Apply ownership filter if not admin
 
@@ -139,5 +139,5 @@ Authorization: Bearer <jwt_token>
 
 ## Context Dependencies
 
-- **System Context:** Authentication (JWT), authorization (ACL)
-- **Posts Context:** Post repository, filtering logic
+- **System Domain:** Authentication (JWT), authorization (ACL)
+- **Posts Domain:** Post repository, filtering logic, variant aggregation

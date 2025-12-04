@@ -189,5 +189,5 @@ Existing user authenticates and receives JWT token for API access.
 
 ## Context Dependencies
 
-- **System Context:** Authentication service, JWT generation, audit logging
+- **System Domain:** Authentication service, JWT generation, session management, audit logging
 - **No external services required**

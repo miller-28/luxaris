@@ -1,8 +1,7 @@
 
-# Luxaris API – Scheduling & Publishing
+# Luxaris API – Scheduling Domain
 
-This document describes **Scheduling and Publishing** within the Posts context:  
-schedule management, background publishing runners, and publish event tracking.
+This document describes the **Scheduling domain**: time-based publishing, background runners, event-driven architecture, and publish tracking with timezone support.
 
 ---
 
@@ -27,14 +26,49 @@ Scheduling and Publishing provide:
 - `id` – UUID.
 - `post_variant_id` – FK → `PostVariant`.
 - `channel_connection_id` – FK → `ChannelConnection`.
-- `run_at` – datetime when publishing should be attempted (in UTC).
-- `timezone` – original timezone chosen by user (for UX; stored as string).
+- `run_at` – datetime when publishing should be attempted (**stored as UTC**, PostgreSQL TIMESTAMP WITH TIME ZONE).
+- `timezone` – IANA timezone string (e.g., 'America/New_York', 'Europe/London', 'Asia/Tokyo'). Used for:
+  - UI display of scheduled time in user's local timezone
+  - Audit trail showing user's scheduling intent
+  - Debugging timezone-related issues
 - `status` – `pending | queued | processing | success | failed | cancelled | skipped`.
 - `attempt_count` – number of publish attempts made.
-- `last_attempt_at` – datetime.
+- `last_attempt_at` – datetime (UTC).
 - `error_code` – last error category (optional).
 - `error_message` – safe error detail (optional).
-- `created_at`, `updated_at`.
+- `created_at`, `updated_at` – (UTC).
+
+**Timezone Selection & Normalization:**
+
+- **UI Behavior:**
+  - Schedule creation form includes timezone dropdown/selector
+  - Dropdown is **auto-populated** with operating principal's timezone setting (from `users.timezone`)
+  - User can change timezone selection if needed (e.g., scheduling for different timezone audience)
+  - User selects date/time in the chosen timezone
+
+- **API Request:**
+  ```json
+  {
+    "post_variant_id": "uuid",
+    "channel_connection_id": "uuid",
+    "run_at": "2025-12-25T15:00:00",  // Local time in selected timezone
+    "timezone": "America/New_York"      // Selected timezone (defaults to user's timezone)
+  }
+  ```
+
+- **API Processing:** 
+  1. If `timezone` not provided, use principal's timezone setting
+  2. Parse `run_at` as local time in specified `timezone`
+  3. Convert to UTC for storage in `run_at` field
+  4. Store `timezone` string for audit/display
+  5. Validate `run_at` is future timestamp (after current UTC time)
+
+- **Scanner Runner:** Queries schedules using UTC comparison: `WHERE run_at <= NOW() AT TIME ZONE 'UTC'`
+
+- **API Responses:** 
+  - Return `run_at` in UTC (ISO 8601 with 'Z')
+  - Return `timezone` field so UI can display in original timezone
+  - UI converts UTC to user's current timezone or original schedule timezone
 
 ### 2.2 Schedule Status
 
@@ -67,7 +101,7 @@ Scheduling and Publishing provide:
 ### 3.2 Purpose
 
 - More detailed than global audit logs
-- Lives in Posts context (not System context)
+- Lives in Scheduling domain (not System domain)
 - Enables debugging of publishing issues
 - Tracks all retry attempts
 

@@ -1,8 +1,7 @@
 
-# Luxaris API – Posts & Variants
+# Luxaris API – Posts Domain
 
-This document describes **Posts and Post Variants** within the Posts context:  
-content creation, multi-platform variants, and post lifecycle.
+This document describes the **Posts domain**: content creation, multi-platform variants, post lifecycle management, and media handling.
 
 ---
 
@@ -193,7 +192,7 @@ draft → ready → published
 
 **Ownership**
 - Only owner or permitted team members can edit
-- Permissions checked via System context
+- Permissions checked via System domain ACL
 
 **Content Validation**
 - Variant content must respect `Channel.limits.max_text_length`

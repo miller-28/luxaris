@@ -1,16 +1,16 @@
-# Luxaris API – System Context Overview
+# Luxaris API – System Domain Overview
 
-This document provides a high-level overview of the **System context** and how its four major components work together to provide the foundational capabilities for the entire Luxaris API.
+This document provides a high-level overview of the **System domain** and how its four major components work together to provide the foundational capabilities for the entire Luxaris API.
 
 ---
 
-## 1. What is the System Context?
+## 1. What is the System Domain?
 
-The System context is the **foundational layer** of the Luxaris API that provides cross-cutting capabilities used by all other bounded contexts (e.g., Posts, Schedules).
+The System domain is the **foundational layer** of the Luxaris API that provides cross-cutting capabilities used by all other domains (Posts, Channels, Generation, Scheduling).
 
 ### 1.1 Core Responsibilities
 
-The System context provides:
+The System domain provides:
 
 - **Identity & Authentication** – Who you are (users, service accounts, sessions, JWT, API keys)
 - **Access Control (ACL)** – What you can do (permissions, roles, authorization)
@@ -20,13 +20,13 @@ The System context provides:
 ### 1.2 Design Principles
 
 - **Separation of concerns** – Each component has a single, well-defined purpose
-- **Bounded context isolation** – Other contexts (Posts, etc.) depend on System but don't modify its internals
-- **Port/adapter pattern** – System exposes well-defined interfaces; contexts call functions, not direct DB access
+- **Domain isolation** – Other domains depend on System but don't modify its internals
+- **Port/adapter pattern** – System exposes well-defined interfaces; domains call functions, not direct DB access
 - **Security-first** – All authentication and authorization flows through System
 
 ---
 
-## 2. The Four Pillars of System Context
+## 2. The Four Pillars of System Domain
 
 ### 2.1 Identity & Authentication
 
@@ -153,7 +153,7 @@ When an API request comes in:
 2. **Observability** attaches `request_id` for tracing
 3. **Access Control** checks if principal can perform the action
 4. **Operations** checks if feature is enabled
-5. Business logic executes (in Posts context, etc.)
+5. Business logic executes (in Posts, Channels, Generation, or Scheduling domain)
 6. **Observability** logs the outcome and creates audit entry
 
 ### 3.2 Integration Points
@@ -176,25 +176,25 @@ When an API request comes in:
 
 ---
 
-## 4. Dependencies and Context Boundaries
+## 4. Dependencies and Domain Boundaries
 
-### 4.1 System Context is Self-Contained
+### 4.1 System Domain is Self-Contained
 
-The System context:
-- Has no dependencies on other contexts (Posts, etc.)
+The System domain:
+- Has no dependencies on other domains (Posts, Channels, etc.)
 - Manages its own data models and repositories
 - Exposes services through well-defined interfaces
 
-### 4.2 Other Contexts Depend on System
+### 4.2 Other Domains Depend on System
 
-Other contexts (e.g., Posts):
+Other domains (Posts, Channels, Generation, Scheduling):
 - Call System services through exposed interfaces
 - Never access System database tables directly
 - Treat System as a black box with clear contracts
 
 **Example:**
 ```js
-// Posts context checking permission
+// Posts domain checking permission
 const { can } = require('../../system/application/services/permission_service');
 
 async function deletePost(postId, principal) {
@@ -211,7 +211,7 @@ async function deletePost(postId, principal) {
 
 ## 5. Complete Entity Map
 
-All System context database entities:
+All System domain database entities:
 
 ### Identity & Authentication
 - `users` – Human users
@@ -339,12 +339,12 @@ module.exports = {
 };
 ```
 
-Other contexts import from this single entry point:
+Other domains import from this single entry point:
 
 ```js
 const { SystemLogger, EventRegistry, RequestLogger, can } = require('../system');
 
-// Use in Posts context
+// Use in Posts domain
 const canPublish = await can(principal, 'post', 'create');
 
 // Log technical information
@@ -475,17 +475,17 @@ For production scale:
 
 ## 11. Summary
 
-The System context is the **backbone** of the Luxaris API, providing:
+The System domain is the **backbone** of the Luxaris API, providing:
 
 ✅ **Identity** – Who you are  
 ✅ **Access Control** – What you can do  
 ✅ **Observability** – What happened  
 ✅ **Operations** – How the system runs  
 
-All four pillars work together to create a **secure, observable, and maintainable** foundation that other contexts build upon.
+All four pillars work together to create a **secure, observable, and maintainable** foundation that other domains build upon.
 
 **Next steps:**
 1. Review each detailed design document
 2. Understand the exposed service interfaces
-3. Never bypass System services in other contexts
+3. Never bypass System services in other domains
 4. Follow security and logging best practices

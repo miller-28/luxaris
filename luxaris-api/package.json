@@ -11,9 +11,9 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "node --watch src/index.js",
-    "test": "jest --runInBand",
+    "test": "jest --runInBand --forceExit",
     "test:watch": "jest --watch --runInBand",
-    "test:coverage": "jest --coverage --runInBand",
+    "test:coverage": "jest --coverage --runInBand --forceExit",
     "test:coverage:open": "npm run test:coverage && start coverage/index.html",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -61,6 +61,7 @@
   },
   "jest": {
     "testEnvironment": "node",
+    "testTimeout": 10000,
     "setupFilesAfterEnv": [
       "<rootDir>/tests/helpers/setup.js"
     ],

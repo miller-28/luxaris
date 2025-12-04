@@ -1,7 +1,7 @@
 
 # Luxaris API system – Operations & System Management
 
-This document describes **Operations and System Management** within the Luxaris System context:  
+This document describes **Operations and System Management** within the Luxaris System domain:  
 feature flags, health checks, and system status.
 
 ---
@@ -44,7 +44,7 @@ Examples:
 
 ## 3. Health & System Status
 
-Not strictly "entities", but part of System context responsibilities.
+Not strictly "entities", but part of System domain responsibilities.
 
 ### 3.1 Health Endpoint
 
@@ -55,7 +55,7 @@ Not strictly "entities", but part of System context responsibilities.
 - Queue connectivity (if applicable).
 - Build/version info (`version`, `commit_sha`).
 
-No DB table required, but it is driven by System context code that knows how to probe dependencies.
+No DB table required, but it is driven by System domain code that knows how to probe dependencies.
 
 ### 3.2 Response Format
 

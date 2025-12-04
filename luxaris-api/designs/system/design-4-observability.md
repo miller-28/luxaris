@@ -1,7 +1,7 @@
 
 # Luxaris API system – Observability
 
-This document describes **Observability** within the Luxaris System context:  
+This document describes **Observability** within the Luxaris System domain:  
 system logs, system events, audit logs, request tracing, and correlation.
 
 ---

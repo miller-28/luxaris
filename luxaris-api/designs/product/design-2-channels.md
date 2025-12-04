@@ -1,8 +1,7 @@
 
-# Luxaris API – Channels & Connections
+# Luxaris API – Channels Domain
 
-This document describes **Channels and Channel Connections** within the Posts context:  
-platform definitions, user-specific connections, and authentication state.
+This document describes the **Channels domain**: platform definitions, user-specific connections, OAuth authentication, and integration management.
 
 ---
 
@@ -83,7 +82,7 @@ This is more like a static catalog table used by:
 ### 3.1 Fields
 
 - `id` – UUID.
-- `owner_principal_id` – principal id from System context.
+- `owner_principal_id` – principal id from System domain.
 - `channel_id` – FK → `Channel`.
 - `display_name` – e.g. `"@miller_28"`.
 - `status` – `connected | revoked | error`.

@@ -37,7 +37,7 @@ Authorization: Bearer <jwt_token>
 
 ### 3. Check Permissions
 
-- Call System context: `can(user, 'post', 'create')`
+- Call System domain ACL: `can(user, 'post', 'create')`
 - Verify user has permission to create posts
 - Check role assignments
 
@@ -183,5 +183,5 @@ API will also create a `PostVariant`:
 
 ## Context Dependencies
 
-- **System Context:** Authentication (JWT), authorization (ACL)
-- **Posts Context:** Post repository, validation rules
+- **System Domain:** Authentication (JWT), authorization (ACL)
+- **Posts Domain:** Post repository, validation rules, lifecycle management

@@ -1,7 +1,7 @@
 
 # Luxaris API system – Access Control (ACL)
 
-This document describes the **Authorization Model (ACL)** within the Luxaris System context:  
+This document describes the **Authorization Model (ACL)** within the Luxaris System domain:  
 permissions, roles, role assignments, direct grants, and permission checking.
 
 ---
@@ -164,7 +164,7 @@ These grants are evaluated in addition to any role-based permissions.
 
 ## 7. Permission Check (conceptual)
 
-The System context will expose an API like:
+The System domain will expose an API like:
 
 ```js
 can(principal, resource, action, context) -> boolean

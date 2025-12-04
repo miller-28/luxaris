@@ -156,5 +156,5 @@ New user creates an account in the Luxaris system.
 
 ## Context Dependencies
 
-- **System Context:** Authentication service, password hashing, role assignment
+- **System Domain:** Authentication service, password hashing, role assignment, ACL initialization
 - **No external services required** (except optional email)

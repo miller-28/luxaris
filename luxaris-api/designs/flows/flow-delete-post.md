@@ -35,7 +35,7 @@ DELETE /api/v1/posts/post-uuid-123
 
 4. **Check Permissions**
    - If post owner matches principal: allow
-   - Otherwise: call System context `can(principal, 'post', 'delete')`
+   - Otherwise: call System domain ACL `can(principal, 'post', 'delete')`
    - Return 403 if not authorized
 
 5. **Check Post Status**

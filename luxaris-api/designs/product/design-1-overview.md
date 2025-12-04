@@ -1,60 +1,34 @@
 
-# Luxaris API – Posts Context Overview
+# Luxaris API – Product Contexts Overview
 
-This document provides a high-level overview of the **Posts context** and how its components work together to enable multi-platform social media management.
-
----
-
-## 1. What is the Posts Context?
-
-The Posts context is the **core product domain** of Luxaris, handling everything related to creating, scheduling, and publishing social media content across multiple platforms.
-
-### 1.1 Core Responsibilities
-
-The Posts context owns:
-
-- **Content Creation** – Drafting posts and platform-specific variants
-- **Scheduling** – Time-based publishing with timezone support
-- **Publishing** – Reliable background publishing to social platforms
-- **Channel Management** – Platform connections and authentication
-- **AI Generation** – Assisted content creation with templates
-
-### 1.2 What Posts Context Does NOT Own
-
-- Users, authentication, roles, permissions → **System context**
-- Global logging and audit trails → **System context**
-- API keys and system configuration → **System context**
-
-Posts context **consumes** these capabilities from System context through well-defined interfaces.
+This document provides a high-level overview of the **product domains** (Posts, Channels, Generation, Scheduling) and how they work together to enable multi-platform social media management.
 
 ---
 
-## 2. The Four Components of Posts Context
+## 1. Product Domain Architecture
 
-### 2.1 Channels & Connections
+The product side of Luxaris is separated into **four domains**, each with distinct responsibilities:
 
-**Purpose:** Manage platform definitions and user account connections.
+### 1.1 Domain Separation
 
-**Key concepts:**
-- Channel catalog (X, LinkedIn, etc.)
-- User-specific social media account connections
-- OAuth authentication state
-- Platform-specific constraints
+- **Posts** – Content creation and lifecycle management
+- **Channels** – Social platform connections and integrations
+- **Generation** – AI-powered content creation
+- **Scheduling** – Time-based publishing automation
 
-**Detailed design:** [`design-channels.md`](./design-channels.md)
+### 1.2 What Product Domains Do NOT Own
 
-**Key entities:**
-- `channels`
-- `channel_connections`
+- Users, authentication, roles, permissions → **System domain**
+- Global logging and audit trails → **System domain**
+- API keys and system configuration → **System domain**
 
-**Exposed interfaces:**
-- `connectChannel(principal, channel, oauth_data)` – Connect social account
-- `disconnectChannel(connection_id)` – Revoke connection
-- `listConnections(principal)` – Get user's connected accounts
+Product domains **consume** these capabilities from System domain through well-defined interfaces.
 
 ---
 
-### 2.2 Posts & Variants
+## 2. The Four Product Domains
+
+### 2.1 Posts Domain
 
 **Purpose:** Manage content creation and multi-platform variants.
 
@@ -62,9 +36,10 @@ Posts context **consumes** these capabilities from System context through well-d
 - Platform-agnostic posts
 - Channel-specific content variants
 - Post lifecycle (draft → scheduled → published)
-- Media attachments
+- Media attachments and metadata
+- Post templates for reusable content
 
-**Detailed design:** [`design-posts.md`](./design-posts.md)
+**Detailed design:** [`design-3-posts.md`](./design-3-posts.md)
 
 **Key entities:**
 - `posts`
@@ -74,11 +49,65 @@ Posts context **consumes** these capabilities from System context through well-d
 - `createPost(principal, content, tags)` – Create new post
 - `createVariant(post_id, channel_id, content)` – Add channel variant
 - `updatePost(post_id, changes)` – Edit post
+- `deletePost(post_id)` – Remove post
 - `listPosts(principal, filters)` – Get posts with variants
 
 ---
 
-### 2.3 Scheduling & Publishing
+### 2.2 Channels Domain
+
+**Purpose:** Manage platform definitions and user account connections.
+
+**Key concepts:**
+- Channel catalog (X, LinkedIn, etc.)
+- User-specific social media account connections
+- OAuth authentication state and token refresh
+- Platform-specific constraints and validation
+- Connection health monitoring
+
+**Detailed design:** [`design-2-channels.md`](./design-2-channels.md)
+
+**Key entities:**
+- `channels`
+- `channel_connections`
+
+**Exposed interfaces:**
+- `connectChannel(principal, channel, oauth_data)` – Connect social account
+- `disconnectChannel(connection_id)` – Revoke connection
+- `refreshConnection(connection_id)` – Refresh OAuth tokens
+- `listConnections(principal)` – Get user's connected accounts
+- `validateConnection(connection_id)` – Check connection health
+
+---
+
+### 2.3 Generation Domain
+
+**Purpose:** AI-assisted content creation with templates and suggestions.
+
+**Key concepts:**
+- Generation sessions and workflows
+- Multi-suggestion generation
+- Template-based content creation
+- LLM integration (OpenAI, others)
+- Suggestion acceptance and variant creation
+
+**Detailed design:** [`design-4-generation.md`](./design-4-generation.md)
+
+**Key entities:**
+- `post_templates`
+- `generation_sessions`
+- `generation_suggestions`
+
+**Exposed interfaces:**
+- `startGeneration(principal, channels, template?, post?)` – Create generation session
+- `generateContent(session_id, config)` – Generate suggestions via AI
+- `acceptSuggestion(suggestion_id, post_id?)` – Accept and create variant
+- `listSessions(principal, filters)` – Get generation history
+- `listTemplates(principal)` – Get available templates
+
+---
+
+### 2.4 Scheduling Domain
 
 **Purpose:** Time-based publishing with reliable background execution.
 
@@ -87,9 +116,10 @@ Posts context **consumes** these capabilities from System context through well-d
 - Two-runner architecture (scanner + publisher)
 - RabbitMQ queue for reliability
 - Retry logic and error handling
-- Publish event tracking
+- Publish event tracking and history
+- Platform-specific publishing adapters
 
-**Detailed design:** [`design-scheduling.md`](./design-scheduling.md)
+**Detailed design:** [`design-5-scheduling.md`](./design-5-scheduling.md)
 
 **Key entities:**
 - `schedules`
@@ -97,6 +127,44 @@ Posts context **consumes** these capabilities from System context through well-d
 
 **Exposed interfaces:**
 - `createSchedule(variant_id, connection_id, run_at, timezone)` – Schedule post
+- `updateSchedule(schedule_id, changes)` – Reschedule or modify
+- `cancelSchedule(schedule_id)` – Cancel scheduled publish
+- `listSchedules(principal, filters)` – Get scheduled posts
+- `getPublishHistory(variant_id)` – Get publish event history
+
+---
+
+## 3. Inter-Domain Communication
+
+### 3.1 Domain Dependencies
+
+```
+┌──────────┐
+│  System  │ (Foundation - used by all)
+└──────────┘
+     ↑
+     │ depends on
+     │
+┌────┴─────────────────────────────────────┐
+│                                           │
+│  ┌────────┐  ┌──────────┐  ┌──────────┐ │
+│  │ Posts  │  │ Channels │  │Generation│ │
+│  └───┬────┘  └────┬─────┘  └────┬─────┘ │
+│      │            │              │       │
+│      └────────────┴──────────────┘       │
+│                   ↓                      │
+│            ┌─────────────┐               │
+│            │ Scheduling  │               │
+│            └─────────────┘               │
+└───────────────────────────────────────────┘
+```
+
+**Dependency Rules:**
+- **System** has no dependencies on product domains
+- **Posts** depends only on System
+- **Channels** depends only on System
+- **Generation** depends on System, Posts, Channels
+- **Scheduling** depends on System, Posts, Channels (publishes variants to connections)
 - `updateSchedule(schedule_id, changes)` – Reschedule or cancel
 - `listSchedules(principal, date_range)` – Calendar view
 - `getPublishEvents(schedule_id)` – Audit trail
@@ -160,14 +228,14 @@ Posts context **consumes** these capabilities from System context through well-d
 - Templates provide content structure
 
 **All → System:**
-- All operations check permissions via System context
-- All actions logged to audit logs via System context
+- All operations check permissions via System domain ACL
+- All actions logged to audit logs via System domain observability
 
 ---
 
 ## 4. Complete Entity Map
 
-All Posts context database entities:
+All product domain database entities:
 
 ### Channels & Connections
 - `channels` – Platform catalog
@@ -366,7 +434,7 @@ module.exports = {
 
 **Ownership & Permissions:**
 - Only owner or team members can edit
-- Permissions checked via System context
+- Permissions checked via System domain ACL
 - Connections cannot be shared without permission
 
 **Publishing Guarantees:**
@@ -401,17 +469,17 @@ module.exports = {
 
 ## 11. Summary
 
-The Posts context is the **product core** of Luxaris, providing:
+The four product domains form the **product core** of Luxaris:
 
-✅ **Channels** – Platform connections  
-✅ **Posts** – Multi-platform content  
-✅ **Scheduling** – Time-based publishing  
-✅ **Generation** – AI-assisted creation  
+✅ **Posts** – Content creation and lifecycle  
+✅ **Channels** – Platform connections and OAuth  
+✅ **Generation** – AI-assisted content creation  
+✅ **Scheduling** – Time-based publishing automation  
 
-All four components work together to enable reliable, scalable, observable social media management.
+All four domains work together with System domain to enable reliable, scalable, observable social media management.
 
 **Next steps:**
 1. Review each detailed design document
 2. Understand the two-runner publishing architecture
 3. Follow domain rules and constraints
-4. Use exposed service interfaces from other contexts
+4. Use exposed service interfaces from other domains

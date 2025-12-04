@@ -2,167 +2,167 @@ const crypto = require('crypto');
 const SystemEventRepository = require('./system_event_repository');
 
 class EventRegistry {
-	constructor(db_pool, system_logger) {
-		this.db_pool = db_pool;
-		this.system_logger = system_logger;
-		this.event_repository = db_pool ? new SystemEventRepository(db_pool) : null;
-	}
+    constructor(db_pool, system_logger) {
+        this.db_pool = db_pool;
+        this.system_logger = system_logger;
+        this.event_repository = db_pool ? new SystemEventRepository(db_pool) : null;
+    }
 
-	async record(event_type, event_name, options = {}) {
-		const event_id = crypto.randomUUID();
+    async record(event_type, event_name, options = {}) {
+        const event_id = crypto.randomUUID();
 
-		// Log event to system logger
-		if (this.system_logger) {
-			await this.system_logger.info(
-				'EventRegistry',
-				`Event recorded: ${event_name}`,
-				{
-					event_type,
-					event_name,
-					entity_type: options.resource_type,
-					entity_id: options.resource_id,
-					user_id: options.principal_id
-				}
-			);
-		}
+        // Log event to system logger
+        if (this.system_logger) {
+            await this.system_logger.info(
+                'EventRegistry',
+                `Event recorded: ${event_name}`,
+                {
+                    event_type,
+                    event_name,
+                    entity_type: options.resource_type,
+                    entity_id: options.resource_id,
+                    user_id: options.principal_id
+                }
+            );
+        }
 
-		// Persist to database (async, non-blocking)
-		if (this.event_repository) {
-			this._persist_to_db({
-				event_id,
-				event_type,
-				event_name,
-				principal_id: options.principal_id || null,
-				principal_type: options.principal_type || null,
-				resource_type: options.resource_type || null,
-				resource_id: options.resource_id || null,
-				status: 'success',
-				metadata: options.metadata || null,
-				ip_address: options.ip_address || null,
-				user_agent: options.user_agent || null,
-				timestamp: new Date()
-			}).catch(error => {
-				if (this.system_logger) {
-					this.system_logger.error(
-						'EventRegistry',
-						'Failed to persist event to database',
-						error,
-						{ event_type, event_name }
-					);
-				} else {
-					console.error('Failed to persist event:', error.message);
-				}
-			});
-		}
+        // Persist to database (async, non-blocking)
+        if (this.event_repository) {
+            this._persist_to_db({
+                event_id,
+                event_type,
+                event_name,
+                principal_id: options.principal_id || null,
+                principal_type: options.principal_type || null,
+                resource_type: options.resource_type || null,
+                resource_id: options.resource_id || null,
+                status: 'success',
+                metadata: options.metadata || null,
+                ip_address: options.ip_address || null,
+                user_agent: options.user_agent || null,
+                timestamp: new Date()
+            }).catch(error => {
+                if (this.system_logger) {
+                    this.system_logger.error(
+                        'EventRegistry',
+                        'Failed to persist event to database',
+                        error,
+                        { event_type, event_name }
+                    );
+                } else {
+                    console.error('Failed to persist event:', error.message);
+                }
+            });
+        }
 
-		return event_id;
-	}
+        return event_id;
+    }
 
-	async record_failure(event_type, event_name, error, options = {}) {
-		const event_id = crypto.randomUUID();
+    async record_failure(event_type, event_name, error, options = {}) {
+        const event_id = crypto.randomUUID();
 
-		// Log event to system logger
-		if (this.system_logger) {
-			this.system_logger.warning(
-				'EventRegistry',
-				`Event failed: ${event_name}`,
-				{
-					component: 'EventRegistry',
-					action: 'record_event',
-					event_type,
-					event_name,
-					error_message: error?.message
-				}
-			);
-		}
+        // Log event to system logger
+        if (this.system_logger) {
+            this.system_logger.warning(
+                'EventRegistry',
+                `Event failed: ${event_name}`,
+                {
+                    component: 'EventRegistry',
+                    action: 'record_event',
+                    event_type,
+                    event_name,
+                    error_message: error?.message
+                }
+            );
+        }
 
-		// Persist to database
-		if (this.event_repository) {
-			this._persist_to_db({
-				event_id,
-				event_type,
-				event_name,
-				principal_id: options.principal_id || null,
-				principal_type: options.principal_type || null,
-				resource_type: options.resource_type || null,
-				resource_id: options.resource_id || null,
-				status: 'failed',
-				metadata: {
-					...(options.metadata || {}),
-					error_message: error?.message,
-					error_name: error?.name
-				},
-				ip_address: options.ip_address || null,
-				user_agent: options.user_agent || null,
-				timestamp: new Date()
-			}).catch(err => {
-				console.error('Failed to persist failed event:', err.message);
-			});
-		}
+        // Persist to database
+        if (this.event_repository) {
+            this._persist_to_db({
+                event_id,
+                event_type,
+                event_name,
+                principal_id: options.principal_id || null,
+                principal_type: options.principal_type || null,
+                resource_type: options.resource_type || null,
+                resource_id: options.resource_id || null,
+                status: 'failed',
+                metadata: {
+                    ...(options.metadata || {}),
+                    error_message: error?.message,
+                    error_name: error?.name
+                },
+                ip_address: options.ip_address || null,
+                user_agent: options.user_agent || null,
+                timestamp: new Date()
+            }).catch(err => {
+                console.error('Failed to persist failed event:', err.message);
+            });
+        }
 
-		return event_id;
-	}
+        return event_id;
+    }
 
-	async _persist_to_db(event) {
-		if (this.event_repository) {
-			await this.event_repository.create(event);
-		}
-	}
+    async _persist_to_db(event) {
+        if (this.event_repository) {
+            await this.event_repository.create(event);
+        }
+    }
 
-	async query(filters) {
-		if (!this.event_repository) {
-			throw new Error('Event repository not initialized');
-		}
-		return await this.event_repository.query(filters);
-	}
+    async query(filters) {
+        if (!this.event_repository) {
+            throw new Error('Event repository not initialized');
+        }
+        return await this.event_repository.query(filters);
+    }
 
-	// Convenience methods for common event categories
-	async record_event(event_type, entity_type, entity_id, event_data = {}, user_id = null) {
-		// Handle object-style call (new format from generation domain)
-		if (typeof event_type === 'object') {
-			const event_obj = event_type;
-			return this.record(event_obj.event_type, event_obj.event_name, {
-				resource_type: event_obj.entity_type,
-				resource_id: event_obj.entity_id,
-				principal_id: event_obj.principal_id,
-				principal_type: event_obj.principal_id ? 'user' : 'system',
-				metadata: event_obj.metadata || {}
-			});
-		}
+    // Convenience methods for common event categories
+    async record_event(event_type, entity_type, entity_id, event_data = {}, user_id = null) {
+        // Handle object-style call (new format from generation domain)
+        if (typeof event_type === 'object') {
+            const event_obj = event_type;
+            return this.record(event_obj.event_type, event_obj.event_name, {
+                resource_type: event_obj.entity_type,
+                resource_id: event_obj.entity_id,
+                principal_id: event_obj.principal_id,
+                principal_type: event_obj.principal_id ? 'user' : 'system',
+                metadata: event_obj.metadata || {}
+            });
+        }
 		
-		// Legacy method for backward compatibility (individual parameters)
-		return this.record('legacy', event_type, {
-			resource_type: entity_type,
-			resource_id: entity_id,
-			principal_id: user_id,
-			principal_type: user_id ? 'user' : 'system',
-			metadata: event_data
-		});
-	}
+        // Legacy method for backward compatibility (individual parameters)
+        return this.record('legacy', event_type, {
+            resource_type: entity_type,
+            resource_id: entity_id,
+            principal_id: user_id,
+            principal_type: user_id ? 'user' : 'system',
+            metadata: event_data
+        });
+    }
 
-	async record_identity_event(event_type, entity_type, entity_id, event_data = {}, user_id = null) {
-		return this.record_event(event_type, entity_type, entity_id, event_data, user_id);
-	}
+    async record_identity_event(event_type, entity_type, entity_id, event_data = {}, user_id = null) {
+        return this.record_event(event_type, entity_type, entity_id, event_data, user_id);
+    }
 
-	async record_acl_event(event_type, entity_type, entity_id, event_data = {}, user_id = null) {
-		return this.record_event(event_type, entity_type, entity_id, event_data, user_id);
-	}
+    async record_acl_event(event_type, entity_type, entity_id, event_data = {}, user_id = null) {
+        return this.record_event(event_type, entity_type, entity_id, event_data, user_id);
+    }
 
-	async record_content_event(event_type, entity_type, entity_id, event_data = {}, user_id = null) {
-		return this.record_event(event_type, entity_type, entity_id, event_data, user_id);
-	}
+    async record_content_event(event_type, entity_type, entity_id, event_data = {}, user_id = null) {
+        return this.record_event(event_type, entity_type, entity_id, event_data, user_id);
+    }
 
-	async record_engagement_event(event_type, entity_type, entity_id, event_data = {}, user_id = null) {
-		return this.record_event(event_type, entity_type, entity_id, event_data, user_id);
-	}
+    async record_engagement_event(event_type, entity_type, entity_id, event_data = {}, user_id = null) {
+        return this.record_event(event_type, entity_type, entity_id, event_data, user_id);
+    }
 
-	async record_moderation_event(event_type, entity_type, entity_id, event_data = {}, user_id = null) {
-		return this.record_event(event_type, entity_type, entity_id, event_data, user_id);
-	}
+    async record_moderation_event(event_type, entity_type, entity_id, event_data = {}, user_id = null) {
+        return this.record_event(event_type, entity_type, entity_id, event_data, user_id);
+    }
 
-	async record_system_event(event_type, entity_type, entity_id, event_data = {}, user_id = null) {
-		return this.record_event(event_type, entity_type, entity_id, event_data, user_id);
-	}
+    async record_system_event(event_type, entity_type, entity_id, event_data = {}, user_id = null) {
+        return this.record_event(event_type, entity_type, entity_id, event_data, user_id);
+    }
 }
 
 module.exports = EventRegistry;

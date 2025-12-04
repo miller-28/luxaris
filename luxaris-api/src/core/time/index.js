@@ -8,6 +8,6 @@ const TimezoneValidator = require('./timezone_validator');
 const TimeHelpers = require('./time_helpers');
 
 module.exports = {
-  TimezoneValidator,
-  TimeHelpers
+    TimezoneValidator,
+    TimeHelpers
 };

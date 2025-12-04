@@ -9,6 +9,6 @@ jest.setTimeout(10000);
 
 // Clean up after all tests
 afterAll(async () => {
-	// Close database connections, etc.
-	// Will be implemented when database pool is created
+    // Close database connections, etc.
+    // Will be implemented when database pool is created
 });

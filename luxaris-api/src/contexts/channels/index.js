@@ -19,45 +19,45 @@ const create_channel_routes = require('./interface/http/channel_routes');
  * Initialize Channels Domain
  */
 function initialize_channels_domain(dependencies) {
-  const {
-    db_pool,
-    system_logger,
-    acl_service,
-    event_registry
-  } = dependencies;
+    const {
+        db_pool,
+        system_logger,
+        acl_service,
+        event_registry
+    } = dependencies;
 
-  // Initialize repositories
-  const channel_repository = new ChannelRepository(db_pool);
-  const channel_connection_repository = new ChannelConnectionRepository(db_pool);
+    // Initialize repositories
+    const channel_repository = new ChannelRepository(db_pool);
+    const channel_connection_repository = new ChannelConnectionRepository(db_pool);
 
-  // Initialize services
-  const channel_service = new ChannelService(
-    channel_repository,
-    system_logger
-  );
+    // Initialize services
+    const channel_service = new ChannelService(
+        channel_repository,
+        system_logger
+    );
 
-  const channel_connection_service = new ChannelConnectionService(
-    channel_connection_repository,
-    channel_service,
-    acl_service,
-    event_registry,
-    system_logger
-  );
+    const channel_connection_service = new ChannelConnectionService(
+        channel_connection_repository,
+        channel_service,
+        acl_service,
+        event_registry,
+        system_logger
+    );
 
-  return {
-    // Repositories
-    channel_repository,
-    channel_connection_repository,
+    return {
+        // Repositories
+        channel_repository,
+        channel_connection_repository,
 
-    // Services
-    channel_service,
-    channel_connection_service,
+        // Services
+        channel_service,
+        channel_connection_service,
 
-    // Routes factory
-    create_channel_routes
-  };
+        // Routes factory
+        create_channel_routes
+    };
 }
 
 module.exports = {
-  initialize_channels_domain
+    initialize_channels_domain
 };

@@ -1,12 +1,12 @@
-const js = require('@eslint/js');
-const globals = require('globals');
+import js from '@eslint/js';
+import globals from 'globals';
 
-module.exports = [
+export default [
 	{
 		files: ['**/*.{js,mjs,cjs}'],
 		languageOptions: {
 			ecmaVersion: 2022,
-			sourceType: 'commonjs',
+			sourceType: 'module',
 			globals: {
 				...globals.browser,
 				...globals.node,
@@ -14,8 +14,8 @@ module.exports = [
 			}
 		},
 		rules: {
-			// Indentation: Use tabs (4 spaces wide)
-			'indent': ['error', 'tab', { 'SwitchCase': 1 }],
+			// Indentation: Use 4 spaces (not tabs)
+			'indent': ['error', 4, { 'SwitchCase': 1 }],
 			
 			// Code quality
 			'no-unused-vars': 'off', // Disabled - allow unused variables
@@ -59,7 +59,7 @@ module.exports = [
 	},
 	{
 		ignores: [
-			'eslint.config.js',
+      		'eslint.config.js',
 			'node_modules/**',
 			'dist/**',
 			'*.min.js',

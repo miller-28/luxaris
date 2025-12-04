@@ -9,13 +9,13 @@ let seed;
   * This enables us to not have to rely on NODE_PATH.
   */
 exports.setup = function(options, seedLink) {
-	dbm = options.dbmigrate;
-	type = dbm.dataType;
-	seed = seedLink;
+    dbm = options.dbmigrate;
+    type = dbm.dataType;
+    seed = seedLink;
 };
 
 exports.up = function(db) {
-	return db.runSql(`
+    return db.runSql(`
 		-- Create luxaris schema if not exists
 		CREATE SCHEMA IF NOT EXISTS luxaris;
 
@@ -141,7 +141,7 @@ exports.up = function(db) {
 };
 
 exports.down = function(db) {
-	return db.runSql(`
+    return db.runSql(`
 		DROP TABLE IF EXISTS sessions CASCADE;
 		DROP TABLE IF EXISTS api_keys CASCADE;
 		DROP TABLE IF EXISTS service_accounts CASCADE;
@@ -152,5 +152,5 @@ exports.down = function(db) {
 };
 
 exports._meta = {
-	'version': 1
+    'version': 1
 };

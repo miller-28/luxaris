@@ -76,6 +76,16 @@
             "skipFiles": ["<node_internals>/**"]
         },
         {
+            "name": "Luxaris - Lint API (create report file)",
+            "type": "node",
+            "request": "launch",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": ["run", "lint:report"],
+            "cwd": "${workspaceFolder}/luxaris-api",
+            "console": "integratedTerminal",
+            "skipFiles": ["<node_internals>/**"]
+        },     
+        {
             "name": "Luxaris - Lint API (Fix)",
             "type": "node",
             "request": "launch",
@@ -84,7 +94,7 @@
             "cwd": "${workspaceFolder}/luxaris-api",
             "console": "integratedTerminal",
             "skipFiles": ["<node_internals>/**"]
-        },
+        },   
         {
             "name": "Luxaris - DB Migrate Up (Dev)",
             "type": "node",

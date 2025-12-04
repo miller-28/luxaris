@@ -5,7 +5,7 @@
  * Implementations can use OpenAI, Claude, or other AI providers.
  */
 class GeneratorAdapter {
-  /**
+    /**
    * Generate content based on prompt and parameters
    * 
    * @param {Object} params - Generation parameters
@@ -17,9 +17,9 @@ class GeneratorAdapter {
    * @param {number} [params.count] - Number of suggestions to generate (default: 3)
    * @returns {Promise<Array>} - Array of {content, score} objects
    */
-  async generate_content(params) {
-    throw new Error('generate_content must be implemented by subclass');
-  }
+    async generate_content(params) {
+        throw new Error('generate_content must be implemented by subclass');
+    }
 }
 
 module.exports = GeneratorAdapter;

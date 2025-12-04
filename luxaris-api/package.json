@@ -16,6 +16,7 @@
     "test:coverage": "jest --coverage --runInBand --forceExit",
     "test:coverage:open": "npm run test:coverage && start coverage/index.html",
     "lint": "eslint .",
+    "lint:report": "eslint . --output-file eslint-report.txt --no-color",
     "lint:fix": "eslint . --fix",
     "migrate:up": "db-migrate up",
     "migrate:down": "db-migrate down",

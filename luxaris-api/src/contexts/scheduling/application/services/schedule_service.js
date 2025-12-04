@@ -1,23 +1,23 @@
 const Schedule = require('../../infrastructure/models/schedule');
 
 class ScheduleService {
-  constructor(
-    schedule_repository,
-    publish_event_repository,
-    post_variant_service,
-    post_repository,
-    system_logger,
-    event_registry
-  ) {
-    this.schedule_repository = schedule_repository;
-    this.publish_event_repository = publish_event_repository;
-    this.variant_service = post_variant_service;
-    this.post_repository = post_repository;
-    this.logger = system_logger;
-    this.event_registry = event_registry;
-  }
+    constructor(
+        schedule_repository,
+        publish_event_repository,
+        post_variant_service,
+        post_repository,
+        system_logger,
+        event_registry
+    ) {
+        this.schedule_repository = schedule_repository;
+        this.publish_event_repository = publish_event_repository;
+        this.variant_service = post_variant_service;
+        this.post_repository = post_repository;
+        this.logger = system_logger;
+        this.event_registry = event_registry;
+    }
 
-  /**
+    /**
    * Create a new schedule
    * @param {Object} principal - Operating principal (user or service account)
    * @param {Object} schedule_data - Schedule data
@@ -26,270 +26,270 @@ class ScheduleService {
    * @param {string} schedule_data.run_at - Local datetime in specified timezone
    * @param {string} [schedule_data.timezone] - IANA timezone (defaults to principal's timezone)
    */
-  async create_schedule(principal, schedule_data) {
-    this.logger.info('Creating schedule', { principal_id: principal.id });
+    async create_schedule(principal, schedule_data) {
+        this.logger.info('Creating schedule', { principal_id: principal.id });
 
-    // Validate required fields
-    if (!schedule_data.post_variant_id || !schedule_data.channel_connection_id || !schedule_data.run_at) {
-      throw new Error('SCHEDULE_REQUIRED_FIELDS_MISSING');
-    }
+        // Validate required fields
+        if (!schedule_data.post_variant_id || !schedule_data.channel_connection_id || !schedule_data.run_at) {
+            throw new Error('SCHEDULE_REQUIRED_FIELDS_MISSING');
+        }
 
-    // Use principal's timezone if not explicitly provided
-    const timezone = schedule_data.timezone || principal.timezone || 'UTC';
+        // Use principal's timezone if not explicitly provided
+        const timezone = schedule_data.timezone || principal.timezone || 'UTC';
 
-    // Verify ownership of post_variant
-    const variant = await this.variant_service.get_variant(principal, schedule_data.post_variant_id);
-    if (!variant) {
-      throw new Error('VARIANT_NOT_FOUND');
-    }
+        // Verify ownership of post_variant
+        const variant = await this.variant_service.get_variant(principal, schedule_data.post_variant_id);
+        if (!variant) {
+            throw new Error('VARIANT_NOT_FOUND');
+        }
 
-    // Validate timezone is valid IANA timezone string
-    // TODO: Add proper timezone validation using moment-timezone or similar
-    if (!timezone) {
-      throw new Error('SCHEDULE_TIMEZONE_REQUIRED');
-    }
+        // Validate timezone is valid IANA timezone string
+        // TODO: Add proper timezone validation using moment-timezone or similar
+        if (!timezone) {
+            throw new Error('SCHEDULE_TIMEZONE_REQUIRED');
+        }
 
-    // Parse run_at as local time in specified timezone
-    // For now, treat as UTC-based timestamp (proper timezone conversion to be added with moment-timezone)
-    const run_at_date = new Date(schedule_data.run_at);
-    const now = new Date();
+        // Parse run_at as local time in specified timezone
+        // For now, treat as UTC-based timestamp (proper timezone conversion to be added with moment-timezone)
+        const run_at_date = new Date(schedule_data.run_at);
+        const now = new Date();
     
-    // Validate run_at is in the future
-    if (run_at_date <= now) {
-      throw new Error('SCHEDULE_TIME_MUST_BE_FUTURE');
+        // Validate run_at is in the future
+        if (run_at_date <= now) {
+            throw new Error('SCHEDULE_TIME_MUST_BE_FUTURE');
+        }
+
+        // Validate not too far in the future (90 days max)
+        const max_future = new Date(now.getTime() + (90 * 24 * 60 * 60 * 1000));
+        if (run_at_date > max_future) {
+            throw new Error('SCHEDULE_TIME_TOO_FAR');
+        }
+
+        // Create schedule with timezone from principal or explicit selection
+        const schedule = await this.schedule_repository.create({
+            post_variant_id: schedule_data.post_variant_id,
+            channel_connection_id: schedule_data.channel_connection_id,
+            run_at: run_at_date.toISOString(), // Store as UTC
+            timezone: timezone, // Store original timezone for display/audit
+            status: 'pending',
+            attempt_count: 0
+        });
+
+        // Update post status to 'scheduled' if not already published
+        const post_id = variant.post_id;
+        const post = await this.post_repository.find_by_id(post_id);
+        if (post && post.status === 'draft') {
+            await this.post_repository.update(post_id, { status: 'scheduled' });
+        }
+
+        // Record event
+        await this.event_registry.record_event({
+            event_type: 'schedule',
+            event_name: 'SCHEDULE_CREATED',
+            entity_type: 'schedule',
+            entity_id: schedule.id,
+            principal_id: principal.id,
+            metadata: {
+                post_variant_id: schedule.post_variant_id,
+                channel_connection_id: schedule.channel_connection_id,
+                run_at: schedule.run_at,
+                timezone: schedule.timezone,
+                timezone_source: schedule_data.timezone ? 'explicit' : 'principal_default'
+            }
+        });
+
+        this.logger.info('Schedule created', { schedule_id: schedule.id });
+        return schedule;
     }
 
-    // Validate not too far in the future (90 days max)
-    const max_future = new Date(now.getTime() + (90 * 24 * 60 * 60 * 1000));
-    if (run_at_date > max_future) {
-      throw new Error('SCHEDULE_TIME_TOO_FAR');
-    }
-
-    // Create schedule with timezone from principal or explicit selection
-    const schedule = await this.schedule_repository.create({
-      post_variant_id: schedule_data.post_variant_id,
-      channel_connection_id: schedule_data.channel_connection_id,
-      run_at: run_at_date.toISOString(), // Store as UTC
-      timezone: timezone, // Store original timezone for display/audit
-      status: 'pending',
-      attempt_count: 0
-    });
-
-    // Update post status to 'scheduled' if not already published
-    const post_id = variant.post_id;
-    const post = await this.post_repository.find_by_id(post_id);
-    if (post && post.status === 'draft') {
-      await this.post_repository.update(post_id, { status: 'scheduled' });
-    }
-
-    // Record event
-    await this.event_registry.record_event({
-      event_type: 'schedule',
-      event_name: 'SCHEDULE_CREATED',
-      entity_type: 'schedule',
-      entity_id: schedule.id,
-      principal_id: principal.id,
-      metadata: {
-        post_variant_id: schedule.post_variant_id,
-        channel_connection_id: schedule.channel_connection_id,
-        run_at: schedule.run_at,
-        timezone: schedule.timezone,
-        timezone_source: schedule_data.timezone ? 'explicit' : 'principal_default'
-      }
-    });
-
-    this.logger.info('Schedule created', { schedule_id: schedule.id });
-    return schedule;
-  }
-
-  /**
+    /**
    * Get schedule by ID
    */
-  async get_schedule(principal, schedule_id) {
-    this.logger.info('Getting schedule', { principal_id: principal.id, schedule_id });
+    async get_schedule(principal, schedule_id) {
+        this.logger.info('Getting schedule', { principal_id: principal.id, schedule_id });
 
-    const schedule = await this.schedule_repository.find_by_id(schedule_id);
-    if (!schedule) {
-      throw new Error('SCHEDULE_NOT_FOUND');
+        const schedule = await this.schedule_repository.find_by_id(schedule_id);
+        if (!schedule) {
+            throw new Error('SCHEDULE_NOT_FOUND');
+        }
+
+        // Verify ownership through post_variant
+        const variant = await this.variant_service.get_variant(principal, schedule.post_variant_id);
+        if (!variant) {
+            throw new Error('SCHEDULE_ACCESS_DENIED');
+        }
+
+        // Get publish events
+        const publish_events = await this.publish_event_repository.list_by_schedule(schedule_id);
+
+        this.logger.info('Schedule retrieved', { schedule_id });
+        return { schedule, publish_events };
     }
 
-    // Verify ownership through post_variant
-    const variant = await this.variant_service.get_variant(principal, schedule.post_variant_id);
-    if (!variant) {
-      throw new Error('SCHEDULE_ACCESS_DENIED');
-    }
-
-    // Get publish events
-    const publish_events = await this.publish_event_repository.list_by_schedule(schedule_id);
-
-    this.logger.info('Schedule retrieved', { schedule_id });
-    return { schedule, publish_events };
-  }
-
-  /**
+    /**
    * List schedules with filters
    */
-  async list_schedules(principal, filters = {}, pagination = {}) {
-    this.logger.info('Listing schedules', { principal_id: principal.id, filters });
+    async list_schedules(principal, filters = {}, pagination = {}) {
+        this.logger.info('Listing schedules', { principal_id: principal.id, filters });
 
-    // Note: This is a simplified version. In production, you'd want to join with
-    // post_variants and posts to filter by ownership via principal_id
-    // For now, we'll list all and filter in memory (not efficient for production)
+        // Note: This is a simplified version. In production, you'd want to join with
+        // post_variants and posts to filter by ownership via principal_id
+        // For now, we'll list all and filter in memory (not efficient for production)
     
-    const schedules = await this.schedule_repository.list(filters, pagination);
-    const total = await this.schedule_repository.count(filters);
+        const schedules = await this.schedule_repository.list(filters, pagination);
+        const total = await this.schedule_repository.count(filters);
 
-    this.logger.info('Schedules listed', { count: schedules.length, total });
-    return { schedules, total };
-  }
+        this.logger.info('Schedules listed', { count: schedules.length, total });
+        return { schedules, total };
+    }
 
-  /**
+    /**
    * Update schedule (reschedule)
    */
-  async update_schedule(principal, schedule_id, updates) {
-    this.logger.info('Updating schedule', { principal_id: principal.id, schedule_id });
+    async update_schedule(principal, schedule_id, updates) {
+        this.logger.info('Updating schedule', { principal_id: principal.id, schedule_id });
 
-    const schedule = await this.schedule_repository.find_by_id(schedule_id);
-    if (!schedule) {
-      throw new Error('SCHEDULE_NOT_FOUND');
+        const schedule = await this.schedule_repository.find_by_id(schedule_id);
+        if (!schedule) {
+            throw new Error('SCHEDULE_NOT_FOUND');
+        }
+
+        // Verify ownership
+        const variant = await this.variant_service.get_variant(principal, schedule.post_variant_id);
+        if (!variant) {
+            throw new Error('SCHEDULE_ACCESS_DENIED');
+        }
+
+        // Check if schedule can be modified
+        if (!schedule.can_reschedule()) {
+            throw new Error('SCHEDULE_CANNOT_BE_MODIFIED');
+        }
+
+        // Validate new run_at if provided
+        if (updates.run_at) {
+            const run_at_date = new Date(updates.run_at);
+            const now = new Date();
+            if (run_at_date <= now) {
+                throw new Error('SCHEDULE_TIME_MUST_BE_FUTURE');
+            }
+            const max_future = new Date(now.getTime() + (90 * 24 * 60 * 60 * 1000));
+            if (run_at_date > max_future) {
+                throw new Error('SCHEDULE_TIME_TOO_FAR');
+            }
+        }
+
+        // Update schedule
+        const updated_schedule = await this.schedule_repository.update(schedule_id, updates);
+
+        // Record event
+        await this.event_registry.record_event({
+            event_type: 'schedule',
+            event_name: 'SCHEDULE_UPDATED',
+            entity_type: 'schedule',
+            entity_id: schedule_id,
+            principal_id: principal.id,
+            metadata: {
+                updated_fields: Object.keys(updates)
+            }
+        });
+
+        this.logger.info('Schedule updated', { schedule_id });
+        return updated_schedule;
     }
 
-    // Verify ownership
-    const variant = await this.variant_service.get_variant(principal, schedule.post_variant_id);
-    if (!variant) {
-      throw new Error('SCHEDULE_ACCESS_DENIED');
-    }
-
-    // Check if schedule can be modified
-    if (!schedule.can_reschedule()) {
-      throw new Error('SCHEDULE_CANNOT_BE_MODIFIED');
-    }
-
-    // Validate new run_at if provided
-    if (updates.run_at) {
-      const run_at_date = new Date(updates.run_at);
-      const now = new Date();
-      if (run_at_date <= now) {
-        throw new Error('SCHEDULE_TIME_MUST_BE_FUTURE');
-      }
-      const max_future = new Date(now.getTime() + (90 * 24 * 60 * 60 * 1000));
-      if (run_at_date > max_future) {
-        throw new Error('SCHEDULE_TIME_TOO_FAR');
-      }
-    }
-
-    // Update schedule
-    const updated_schedule = await this.schedule_repository.update(schedule_id, updates);
-
-    // Record event
-    await this.event_registry.record_event({
-      event_type: 'schedule',
-      event_name: 'SCHEDULE_UPDATED',
-      entity_type: 'schedule',
-      entity_id: schedule_id,
-      principal_id: principal.id,
-      metadata: {
-        updated_fields: Object.keys(updates)
-      }
-    });
-
-    this.logger.info('Schedule updated', { schedule_id });
-    return updated_schedule;
-  }
-
-  /**
+    /**
    * Cancel schedule
    */
-  async cancel_schedule(principal, schedule_id) {
-    this.logger.info('Cancelling schedule', { principal_id: principal.id, schedule_id });
+    async cancel_schedule(principal, schedule_id) {
+        this.logger.info('Cancelling schedule', { principal_id: principal.id, schedule_id });
 
-    const schedule = await this.schedule_repository.find_by_id(schedule_id);
-    if (!schedule) {
-      throw new Error('SCHEDULE_NOT_FOUND');
+        const schedule = await this.schedule_repository.find_by_id(schedule_id);
+        if (!schedule) {
+            throw new Error('SCHEDULE_NOT_FOUND');
+        }
+
+        // Verify ownership
+        const variant = await this.variant_service.get_variant(principal, schedule.post_variant_id);
+        if (!variant) {
+            throw new Error('SCHEDULE_ACCESS_DENIED');
+        }
+
+        // Check if schedule can be cancelled
+        if (!schedule.can_cancel()) {
+            throw new Error('SCHEDULE_CANNOT_BE_CANCELLED');
+        }
+
+        // Update status to cancelled
+        const cancelled_schedule = await this.schedule_repository.update_status(schedule_id, 'cancelled');
+
+        // Record event
+        await this.event_registry.record_event({
+            event_type: 'schedule',
+            event_name: 'SCHEDULE_CANCELLED',
+            entity_type: 'schedule',
+            entity_id: schedule_id,
+            principal_id: principal.id,
+            metadata: {
+                previous_status: schedule.status
+            }
+        });
+
+        this.logger.info('Schedule cancelled', { schedule_id });
+        return cancelled_schedule;
     }
 
-    // Verify ownership
-    const variant = await this.variant_service.get_variant(principal, schedule.post_variant_id);
-    if (!variant) {
-      throw new Error('SCHEDULE_ACCESS_DENIED');
-    }
-
-    // Check if schedule can be cancelled
-    if (!schedule.can_cancel()) {
-      throw new Error('SCHEDULE_CANNOT_BE_CANCELLED');
-    }
-
-    // Update status to cancelled
-    const cancelled_schedule = await this.schedule_repository.update_status(schedule_id, 'cancelled');
-
-    // Record event
-    await this.event_registry.record_event({
-      event_type: 'schedule',
-      event_name: 'SCHEDULE_CANCELLED',
-      entity_type: 'schedule',
-      entity_id: schedule_id,
-      principal_id: principal.id,
-      metadata: {
-        previous_status: schedule.status
-      }
-    });
-
-    this.logger.info('Schedule cancelled', { schedule_id });
-    return cancelled_schedule;
-  }
-
-  /**
+    /**
    * Delete schedule
    */
-  async delete_schedule(principal, schedule_id) {
-    this.logger.info('Deleting schedule', { principal_id: principal.id, schedule_id });
+    async delete_schedule(principal, schedule_id) {
+        this.logger.info('Deleting schedule', { principal_id: principal.id, schedule_id });
 
-    const schedule = await this.schedule_repository.find_by_id(schedule_id);
-    if (!schedule) {
-      throw new Error('SCHEDULE_NOT_FOUND');
+        const schedule = await this.schedule_repository.find_by_id(schedule_id);
+        if (!schedule) {
+            throw new Error('SCHEDULE_NOT_FOUND');
+        }
+
+        // Verify ownership
+        const variant = await this.variant_service.get_variant(principal, schedule.post_variant_id);
+        if (!variant) {
+            throw new Error('SCHEDULE_ACCESS_DENIED');
+        }
+
+        // Delete schedule (will cascade to publish_events)
+        await this.schedule_repository.delete(schedule_id);
+
+        // Record event
+        await this.event_registry.record_event({
+            event_type: 'schedule',
+            event_name: 'SCHEDULE_DELETED',
+            entity_type: 'schedule',
+            entity_id: schedule_id,
+            principal_id: principal.id,
+            metadata: {
+                status: schedule.status
+            }
+        });
+
+        this.logger.info('Schedule deleted', { schedule_id });
     }
 
-    // Verify ownership
-    const variant = await this.variant_service.get_variant(principal, schedule.post_variant_id);
-    if (!variant) {
-      throw new Error('SCHEDULE_ACCESS_DENIED');
-    }
-
-    // Delete schedule (will cascade to publish_events)
-    await this.schedule_repository.delete(schedule_id);
-
-    // Record event
-    await this.event_registry.record_event({
-      event_type: 'schedule',
-      event_name: 'SCHEDULE_DELETED',
-      entity_type: 'schedule',
-      entity_id: schedule_id,
-      principal_id: principal.id,
-      metadata: {
-        status: schedule.status
-      }
-    });
-
-    this.logger.info('Schedule deleted', { schedule_id });
-  }
-
-  /**
+    /**
    * List schedules by date range (for calendar view)
    */
-  async list_by_date_range(principal, from_date, to_date, filters = {}) {
-    this.logger.info('Listing schedules by date range', { principal_id: principal.id, from_date, to_date });
+    async list_by_date_range(principal, from_date, to_date, filters = {}) {
+        this.logger.info('Listing schedules by date range', { principal_id: principal.id, from_date, to_date });
 
-    const range_filters = {
-      ...filters,
-      run_at_from: from_date,
-      run_at_to: to_date
-    };
+        const range_filters = {
+            ...filters,
+            run_at_from: from_date,
+            run_at_to: to_date
+        };
 
-    const schedules = await this.schedule_repository.list(range_filters, { limit: 1000 });
+        const schedules = await this.schedule_repository.list(range_filters, { limit: 1000 });
 
-    this.logger.info('Schedules by date range listed', { count: schedules.length });
-    return schedules;
-  }
+        this.logger.info('Schedules by date range listed', { count: schedules.length });
+        return schedules;
+    }
 }
 
 module.exports = ScheduleService;

@@ -8,7 +8,7 @@ class RoleRepository {
 	 */
     async find_by_id(role_id) {
         const result = await connection_manager.get_db_pool().query(
-            'SELECT * FROM acl_roles WHERE id = $1',
+            'SELECT * FROM acl_roles WHERE id = $1 AND is_deleted = false',
             [role_id]
         );
         return result.rows[0] ? Role.from_db_row(result.rows[0]) : null;
@@ -19,7 +19,7 @@ class RoleRepository {
 	 */
     async find_by_slug(slug) {
         const result = await connection_manager.get_db_pool().query(
-            'SELECT * FROM acl_roles WHERE slug = $1',
+            'SELECT * FROM acl_roles WHERE slug = $1 AND is_deleted = false',
             [slug]
         );
         return result.rows[0] ? Role.from_db_row(result.rows[0]) : null;
@@ -30,7 +30,7 @@ class RoleRepository {
 	 */
     async find_all() {
         const result = await connection_manager.get_db_pool().query(
-            'SELECT * FROM acl_roles ORDER BY name'
+            'SELECT * FROM acl_roles WHERE is_deleted = false ORDER BY name'
         );
         return result.rows.map(row => Role.from_db_row(row));
     }
@@ -40,7 +40,7 @@ class RoleRepository {
 	 */
     async find_by_scope(scope) {
         const result = await connection_manager.get_db_pool().query(
-            'SELECT * FROM acl_roles WHERE scope = $1 ORDER BY name',
+            'SELECT * FROM acl_roles WHERE scope = $1 AND is_deleted = false ORDER BY name',
             [scope]
         );
         return result.rows.map(row => Role.from_db_row(row));
@@ -106,11 +106,11 @@ class RoleRepository {
     }
 
     /**
-	 * Delete role
+	 * Delete role (soft delete)
 	 */
     async delete(role_id) {
         const result = await connection_manager.get_db_pool().query(
-            'DELETE FROM acl_roles WHERE id = $1 RETURNING *',
+            'UPDATE acl_roles SET is_deleted = true, deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND is_deleted = false RETURNING id',
             [role_id]
         );
         return result.rowCount > 0;
@@ -121,7 +121,7 @@ class RoleRepository {
 	 */
     async exists(slug) {
         const result = await connection_manager.get_db_pool().query(
-            'SELECT EXISTS(SELECT 1 FROM acl_roles WHERE slug = $1)',
+            'SELECT EXISTS(SELECT 1 FROM acl_roles WHERE slug = $1 AND is_deleted = false)',
             [slug]
         );
         return result.rows[0].exists;

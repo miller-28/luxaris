@@ -122,6 +122,14 @@ All ACL tables use the `acl_` prefix and reside in the `luxaris` schema:
 - `acl_principal_role_assignments` - User/ServiceAccount role assignments
 - `acl_principal_permission_grants` - Direct permission grants
 
+**Soft Delete:**
+All main entities support soft delete via `is_deleted` and `deleted_at` columns:
+- Users, posts, post variants, post templates
+- Channel connections, schedules
+- Generation sessions and suggestions
+- ACL roles, UI presets
+- See `design-10-soft-delete.md` for detailed implementation
+
 ### 4.3 Error Handling
 
 - Central Express/Fastify error middleware.

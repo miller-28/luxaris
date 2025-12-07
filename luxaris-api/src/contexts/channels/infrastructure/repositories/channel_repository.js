@@ -14,7 +14,7 @@ class ChannelRepository {
       SELECT 
         id, key, name, status, limits,
         created_at, updated_at
-      FROM luxaris.channels
+      FROM channels
       WHERE status = 'active'
       ORDER BY name ASC
     `;
@@ -31,7 +31,7 @@ class ChannelRepository {
       SELECT 
         id, key, name, status, limits,
         created_at, updated_at
-      FROM luxaris.channels
+      FROM channels
       WHERE id = $1
     `;
 
@@ -47,7 +47,7 @@ class ChannelRepository {
       SELECT 
         id, key, name, status, limits,
         created_at, updated_at
-      FROM luxaris.channels
+      FROM channels
       WHERE key = $1
     `;
 
@@ -61,7 +61,7 @@ class ChannelRepository {
     async is_active(channel_id) {
         const query = `
       SELECT 1 
-      FROM luxaris.channels
+      FROM channels
       WHERE id = $1 AND status = 'active'
     `;
 

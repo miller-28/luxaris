@@ -1,5 +1,5 @@
 const request = require('supertest');
-const { create_database_pool } = require('../../../src/config/database');
+const { create_database_pool } = require('../../../src/connections/database');
 const Server = require('../../../src/core/http/server');
 const { get_app_config } = require('../../../src/config/app');
 const { get_auth_config } = require('../../../src/config/auth');
@@ -157,12 +157,12 @@ describe('Schedules API', () => {
         root_token = root_login.access_token;
 
         // Get X channel ID from database (seeded channels)
-        const channels_result = await db_pool.query('SELECT id FROM luxaris.channels WHERE key = $1', ['x']);
+        const channels_result = await db_pool.query('SELECT id FROM channels WHERE key = $1', ['x']);
         x_channel_id = channels_result.rows[0].id;
 
         // Create channel connection directly in database (bypass OAuth flow)
         const connection_result = await db_pool.query(
-            `INSERT INTO luxaris.channel_connections 
+            `INSERT INTO channel_connections 
 			(channel_id, owner_principal_id, status, auth_state, display_name) 
 			VALUES ($1, $2, $3, $4, $5) 
 			RETURNING id`,
@@ -200,11 +200,11 @@ describe('Schedules API', () => {
 
     afterAll(async () => {
         // Cleanup test data
-        await db_pool.query('DELETE FROM luxaris.schedules WHERE channel_connection_id = $1', [channel_connection_id]);
-        await db_pool.query('DELETE FROM luxaris.post_variants WHERE post_id = $1', [post_id]);
-        await db_pool.query('DELETE FROM luxaris.posts WHERE id = $1', [post_id]);
-        await db_pool.query('DELETE FROM luxaris.channel_connections WHERE id = $1', [channel_connection_id]);
-        await db_pool.query('DELETE FROM luxaris.users WHERE email = $1', ['root@test.com']);
+        await db_pool.query('DELETE FROM schedules WHERE channel_connection_id = $1', [channel_connection_id]);
+        await db_pool.query('DELETE FROM post_variants WHERE post_id = $1', [post_id]);
+        await db_pool.query('DELETE FROM posts WHERE id = $1', [post_id]);
+        await db_pool.query('DELETE FROM channel_connections WHERE id = $1', [channel_connection_id]);
+        await db_pool.query('DELETE FROM users WHERE email = $1', ['root@test.com']);
         await db_pool.end();
     });
 

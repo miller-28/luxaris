@@ -13,7 +13,7 @@ class ChannelConnectionRepository {
         const now = new Date().toISOString();
 
         const query = `
-      INSERT INTO luxaris.channel_connections (
+      INSERT INTO channel_connections (
         owner_principal_id, channel_id, display_name,
         status, auth_state, created_at, updated_at
       ) VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -44,9 +44,9 @@ class ChannelConnectionRepository {
         cc.display_name, cc.status, cc.auth_state,
         cc.created_at, cc.updated_at, cc.last_used_at, cc.disconnected_at,
         c.key as channel_key, c.name as channel_name, c.limits as channel_limits
-      FROM luxaris.channel_connections cc
-      JOIN luxaris.channels c ON cc.channel_id = c.id
-      WHERE cc.id = $1
+      FROM channel_connections cc
+      JOIN channels c ON cc.channel_id = c.id
+      WHERE cc.id = $1 AND cc.is_deleted = false
     `;
 
         const result = await connection_manager.get_db_pool().query(query, [connection_id]);
@@ -63,9 +63,9 @@ class ChannelConnectionRepository {
         cc.display_name, cc.status, cc.auth_state,
         cc.created_at, cc.updated_at, cc.last_used_at, cc.disconnected_at,
         c.key as channel_key, c.name as channel_name, c.limits as channel_limits
-      FROM luxaris.channel_connections cc
-      JOIN luxaris.channels c ON cc.channel_id = c.id
-      WHERE cc.owner_principal_id = $1
+      FROM channel_connections cc
+      JOIN channels c ON cc.channel_id = c.id
+      WHERE cc.owner_principal_id = $1 AND cc.is_deleted = false
     `;
 
         const params = [owner_principal_id];
@@ -104,7 +104,7 @@ class ChannelConnectionRepository {
         // Get total count for pagination
         let count_query = `
       SELECT COUNT(*) as total
-      FROM luxaris.channel_connections cc
+      FROM channel_connections cc
       WHERE cc.owner_principal_id = $1
     `;
 
@@ -146,7 +146,7 @@ class ChannelConnectionRepository {
    */
     async update_status(connection_id, status) {
         const query = `
-      UPDATE luxaris.channel_connections
+      UPDATE channel_connections
       SET 
         status = $1,
         updated_at = CURRENT_TIMESTAMP,
@@ -164,7 +164,7 @@ class ChannelConnectionRepository {
    */
     async update_auth_state(connection_id, auth_state) {
         const query = `
-      UPDATE luxaris.channel_connections
+      UPDATE channel_connections
       SET 
         auth_state = $1,
         updated_at = CURRENT_TIMESTAMP
@@ -181,7 +181,7 @@ class ChannelConnectionRepository {
    */
     async mark_used(connection_id) {
         const query = `
-      UPDATE luxaris.channel_connections
+      UPDATE channel_connections
       SET last_used_at = CURRENT_TIMESTAMP
       WHERE id = $1
     `;
@@ -194,7 +194,7 @@ class ChannelConnectionRepository {
    */
     async disconnect(connection_id) {
         const query = `
-      UPDATE luxaris.channel_connections
+      UPDATE channel_connections
       SET 
         status = 'disconnected',
         auth_state = '{}',
@@ -214,7 +214,7 @@ class ChannelConnectionRepository {
     async is_owned_by(connection_id, principal_id) {
         const query = `
       SELECT 1 
-      FROM luxaris.channel_connections
+      FROM channel_connections
       WHERE id = $1 AND owner_principal_id = $2
     `;
 
@@ -228,7 +228,7 @@ class ChannelConnectionRepository {
     async has_connection_to_channel(principal_id, channel_id) {
         const query = `
       SELECT id
-      FROM luxaris.channel_connections
+      FROM channel_connections
       WHERE owner_principal_id = $1 
         AND channel_id = $2 
         AND status = 'connected'

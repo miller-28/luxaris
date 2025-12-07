@@ -39,7 +39,7 @@ class PostVariantRepository {
 	 * Find variant by ID
 	 */
     async find_by_id(variant_id) {
-        const query = 'SELECT * FROM post_variants WHERE id = $1';
+        const query = 'SELECT * FROM post_variants WHERE id = $1 AND is_deleted = false';
         const result = await connection_manager.get_db_pool().query(query, [variant_id]);
 		
         if (result.rows.length === 0) {
@@ -55,7 +55,7 @@ class PostVariantRepository {
     async list_by_post(post_id) {
         const query = `
 			SELECT * FROM post_variants 
-			WHERE post_id = $1
+			WHERE post_id = $1 AND is_deleted = false
 			ORDER BY created_at DESC
 		`;
 
@@ -70,7 +70,7 @@ class PostVariantRepository {
         let query = `
 			SELECT pv.* FROM post_variants pv
 			JOIN posts p ON pv.post_id = p.id
-			WHERE p.owner_principal_id = $1
+			WHERE p.owner_principal_id = $1 AND pv.is_deleted = false AND p.is_deleted = false
 		`;
         const params = [owner_principal_id];
         let param_index = 2;
@@ -217,12 +217,12 @@ class PostVariantRepository {
     }
 
     /**
-	 * Delete variant
+	 * Delete variant (soft delete)
 	 */
     async delete(variant_id) {
-        const query = 'DELETE FROM post_variants WHERE id = $1';
-        await connection_manager.get_db_pool().query(query, [variant_id]);
-        return true;
+        const query = 'UPDATE post_variants SET is_deleted = true, deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND is_deleted = false RETURNING *';
+        const result = await connection_manager.get_db_pool().query(query, [variant_id]);
+        return result.rowCount > 0;
     }
 
     /**

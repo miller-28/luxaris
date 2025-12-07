@@ -1,6 +1,6 @@
 const TestServer = require('../helpers/test-server');
 const request = require('supertest');
-const { create_database_pool } = require('../../src/config/database');
+const { create_database_pool } = require('../../src/connections/database');
 const { User } = require('../../src/contexts/system/domain/models/user');
 const RoleRepository = require('../../src/contexts/system/infrastructure/persistence/role_repository');
 const PermissionRepository = require('../../src/contexts/system/infrastructure/persistence/permission_repository');

@@ -1,6 +1,6 @@
 const TestServer = require('../helpers/test-server');
 const request = require('supertest');
-const { create_database_pool } = require('../../src/config/database');
+const { create_database_pool } = require('../../src/connections/database');
 
 describe('Operations & System Management', () => {
     let test_server;

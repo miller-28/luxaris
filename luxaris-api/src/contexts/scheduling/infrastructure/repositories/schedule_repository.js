@@ -29,7 +29,7 @@ class ScheduleRepository {
    */
     async find_by_id(schedule_id) {
         const result = await connection_manager.get_db_pool().query(
-            'SELECT * FROM schedules WHERE id = $1',
+            'SELECT * FROM schedules WHERE id = $1 AND is_deleted = false',
             [schedule_id]
         );
         return result.rows[0] ? new Schedule(result.rows[0]) : null;
@@ -42,7 +42,7 @@ class ScheduleRepository {
     async find_by_id_for_update(schedule_id, transaction = null) {
         const client = transaction || this.db;
         const result = await client.query(
-            'SELECT * FROM schedules WHERE id = $1 FOR UPDATE',
+            'SELECT * FROM schedules WHERE id = $1 AND is_deleted = false FOR UPDATE',
             [schedule_id]
         );
         return result.rows[0] ? new Schedule(result.rows[0]) : null;
@@ -52,7 +52,7 @@ class ScheduleRepository {
    * List schedules with filters and pagination
    */
     async list(filters = {}, pagination = {}) {
-        const conditions = [];
+        const conditions = ['is_deleted = false'];
         const params = [];
         let param_count = 0;
 
@@ -99,10 +99,10 @@ class ScheduleRepository {
     }
 
     /**
-   * Count schedules matching filters
+   * Count schedules with filters
    */
     async count(filters = {}) {
-        const conditions = [];
+        const conditions = ['is_deleted = false'];
         const params = [];
         let param_count = 0;
 
@@ -141,13 +141,13 @@ class ScheduleRepository {
     }
 
     /**
-   * Find due schedules for scanner
+   * Find schedules that are due for execution
    * Returns schedules that are pending and past their run_at time
    */
     async find_due_schedules(current_time, limit = 100) {
         const result = await connection_manager.get_db_pool().query(
             `SELECT * FROM schedules
-       WHERE status = 'pending' AND run_at <= $1
+       WHERE status = 'pending' AND run_at <= $1 AND is_deleted = false
        ORDER BY run_at ASC
        LIMIT $2`,
             [current_time, limit]
@@ -230,10 +230,14 @@ class ScheduleRepository {
     }
 
     /**
-   * Delete schedule
+   * Delete schedule (soft delete)
    */
     async delete(schedule_id) {
-        await connection_manager.get_db_pool().query('DELETE FROM schedules WHERE id = $1', [schedule_id]);
+        const result = await connection_manager.get_db_pool().query(
+            'UPDATE schedules SET is_deleted = true, deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND is_deleted = false RETURNING id',
+            [schedule_id]
+        );
+        return result.rowCount > 0;
     }
 
     /**
@@ -241,7 +245,7 @@ class ScheduleRepository {
    */
     async get_post_variant_id(schedule_id) {
         const result = await connection_manager.get_db_pool().query(
-            'SELECT post_variant_id FROM schedules WHERE id = $1',
+            'SELECT post_variant_id FROM schedules WHERE id = $1 AND is_deleted = false',
             [schedule_id]
         );
         return result.rows[0] ? result.rows[0].post_variant_id : null;

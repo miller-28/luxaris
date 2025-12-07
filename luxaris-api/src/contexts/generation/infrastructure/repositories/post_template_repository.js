@@ -31,7 +31,7 @@ class PostTemplateRepository {
    * Find template by ID
    */
     async find_by_id(template_id) {
-        const query = 'SELECT * FROM post_templates WHERE id = $1';
+        const query = 'SELECT * FROM post_templates WHERE id = $1 AND is_deleted = false';
         const result = await connection_manager.get_db_pool().query(query, [template_id]);
         return result.rows[0] || null;
     }
@@ -40,7 +40,7 @@ class PostTemplateRepository {
    * List templates by owner with optional filters
    */
     async list_by_owner(owner_principal_id, filters = {}) {
-        let query = 'SELECT * FROM post_templates WHERE owner_principal_id = $1';
+        let query = 'SELECT * FROM post_templates WHERE owner_principal_id = $1 AND is_deleted = false';
         const values = [owner_principal_id];
         let param_count = 1;
 
@@ -163,10 +163,10 @@ class PostTemplateRepository {
     }
 
     /**
-   * Delete template
+   * Delete template (soft delete)
    */
     async delete(template_id) {
-        const query = 'DELETE FROM post_templates WHERE id = $1 RETURNING id';
+        const query = 'UPDATE post_templates SET is_deleted = true, deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND is_deleted = false RETURNING id';
         const result = await connection_manager.get_db_pool().query(query, [template_id]);
         return result.rowCount > 0;
     }

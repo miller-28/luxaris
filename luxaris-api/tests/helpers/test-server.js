@@ -15,13 +15,15 @@ const AuthService = require('../../src/contexts/system/application/services/auth
 const FeatureFlagService = require('../../src/contexts/system/application/services/feature-flag-service');
 const HealthCheckService = require('../../src/contexts/system/application/services/health-check-service');
 const PresetService = require('../../src/contexts/system/application/services/preset-service');
+const UserService = require('../../src/contexts/system/application/services/user-service');
 const RegisterUserUseCase = require('../../src/contexts/system/application/use_cases/register-user');
 const LoginUserUseCase = require('../../src/contexts/system/application/use_cases/login-user');
 const RefreshTokenUseCase = require('../../src/contexts/system/application/use_cases/refresh-token');
 const AuthHandler = require('../../src/contexts/system/interface/http/handlers/auth-handler');
 const OpsHandler = require('../../src/contexts/system/interface/http/handlers/ops-handler');
 const PresetHandler = require('../../src/contexts/system/interface/http/handlers/preset-handler');
-const { create_auth_routes, create_preset_routes } = require('../../src/contexts/system/interface/http/routes');
+const UserHandler = require('../../src/contexts/system/interface/http/handlers/user-handler');
+const { create_auth_routes, create_preset_routes, create_user_routes } = require('../../src/contexts/system/interface/http/routes');
 const create_ops_routes = require('../../src/contexts/system/interface/http/ops-routes');
 const { initialize_posts_domain } = require('../../src/contexts/posts');
 const { initialize_channels_domain } = require('../../src/contexts/channels');
@@ -78,6 +80,7 @@ class TestServer {
         const feature_flag_service = new FeatureFlagService(feature_flag_repository, connection_manager.get_cache_client());
         const health_check_service = new HealthCheckService(connection_manager.get_db_pool(), connection_manager.get_cache_client(), null);
         const preset_service = new PresetService(preset_repository, event_registry, system_logger);
+        const user_service = new UserService(user_repository);
         const GoogleOAuthService = require('../../src/contexts/system/application/services/google-oauth-service');
         const google_oauth_service = new GoogleOAuthService(auth_config, cache_service, system_logger);
 		
@@ -95,6 +98,7 @@ class TestServer {
         );
         const ops_handler = new OpsHandler(health_check_service, feature_flag_service);
         const preset_handler = new PresetHandler(preset_service);
+        const user_handler = new UserHandler(user_service);
 
         // Create authentication middleware
         const auth_middleware = (req, res, next) => {
@@ -144,10 +148,12 @@ class TestServer {
         const auth_routes = create_auth_routes(auth_handler);
         const ops_routes = create_ops_routes(ops_handler);
         const preset_routes = create_preset_routes(preset_handler, auth_middleware);
+        const user_routes = create_user_routes(user_handler, auth_middleware);
 		
         this.server.register_routes(`/api/${merged_config.api_version}/auth`, auth_routes);
         this.server.register_routes(`/api/${merged_config.api_version}/ops`, ops_routes);
         this.server.register_routes(`/api/${merged_config.api_version}/system`, preset_routes);
+        this.server.register_routes(`/api/${merged_config.api_version}/system`, user_routes);
 
         // Initialize domains for testing
         const channels_domain = initialize_channels_domain({

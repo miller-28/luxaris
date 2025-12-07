@@ -1,5 +1,19 @@
 const { z } = require('zod');
 
+// Common timezone identifiers (IANA timezone database)
+const VALID_TIMEZONES = [
+    'UTC', 'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles',
+    'America/Toronto', 'America/Vancouver', 'America/Mexico_City', 'America/Sao_Paulo',
+    'Europe/London', 'Europe/Paris', 'Europe/Berlin', 'Europe/Rome', 'Europe/Madrid',
+    'Europe/Amsterdam', 'Europe/Brussels', 'Europe/Vienna', 'Europe/Stockholm', 'Europe/Copenhagen',
+    'Europe/Oslo', 'Europe/Helsinki', 'Europe/Warsaw', 'Europe/Prague', 'Europe/Budapest',
+    'Europe/Bucharest', 'Europe/Athens', 'Europe/Istanbul', 'Europe/Moscow',
+    'Asia/Tokyo', 'Asia/Seoul', 'Asia/Shanghai', 'Asia/Hong_Kong', 'Asia/Singapore',
+    'Asia/Bangkok', 'Asia/Dubai', 'Asia/Kolkata', 'Asia/Jakarta', 'Asia/Manila',
+    'Australia/Sydney', 'Australia/Melbourne', 'Australia/Brisbane', 'Australia/Perth',
+    'Pacific/Auckland', 'Pacific/Fiji', 'Pacific/Honolulu'
+];
+
 // User status enum
 const UserStatus = {
     ACTIVE: 'active',
@@ -37,7 +51,10 @@ const UserLoginSchema = z.object({
 
 const UserUpdateSchema = z.object({
     name: z.string().min(1).max(255).optional(),
-    timezone: z.string().optional(),
+    timezone: z.string().refine(
+        (tz) => VALID_TIMEZONES.includes(tz),
+        { message: 'Invalid timezone identifier' }
+    ).optional(),
     locale: z.string().optional(),
     avatar_url: z.string().url().optional().nullable()
 });

@@ -28,7 +28,7 @@ class UserRepository {
     }
 
     async find_by_id(user_id) {
-        const query = 'SELECT * FROM users WHERE id = $1';
+        const query = 'SELECT * FROM users WHERE id = $1 AND is_deleted = false';
         const result = await connection_manager.get_db_pool().query(query, [user_id]);
 
         if (result.rows.length === 0) {
@@ -39,7 +39,7 @@ class UserRepository {
     }
 
     async find_by_email(email) {
-        const query = 'SELECT * FROM users WHERE email = $1';
+        const query = 'SELECT * FROM users WHERE email = $1 AND is_deleted = false';
         const result = await connection_manager.get_db_pool().query(query, [email.toLowerCase()]);
 
         if (result.rows.length === 0) {
@@ -50,13 +50,13 @@ class UserRepository {
     }
 
     async email_exists(email) {
-        const query = 'SELECT COUNT(*) as count FROM users WHERE email = $1';
+        const query = 'SELECT COUNT(*) as count FROM users WHERE email = $1 AND is_deleted = false';
         const result = await connection_manager.get_db_pool().query(query, [email.toLowerCase()]);
         return parseInt(result.rows[0].count) > 0;
     }
 
     async count_users() {
-        const query = 'SELECT COUNT(*) as count FROM users';
+        const query = 'SELECT COUNT(*) as count FROM users WHERE is_deleted = false';
         const result = await connection_manager.get_db_pool().query(query);
         return parseInt(result.rows[0].count);
     }
@@ -133,12 +133,13 @@ class UserRepository {
     }
 
     async delete(user_id) {
-        const query = 'DELETE FROM users WHERE id = $1';
-        await connection_manager.get_db_pool().query(query, [user_id]);
+        const query = 'UPDATE users SET is_deleted = true, deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND is_deleted = false RETURNING *';
+        const result = await connection_manager.get_db_pool().query(query, [user_id]);
+        return result.rows.length > 0;
     }
 
     async find_all(filters = {}) {
-        let query = 'SELECT * FROM users WHERE 1=1';
+        let query = 'SELECT * FROM users WHERE is_deleted = false';
         const values = [];
         let param_count = 1;
 

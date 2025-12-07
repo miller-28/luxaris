@@ -1,5 +1,5 @@
 const request = require('supertest');
-const { create_database_pool } = require('../../../src/config/database');
+const { create_database_pool } = require('../../../src/connections/database');
 const Server = require('../../../src/core/http/server');
 const { get_app_config } = require('../../../src/config/app');
 const { get_auth_config } = require('../../../src/config/auth');
@@ -117,17 +117,17 @@ describe('Channels Integration Tests', () => {
         normal_user_id = normal_user.id;
 
         // Get channel IDs
-        const channels_result = await db_pool.query('SELECT id, key FROM luxaris.channels');
+        const channels_result = await db_pool.query('SELECT id, key FROM channels');
         x_channel_id = channels_result.rows.find(c => c.key === 'x').id;
         linkedin_channel_id = channels_result.rows.find(c => c.key === 'linkedin').id;
     });
 
     afterAll(async () => {
         // Clean up test data
-        await db_pool.query('DELETE FROM luxaris.channel_connections WHERE owner_principal_id = $1', [root_user_id]);
-        await db_pool.query('DELETE FROM luxaris.channel_connections WHERE owner_principal_id = $1', [normal_user_id]);
-        await db_pool.query('DELETE FROM luxaris.users WHERE email = $1', ['root@test.com']);
-        await db_pool.query('DELETE FROM luxaris.users WHERE email = $1', ['normal@test.com']);
+        await db_pool.query('DELETE FROM channel_connections WHERE owner_principal_id = $1', [root_user_id]);
+        await db_pool.query('DELETE FROM channel_connections WHERE owner_principal_id = $1', [normal_user_id]);
+        await db_pool.query('DELETE FROM users WHERE email = $1', ['root@test.com']);
+        await db_pool.query('DELETE FROM users WHERE email = $1', ['normal@test.com']);
         await db_pool.end();
     });
 

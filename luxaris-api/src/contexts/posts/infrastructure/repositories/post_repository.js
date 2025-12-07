@@ -35,7 +35,7 @@ class PostRepository {
 	 * Find post by ID
 	 */
     async find_by_id(post_id) {
-        const query = 'SELECT * FROM posts WHERE id = $1';
+        const query = 'SELECT * FROM posts WHERE id = $1 AND is_deleted = false';
         const result = await connection_manager.get_db_pool().query(query, [post_id]);
 		
         if (result.rows.length === 0) {
@@ -49,7 +49,7 @@ class PostRepository {
 	 * List posts by owner with filters and pagination
 	 */
     async list_by_owner(owner_principal_id, filters = {}) {
-        let query = 'SELECT * FROM posts WHERE owner_principal_id = $1';
+        let query = 'SELECT * FROM posts WHERE owner_principal_id = $1 AND is_deleted = false';
         const params = [owner_principal_id];
         let param_index = 2;
 
@@ -84,7 +84,7 @@ class PostRepository {
 	 * Count posts by owner with filters
 	 */
     async count_by_owner(owner_principal_id, filters = {}) {
-        let query = 'SELECT COUNT(*) FROM posts WHERE owner_principal_id = $1';
+        let query = 'SELECT COUNT(*) FROM posts WHERE owner_principal_id = $1 AND is_deleted = false';
         const params = [owner_principal_id];
         let param_index = 2;
 
@@ -185,12 +185,12 @@ class PostRepository {
     }
 
     /**
-	 * Delete post
+	 * Delete post (soft delete)
 	 */
     async delete(post_id) {
-        const query = 'DELETE FROM posts WHERE id = $1';
-        await connection_manager.get_db_pool().query(query, [post_id]);
-        return true;
+        const query = 'UPDATE posts SET is_deleted = true, deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND is_deleted = false RETURNING *';
+        const result = await connection_manager.get_db_pool().query(query, [post_id]);
+        return result.rowCount > 0;
     }
 
     /**

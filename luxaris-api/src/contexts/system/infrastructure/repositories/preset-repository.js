@@ -20,7 +20,7 @@ class PresetRepository {
                 created_at,
                 updated_at
             FROM user_ui_stateful_presets
-            WHERE user_id = $1
+            WHERE user_id = $1 AND is_deleted = false
             LIMIT 1
         `;
         
@@ -46,7 +46,7 @@ class PresetRepository {
                 created_at,
                 updated_at
             FROM user_ui_stateful_presets
-            WHERE role_id = $1 AND is_default = true
+            WHERE role_id = $1 AND is_default = true AND is_deleted = false
             LIMIT 1
         `;
         
@@ -71,7 +71,7 @@ class PresetRepository {
                 created_at,
                 updated_at
             FROM user_ui_stateful_presets
-            WHERE is_global = true
+            WHERE is_global = true AND is_deleted = false
             LIMIT 1
         `;
         
@@ -97,7 +97,7 @@ class PresetRepository {
                 created_at,
                 updated_at
             FROM user_ui_stateful_presets
-            WHERE id = $1
+            WHERE id = $1 AND is_deleted = false
         `;
         
         const result = await connection_manager.get_db_pool().query(query, [preset_id]);
@@ -253,14 +253,15 @@ class PresetRepository {
     }
 
     /**
-     * Delete preset
+     * Delete preset (soft delete)
      * @param {string} preset_id - Preset UUID
      * @returns {boolean} Success
      */
     async delete(preset_id) {
         const query = `
-            DELETE FROM user_ui_stateful_presets
-            WHERE id = $1 AND user_id IS NOT NULL
+            UPDATE user_ui_stateful_presets
+            SET is_deleted = true, deleted_at = NOW(), updated_at = NOW()
+            WHERE id = $1 AND is_deleted = false
         `;
 
         const result = await connection_manager.get_db_pool().query(query, [preset_id]);
@@ -276,7 +277,7 @@ class PresetRepository {
         const query = `
             SELECT EXISTS(
                 SELECT 1 FROM user_ui_stateful_presets
-                WHERE user_id = $1
+                WHERE user_id = $1 AND is_deleted = false
             ) as exists
         `;
 

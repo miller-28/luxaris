@@ -159,7 +159,11 @@ class PresetService {
             user_id
         );
 
-        return new_preset;
+        // Return with source field for API consistency
+        return {
+            ...new_preset,
+            source: 'user'
+        };
     }
 
     /**
@@ -299,16 +303,17 @@ class PresetService {
      * Delete user preset (revert to role/global)
      * @param {string} preset_id - Preset UUID
      * @param {string} user_id - User making deletion
+     * @param {boolean} is_admin - Whether user is admin (can delete role/global presets)
      * @returns {boolean} Success
      */
-    async delete_preset(preset_id, user_id) {
+    async delete_preset(preset_id, user_id, is_admin = false) {
         // Get preset to validate it's a user preset
         const preset = await this.preset_repository.find_by_id(preset_id);
         if (!preset) {
             throw new Error('Preset not found');
         }
 
-        if (preset.user_id === null) {
+        if (preset.user_id === null && !is_admin) {
             throw new Error('Cannot delete role or global preset');
         }
 

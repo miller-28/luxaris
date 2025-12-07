@@ -1,5 +1,5 @@
 const request = require('supertest');
-const { create_database_pool } = require('../../../src/config/database');
+const { create_database_pool } = require('../../../src/connections/database');
 const Server = require('../../../src/core/http/server');
 const { get_app_config } = require('../../../src/config/app');
 const { get_auth_config } = require('../../../src/config/auth');

@@ -65,7 +65,7 @@ class GenerationSuggestionRepository {
    * Find suggestion by ID
    */
     async find_by_id(suggestion_id) {
-        const query = 'SELECT * FROM generation_suggestions WHERE id = $1';
+        const query = 'SELECT * FROM generation_suggestions WHERE id = $1 AND is_deleted = false';
         const result = await connection_manager.get_db_pool().query(query, [suggestion_id]);
         return result.rows[0] || null;
     }
@@ -74,7 +74,7 @@ class GenerationSuggestionRepository {
    * List suggestions by session
    */
     async list_by_session(session_id, filters = {}) {
-        let query = 'SELECT * FROM generation_suggestions WHERE generation_session_id = $1';
+        let query = 'SELECT * FROM generation_suggestions WHERE generation_session_id = $1 AND is_deleted = false';
         const values = [session_id];
         let param_count = 1;
 
@@ -129,19 +129,19 @@ class GenerationSuggestionRepository {
     }
 
     /**
-   * Delete suggestion
+   * Delete suggestion (soft delete)
    */
     async delete(suggestion_id) {
-        const query = 'DELETE FROM generation_suggestions WHERE id = $1 RETURNING id';
+        const query = 'UPDATE generation_suggestions SET is_deleted = true, deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND is_deleted = false RETURNING id';
         const result = await connection_manager.get_db_pool().query(query, [suggestion_id]);
         return result.rowCount > 0;
     }
 
     /**
-   * Delete all suggestions for a session
+   * Delete all suggestions for a session (soft delete)
    */
     async delete_by_session(session_id) {
-        const query = 'DELETE FROM generation_suggestions WHERE generation_session_id = $1';
+        const query = 'UPDATE generation_suggestions SET is_deleted = true, deleted_at = NOW(), updated_at = NOW() WHERE generation_session_id = $1 AND is_deleted = false';
         const result = await connection_manager.get_db_pool().query(query, [session_id]);
         return result.rowCount;
     }

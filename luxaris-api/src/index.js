@@ -22,13 +22,15 @@ const FeatureFlagService = require('./contexts/system/application/services/featu
 const HealthCheckService = require('./contexts/system/application/services/health-check-service');
 const GoogleOAuthService = require('./contexts/system/application/services/google-oauth-service');
 const PresetService = require('./contexts/system/application/services/preset-service');
+const UserService = require('./contexts/system/application/services/user-service');
 const RegisterUserUseCase = require('./contexts/system/application/use_cases/register-user');
 const LoginUserUseCase = require('./contexts/system/application/use_cases/login-user');
 const RefreshTokenUseCase = require('./contexts/system/application/use_cases/refresh-token');
 const AuthHandler = require('./contexts/system/interface/http/handlers/auth-handler');
 const OpsHandler = require('./contexts/system/interface/http/handlers/ops-handler');
 const PresetHandler = require('./contexts/system/interface/http/handlers/preset-handler');
-const { create_auth_routes, create_preset_routes } = require('./contexts/system/interface/http/routes');
+const UserHandler = require('./contexts/system/interface/http/handlers/user-handler');
+const { create_auth_routes, create_preset_routes, create_user_routes } = require('./contexts/system/interface/http/routes');
 const create_ops_routes = require('./contexts/system/interface/http/ops-routes');
 const { initialize_channels_domain } = require('./contexts/channels');
 const { initialize_posts_domain } = require('./contexts/posts');
@@ -151,6 +153,7 @@ async function bootstrap() {
         const health_check_service = new HealthCheckService(connection_manager.get_db_pool(), connection_manager.get_cache_client(), connection_manager.get_queue_connection());
         const google_oauth_service = new GoogleOAuthService(auth_config, cache_service, system_logger);
         const preset_service = new PresetService(preset_repository, event_registry, system_logger);
+        const user_service = new UserService(user_repository);
     
         const register_user_use_case = new RegisterUserUseCase(auth_service);
         const login_user_use_case = new LoginUserUseCase(auth_service);
@@ -166,6 +169,7 @@ async function bootstrap() {
         );
         const ops_handler = new OpsHandler(health_check_service, feature_flag_service);
         const preset_handler = new PresetHandler(preset_service);
+        const user_handler = new UserHandler(user_service);
 
         // Initialize domains in correct order (respecting dependencies)
 		
@@ -248,10 +252,12 @@ async function bootstrap() {
         const auth_routes = create_auth_routes(auth_handler);
         const ops_routes = create_ops_routes(ops_handler);
         const preset_routes = create_preset_routes(preset_handler, auth_middleware);
+        const user_routes = create_user_routes(user_handler, auth_middleware);
     
         server.register_routes(`/api/${app_config.api_version}/auth`, auth_routes);
         server.register_routes(`/api/${app_config.api_version}/ops`, ops_routes);
         server.register_routes(`/api/${app_config.api_version}/system`, preset_routes);
+        server.register_routes(`/api/${app_config.api_version}/system`, user_routes);
 
         // Register channels domain routes
         const channel_routes = channels_domain.create_channel_routes({

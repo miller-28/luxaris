@@ -1,6 +1,6 @@
 const TestServer = require('../helpers/test-server');
 const request = require('supertest');
-const { create_database_pool } = require('../../src/config/database');
+const { create_database_pool } = require('../../src/connections/database');
 const { get_logger } = require('../../src/core/logging/system_logger');
 const EventRegistry = require('../../src/core/events/event-registry');
 const { get_request_logger } = require('../../src/core/http/middleware/request_logger');

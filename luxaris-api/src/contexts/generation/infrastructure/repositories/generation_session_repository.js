@@ -29,7 +29,7 @@ class GenerationSessionRepository {
    * Find session by ID
    */
     async find_by_id(session_id) {
-        const query = 'SELECT * FROM generation_sessions WHERE id = $1';
+        const query = 'SELECT * FROM generation_sessions WHERE id = $1 AND is_deleted = false';
         const result = await connection_manager.get_db_pool().query(query, [session_id]);
         return result.rows[0] || null;
     }
@@ -38,7 +38,7 @@ class GenerationSessionRepository {
    * List sessions by owner with optional filters
    */
     async list_by_owner(owner_principal_id, filters = {}) {
-        let query = 'SELECT * FROM generation_sessions WHERE owner_principal_id = $1';
+        let query = 'SELECT * FROM generation_sessions WHERE owner_principal_id = $1 AND is_deleted = false';
         const values = [owner_principal_id];
         let param_count = 1;
 
@@ -138,10 +138,10 @@ class GenerationSessionRepository {
     }
 
     /**
-   * Delete session (cascade will delete suggestions)
+   * Delete session (soft delete - cascade will soft delete suggestions via trigger or app logic)
    */
     async delete(session_id) {
-        const query = 'DELETE FROM generation_sessions WHERE id = $1 RETURNING id';
+        const query = 'UPDATE generation_sessions SET is_deleted = true, deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND is_deleted = false RETURNING id';
         const result = await connection_manager.get_db_pool().query(query, [session_id]);
         return result.rowCount > 0;
     }

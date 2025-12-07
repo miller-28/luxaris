@@ -1,11 +1,9 @@
-class FeatureFlagRepository {
-    constructor(db_pool) {
-        this.db_pool = db_pool;
-    }
+const connection_manager = require('../../../../core/infrastructure/connection-manager');
 
+class FeatureFlagRepository {
     async get_by_key(key) {
         const query = 'SELECT * FROM feature_flags WHERE key = $1';
-        const result = await this.db_pool.query(query, [key]);
+        const result = await connection_manager.get_db_pool().query(query, [key]);
         return result.rows[0] || null;
     }
 
@@ -21,7 +19,7 @@ class FeatureFlagRepository {
 
         query += ' ORDER BY key ASC';
 
-        const result = await this.db_pool.query(query, values);
+        const result = await connection_manager.get_db_pool().query(query, values);
         return result.rows;
     }
 
@@ -39,7 +37,7 @@ class FeatureFlagRepository {
             flag_data.is_enabled !== undefined ? flag_data.is_enabled : true
         ];
 
-        const result = await this.db_pool.query(query, values);
+        const result = await connection_manager.get_db_pool().query(query, values);
         return result.rows[0];
     }
 
@@ -81,13 +79,13 @@ class FeatureFlagRepository {
 
     async delete(key) {
         const query = 'DELETE FROM feature_flags WHERE key = $1 RETURNING *';
-        const result = await this.db_pool.query(query, [key]);
+        const result = await connection_manager.get_db_pool().query(query, [key]);
         return result.rows[0] || null;
     }
 
     async exists(key) {
         const query = 'SELECT EXISTS(SELECT 1 FROM feature_flags WHERE key = $1) as exists';
-        const result = await this.db_pool.query(query, [key]);
+        const result = await connection_manager.get_db_pool().query(query, [key]);
         return result.rows[0].exists;
     }
 }

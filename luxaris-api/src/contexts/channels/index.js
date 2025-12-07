@@ -27,8 +27,8 @@ function initialize_channels_domain(dependencies) {
     } = dependencies;
 
     // Initialize repositories
-    const channel_repository = new ChannelRepository(db_pool);
-    const channel_connection_repository = new ChannelConnectionRepository(db_pool);
+    const channel_repository = new ChannelRepository();
+    const channel_connection_repository = new ChannelConnectionRepository();
 
     // Initialize services
     const channel_service = new ChannelService(

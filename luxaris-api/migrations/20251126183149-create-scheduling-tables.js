@@ -15,151 +15,69 @@ exports.setup = function(options, seedLink) {
 };
 
 exports.up = async function(db) {
+	
+	const schema = process.env.DB_SCHEMA || 'luxaris';
+	
     // Create schedules table - instructions to publish variants at specific times
-    await db.createTable('schedules', {
-        id: { 
-            type: 'uuid', 
-            primaryKey: true, 
-            defaultValue: new String('gen_random_uuid()') 
-        },
-        post_variant_id: { 
-            type: 'uuid', 
-            notNull: true 
-        },
-        channel_connection_id: { 
-            type: 'uuid', 
-            notNull: true 
-        },
-        run_at: { 
-            type: 'timestamp with time zone', 
-            notNull: true 
-        },
-        timezone: { 
-            type: 'string', 
-            length: 50, 
-            notNull: true 
-        },
-        status: { 
-            type: 'string', 
-            length: 20, 
-            notNull: true, 
-            defaultValue: 'pending' 
-        },
-        attempt_count: { 
-            type: 'int', 
-            notNull: true, 
-            defaultValue: 0 
-        },
-        last_attempt_at: { 
-            type: 'timestamp with time zone', 
-            notNull: false 
-        },
-        error_code: { 
-            type: 'string', 
-            length: 50, 
-            notNull: false 
-        },
-        error_message: { 
-            type: 'text', 
-            notNull: false 
-        },
-        created_at: { 
-            type: 'timestamp with time zone', 
-            notNull: true, 
-            defaultValue: new String('CURRENT_TIMESTAMP') 
-        },
-        updated_at: { 
-            type: 'timestamp with time zone', 
-            notNull: true, 
-            defaultValue: new String('CURRENT_TIMESTAMP') 
-        }
-    });
-
-    // Add foreign key constraints
-    await db.addForeignKey('schedules', 'post_variants', 'schedules_post_variant_id_fkey',
-        { post_variant_id: 'id' },
-        { onDelete: 'SET NULL', onUpdate: 'CASCADE' });
-
-    await db.addForeignKey('schedules', 'channel_connections', 'schedules_channel_connection_id_fkey',
-        { channel_connection_id: 'id' },
-        { onDelete: 'SET NULL', onUpdate: 'CASCADE' });
+    await db.runSql(`
+		CREATE SEQUENCE ${schema}.schedules_id_seq;
+		CREATE TABLE ${schema}.schedules (
+			id INTEGER PRIMARY KEY DEFAULT nextval('${schema}.schedules_id_seq'),
+			post_variant_id INTEGER REFERENCES ${schema}.post_variants(id) ON DELETE SET NULL ON UPDATE CASCADE,
+			channel_connection_id INTEGER REFERENCES ${schema}.channel_connections(id) ON DELETE SET NULL ON UPDATE CASCADE,
+			run_at TIMESTAMP WITH TIME ZONE NOT NULL,
+			timezone VARCHAR(50) NOT NULL,
+			status VARCHAR(20) NOT NULL DEFAULT 'pending',
+			attempt_count INT NOT NULL DEFAULT 0,
+			last_attempt_at TIMESTAMP WITH TIME ZONE,
+			error_code VARCHAR(50),
+			error_message TEXT,
+			created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+		);
+		ALTER SEQUENCE ${schema}.schedules_id_seq OWNED BY ${schema}.schedules.id;
+	`);
 
     // Add indexes for common queries
-    await db.addIndex('schedules', 'idx_schedules_status', ['status']);
-    await db.addIndex('schedules', 'idx_schedules_run_at', ['run_at']);
-    await db.addIndex('schedules', 'idx_schedules_post_variant_id', ['post_variant_id']);
-    await db.addIndex('schedules', 'idx_schedules_channel_connection_id', ['channel_connection_id']);
-    await db.addIndex('schedules', 'idx_schedules_status_run_at', ['status', 'run_at']);
+    await db.runSql(`CREATE INDEX idx_schedules_status ON ${schema}.schedules(status)`);
+    await db.runSql(`CREATE INDEX idx_schedules_run_at ON ${schema}.schedules(run_at)`);
+    await db.runSql(`CREATE INDEX idx_schedules_post_variant_id ON ${schema}.schedules(post_variant_id)`);
+    await db.runSql(`CREATE INDEX idx_schedules_channel_connection_id ON ${schema}.schedules(channel_connection_id)`);
+    await db.runSql(`CREATE INDEX idx_schedules_status_run_at ON ${schema}.schedules(status, run_at)`);
 
     // Create publish_events table - detailed audit trail of publish attempts
-    await db.createTable('publish_events', {
-        id: { 
-            type: 'uuid', 
-            primaryKey: true, 
-            defaultValue: new String('gen_random_uuid()') 
-        },
-        schedule_id: { 
-            type: 'uuid', 
-            notNull: true 
-        },
-        attempt_index: { 
-            type: 'int', 
-            notNull: true 
-        },
-        timestamp: { 
-            type: 'timestamp with time zone', 
-            notNull: true, 
-            defaultValue: new String('CURRENT_TIMESTAMP') 
-        },
-        status: { 
-            type: 'string', 
-            length: 20, 
-            notNull: true 
-        },
-        external_post_id: { 
-            type: 'string', 
-            length: 100, 
-            notNull: false 
-        },
-        external_url: { 
-            type: 'string', 
-            length: 500, 
-            notNull: false 
-        },
-        error_code: { 
-            type: 'string', 
-            length: 50, 
-            notNull: false 
-        },
-        error_message: { 
-            type: 'text', 
-            notNull: false 
-        },
-        raw_response: { 
-            type: 'text', 
-            notNull: false 
-        }
-    });
-
-    // Add foreign key constraint with CASCADE delete (events deleted when schedule is deleted)
-    await db.addForeignKey('publish_events', 'schedules', 'publish_events_schedule_id_fkey',
-        { schedule_id: 'id' },
-        { onDelete: 'CASCADE', onUpdate: 'CASCADE' });
+    await db.runSql(`
+		CREATE SEQUENCE ${schema}.publish_events_id_seq;
+		CREATE TABLE ${schema}.publish_events (
+			id INTEGER PRIMARY KEY DEFAULT nextval('${schema}.publish_events_id_seq'),
+			schedule_id INTEGER NOT NULL REFERENCES ${schema}.schedules(id) ON DELETE CASCADE ON UPDATE CASCADE,
+			attempt_index INT NOT NULL,
+			timestamp TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			status VARCHAR(20) NOT NULL,
+			external_post_id VARCHAR(100),
+			external_url VARCHAR(500),
+			error_code VARCHAR(50),
+			error_message TEXT,
+			raw_response TEXT
+		);
+		ALTER SEQUENCE ${schema}.publish_events_id_seq OWNED BY ${schema}.publish_events.id;
+	`);
 
     // Add indexes
-    await db.addIndex('publish_events', 'idx_publish_events_schedule_id', ['schedule_id']);
-    await db.addIndex('publish_events', 'idx_publish_events_timestamp', ['timestamp']);
-    await db.addIndex('publish_events', 'idx_publish_events_status', ['status']);
-
-    console.log('✓ Created schedules and publish_events tables with indexes and foreign keys');
+    await db.runSql(`CREATE INDEX idx_publish_events_schedule_id ON ${schema}.publish_events(schedule_id)`);
+    await db.runSql(`CREATE INDEX idx_publish_events_timestamp ON ${schema}.publish_events(timestamp)`);
+    await db.runSql(`CREATE INDEX idx_publish_events_status ON ${schema}.publish_events(status)`);
 };
 
 exports.down = async function(db) {
+	
+	const schema = process.env.DB_SCHEMA || 'luxaris';
+	
     // Drop tables in reverse order (children first)
-    await db.dropTable('publish_events');
-    await db.dropTable('schedules');
-  
-    console.log('✓ Dropped schedules and publish_events tables');
+    await db.runSql(`DROP TABLE IF EXISTS ${schema}.publish_events CASCADE`);
+    await db.runSql(`DROP SEQUENCE IF EXISTS ${schema}.publish_events_id_seq CASCADE`);
+    await db.runSql(`DROP TABLE IF EXISTS ${schema}.schedules CASCADE`);
+    await db.runSql(`DROP SEQUENCE IF EXISTS ${schema}.schedules_id_seq CASCADE`);
 };
 
 exports._meta = {

@@ -1,15 +1,12 @@
 const PublishEvent = require('../models/publish_event');
+const connection_manager = require('../../../../core/infrastructure/connection-manager');
 
 class PublishEventRepository {
-    constructor(db_pool) {
-        this.db = db_pool;
-    }
-
-    /**
+/**
    * Create a new publish event
    */
     async create(event_data) {
-        const result = await this.db.query(
+        const result = await connection_manager.get_db_pool().query(
             `INSERT INTO publish_events (
         schedule_id, attempt_index, status, 
         external_post_id, external_url, 
@@ -34,7 +31,7 @@ class PublishEventRepository {
    * Find event by ID
    */
     async find_by_id(event_id) {
-        const result = await this.db.query(
+        const result = await connection_manager.get_db_pool().query(
             'SELECT * FROM publish_events WHERE id = $1',
             [event_id]
         );
@@ -45,7 +42,7 @@ class PublishEventRepository {
    * List events for a schedule
    */
     async list_by_schedule(schedule_id) {
-        const result = await this.db.query(
+        const result = await connection_manager.get_db_pool().query(
             `SELECT * FROM publish_events 
        WHERE schedule_id = $1 
        ORDER BY attempt_index ASC`,
@@ -58,7 +55,7 @@ class PublishEventRepository {
    * Get latest event for a schedule
    */
     async get_latest_by_schedule(schedule_id) {
-        const result = await this.db.query(
+        const result = await connection_manager.get_db_pool().query(
             `SELECT * FROM publish_events 
        WHERE schedule_id = $1 
        ORDER BY attempt_index DESC 
@@ -109,7 +106,7 @@ class PublishEventRepository {
     `;
         params.push(limit, offset);
 
-        const result = await this.db.query(query, params);
+        const result = await connection_manager.get_db_pool().query(query, params);
         return result.rows.map(row => new PublishEvent(row));
     }
 
@@ -143,7 +140,7 @@ class PublishEventRepository {
 
         const where_clause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
-        const result = await this.db.query(
+        const result = await connection_manager.get_db_pool().query(
             `SELECT COUNT(*) as total FROM publish_events ${where_clause}`,
             params
         );
@@ -154,7 +151,7 @@ class PublishEventRepository {
    * Delete events for a schedule (cascade handled by FK, but exposed for manual cleanup)
    */
     async delete_by_schedule(schedule_id) {
-        await this.db.query('DELETE FROM publish_events WHERE schedule_id = $1', [schedule_id]);
+        await connection_manager.get_db_pool().query('DELETE FROM publish_events WHERE schedule_id = $1', [schedule_id]);
     }
 }
 

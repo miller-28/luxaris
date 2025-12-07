@@ -15,151 +15,68 @@ exports.setup = function(options, seedLink) {
 };
 
 exports.up = async function(db) {
+	
+	const schema = process.env.DB_SCHEMA || 'luxaris';
+
     // Create channels table - platform catalog
-    await db.createTable('channels', {
-        id: { 
-            type: 'uuid', 
-            primaryKey: true, 
-            defaultValue: new String('gen_random_uuid()') 
-        },
-        key: { 
-            type: 'string', 
-            length: 50, 
-            notNull: true, 
-            unique: true 
-        },
-        name: { 
-            type: 'string', 
-            length: 100, 
-            notNull: true 
-        },
-        status: { 
-            type: 'string', 
-            length: 20, 
-            notNull: true, 
-            defaultValue: 'active' 
-        },
-        limits: { 
-            type: 'jsonb', 
-            notNull: true, 
-            defaultValue: '{}' 
-        },
-        created_at: { 
-            type: 'timestamp', 
-            notNull: true, 
-            defaultValue: new String('CURRENT_TIMESTAMP') 
-        },
-        updated_at: { 
-            type: 'timestamp', 
-            notNull: true, 
-            defaultValue: new String('CURRENT_TIMESTAMP') 
-        }
-    });
+    await db.runSql(`
+		CREATE SEQUENCE ${schema}.channels_id_seq;
+		CREATE TABLE ${schema}.channels (
+			id INTEGER PRIMARY KEY DEFAULT nextval('${schema}.channels_id_seq'),
+			key VARCHAR(50) NOT NULL UNIQUE,
+			name VARCHAR(100) NOT NULL,
+			status VARCHAR(20) NOT NULL DEFAULT 'active',
+			limits JSONB NOT NULL DEFAULT '{}',
+			created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+		);
+		ALTER SEQUENCE ${schema}.channels_id_seq OWNED BY ${schema}.channels.id;
+	`);
 
     // Create index on key for fast lookups
-    await db.addIndex('channels', 'idx_channels_key', ['key'], true);
+    await db.runSql(`CREATE UNIQUE INDEX idx_channels_key ON ${schema}.channels(key)`);
 
     // Create channel_connections table - user-specific OAuth connections
-    await db.createTable('channel_connections', {
-        id: { 
-            type: 'uuid', 
-            primaryKey: true, 
-            defaultValue: new String('gen_random_uuid()') 
-        },
-        owner_principal_id: { 
-            type: 'uuid', 
-            notNull: true 
-        },
-        channel_id: { 
-            type: 'uuid', 
-            notNull: true,
-            foreignKey: {
-                name: 'channel_connections_channel_id_fk',
-                table: 'channels',
-                rules: {
-                    onDelete: 'RESTRICT',
-                    onUpdate: 'CASCADE'
-                },
-                mapping: 'id'
-            }
-        },
-        display_name: { 
-            type: 'string', 
-            length: 200, 
-            notNull: true 
-        },
-        status: { 
-            type: 'string', 
-            length: 20, 
-            notNull: true, 
-            defaultValue: 'connected' 
-        },
-        auth_state: { 
-            type: 'jsonb', 
-            notNull: true, 
-            defaultValue: '{}' 
-        },
-        created_at: { 
-            type: 'timestamp', 
-            notNull: true, 
-            defaultValue: new String('CURRENT_TIMESTAMP') 
-        },
-        updated_at: { 
-            type: 'timestamp', 
-            notNull: true, 
-            defaultValue: new String('CURRENT_TIMESTAMP') 
-        },
-        last_used_at: { 
-            type: 'timestamp', 
-            notNull: false 
-        },
-        disconnected_at: { 
-            type: 'timestamp', 
-            notNull: false 
-        }
-    });
+    await db.runSql(`
+		CREATE SEQUENCE ${schema}.channel_connections_id_seq;
+		CREATE TABLE ${schema}.channel_connections (
+			id INTEGER PRIMARY KEY DEFAULT nextval('${schema}.channel_connections_id_seq'),
+			owner_principal_id INTEGER NOT NULL,
+			channel_id INTEGER NOT NULL REFERENCES ${schema}.channels(id) ON DELETE RESTRICT ON UPDATE CASCADE,
+			display_name VARCHAR(200) NOT NULL,
+			status VARCHAR(20) NOT NULL DEFAULT 'connected',
+			auth_state JSONB NOT NULL DEFAULT '{}',
+			created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			last_used_at TIMESTAMP,
+			disconnected_at TIMESTAMP
+		);
+		ALTER SEQUENCE ${schema}.channel_connections_id_seq OWNED BY ${schema}.channel_connections.id;
+	`);
 
     // Create indexes for common queries
-    await db.addIndex('channel_connections', 'idx_channel_connections_owner', ['owner_principal_id']);
-    await db.addIndex('channel_connections', 'idx_channel_connections_channel', ['channel_id']);
-    await db.addIndex('channel_connections', 'idx_channel_connections_status', ['status']);
-    await db.addIndex('channel_connections', 'idx_channel_connections_owner_status', ['owner_principal_id', 'status']);
+    await db.runSql(`CREATE INDEX idx_channel_connections_owner ON ${schema}.channel_connections(owner_principal_id)`);
+    await db.runSql(`CREATE INDEX idx_channel_connections_channel ON ${schema}.channel_connections(channel_id)`);
+    await db.runSql(`CREATE INDEX idx_channel_connections_status ON ${schema}.channel_connections(status)`);
+    await db.runSql(`CREATE INDEX idx_channel_connections_owner_status ON ${schema}.channel_connections(owner_principal_id, status)`);
 
-    // Insert initial channel catalog data
-    const xChannelId = '7fc9150d-32f3-48ed-a600-036610ef5642'; // Use same UUID as Owner role for consistency
-    const linkedinChannelId = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
-
-    await db.insert('channels', ['id', 'key', 'name', 'status', 'limits'], [
-        xChannelId,
-        'x',
-        'X (Twitter)',
-        'active',
-        JSON.stringify({
-            max_text_length: 280,
-            supports_images: true,
-            supports_links: true,
-            max_images: 4
-        })
-    ]);
-
-    await db.insert('channels', ['id', 'key', 'name', 'status', 'limits'], [
-        linkedinChannelId,
-        'linkedin',
-        'LinkedIn',
-        'active',
-        JSON.stringify({
-            max_text_length: 3000,
-            supports_images: true,
-            supports_links: true,
-            max_images: 9
-        })
-    ]);
+    // Insert initial channel catalog data (using known integer IDs)
+    await db.runSql(`
+		INSERT INTO ${schema}.channels (id, key, name, status, limits) VALUES
+		(1, 'x', 'X (Twitter)', 'active', '{"max_text_length": 280, "supports_images": true, "supports_links": true, "max_images": 4}'),
+		(2, 'linkedin', 'LinkedIn', 'active', '{"max_text_length": 3000, "supports_images": true, "supports_links": true, "max_images": 9}')
+	`);
 };
 
 exports.down = async function(db) {
+	
+	const schema = process.env.DB_SCHEMA || 'luxaris';
+
     // Drop tables in reverse order
-    await db.dropTable('channel_connections');
-    await db.dropTable('channels');
+    await db.runSql(`DROP TABLE IF EXISTS ${schema}.channel_connections CASCADE`);
+    await db.runSql(`DROP SEQUENCE IF EXISTS ${schema}.channel_connections_id_seq CASCADE`);
+    await db.runSql(`DROP TABLE IF EXISTS ${schema}.channels CASCADE`);
+    await db.runSql(`DROP SEQUENCE IF EXISTS ${schema}.channels_id_seq CASCADE`);
 };
 
 exports._meta = {

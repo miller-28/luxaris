@@ -2,7 +2,7 @@ const AuditLogRepository = require('./audit_log_repository');
 
 class AuditService {
     constructor(db_pool) {
-        this.repository = new AuditLogRepository(db_pool);
+        this.repository = new AuditLogRepository();
     }
 
     async log(action, options = {}) {

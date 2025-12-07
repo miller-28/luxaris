@@ -6,7 +6,7 @@
     "user": {"ENV": "DB_USER"},
     "password": {"ENV": "DB_PASSWORD"},
     "database": {"ENV": "DB_NAME"},
-    "schema": {"ENV": "DB_SCHEMA"},
+    "schema": "public",
     "multipleStatements": true
   },
   "test": {
@@ -16,7 +16,7 @@
     "user": {"ENV": "DB_USER"},
     "password": {"ENV": "DB_PASSWORD"},
     "database": {"ENV": "DB_NAME"},
-    "schema": {"ENV": "DB_SCHEMA"},
+    "schema": "public",
     "multipleStatements": true
   },
   "production": {
@@ -26,7 +26,7 @@
     "user": {"ENV": "DB_USER"},
     "password": {"ENV": "DB_PASSWORD"},
     "database": {"ENV": "DB_NAME"},
-    "schema": {"ENV": "DB_SCHEMA"},
+    "schema": "public",
     "multipleStatements": true
   }
 }

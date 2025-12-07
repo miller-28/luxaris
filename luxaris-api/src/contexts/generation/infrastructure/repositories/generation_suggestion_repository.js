@@ -1,9 +1,7 @@
-class GenerationSuggestionRepository {
-    constructor(db_pool) {
-        this.db = db_pool;
-    }
+const connection_manager = require('../../../../core/infrastructure/connection-manager');
 
-    /**
+class GenerationSuggestionRepository {
+/**
    * Create a new generation suggestion
    */
     async create(suggestion_data) {
@@ -23,7 +21,7 @@ class GenerationSuggestionRepository {
             suggestion_data.accepted || false
         ];
     
-        const result = await this.db.query(query, values);
+        const result = await connection_manager.get_db_pool().query(query, values);
         return result.rows[0];
     }
 
@@ -59,7 +57,7 @@ class GenerationSuggestionRepository {
       RETURNING *
     `;
 
-        const result = await this.db.query(query, values);
+        const result = await connection_manager.get_db_pool().query(query, values);
         return result.rows;
     }
 
@@ -68,7 +66,7 @@ class GenerationSuggestionRepository {
    */
     async find_by_id(suggestion_id) {
         const query = 'SELECT * FROM generation_suggestions WHERE id = $1';
-        const result = await this.db.query(query, [suggestion_id]);
+        const result = await connection_manager.get_db_pool().query(query, [suggestion_id]);
         return result.rows[0] || null;
     }
 
@@ -97,7 +95,7 @@ class GenerationSuggestionRepository {
         // Ordering by score (descending, nulls last) then created_at
         query += ' ORDER BY score DESC NULLS LAST, created_at ASC';
 
-        const result = await this.db.query(query, values);
+        const result = await connection_manager.get_db_pool().query(query, values);
         return result.rows;
     }
 
@@ -112,7 +110,7 @@ class GenerationSuggestionRepository {
       RETURNING *
     `;
     
-        const result = await this.db.query(query, [suggestion_id]);
+        const result = await connection_manager.get_db_pool().query(query, [suggestion_id]);
         return result.rows[0] || null;
     }
 
@@ -126,7 +124,7 @@ class GenerationSuggestionRepository {
       JOIN generation_sessions gs ON gsug.generation_session_id = gs.id
       WHERE gsug.id = $1
     `;
-        const result = await this.db.query(query, [suggestion_id]);
+        const result = await connection_manager.get_db_pool().query(query, [suggestion_id]);
         return result.rows[0]?.owner_principal_id || null;
     }
 
@@ -135,7 +133,7 @@ class GenerationSuggestionRepository {
    */
     async delete(suggestion_id) {
         const query = 'DELETE FROM generation_suggestions WHERE id = $1 RETURNING id';
-        const result = await this.db.query(query, [suggestion_id]);
+        const result = await connection_manager.get_db_pool().query(query, [suggestion_id]);
         return result.rowCount > 0;
     }
 
@@ -144,7 +142,7 @@ class GenerationSuggestionRepository {
    */
     async delete_by_session(session_id) {
         const query = 'DELETE FROM generation_suggestions WHERE generation_session_id = $1';
-        const result = await this.db.query(query, [session_id]);
+        const result = await connection_manager.get_db_pool().query(query, [session_id]);
         return result.rowCount;
     }
 }

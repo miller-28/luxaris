@@ -2,28 +2,33 @@ require('dotenv').config();
 
 const { get_app_config, validate_app_config } = require('./config/app');
 const { get_auth_config, validate_auth_config } = require('./config/auth');
-const { create_database_pool, test_database_connection } = require('./config/database');
-const { create_cache_client, test_cache_connection } = require('./config/cache');
-const { create_queue_connection, declare_queues } = require('./config/queue');
+const connection_manager = require('./core/infrastructure/connection-manager');
 const Server = require('./core/http/server');
 const { get_logger } = require('./core/logging/system_logger');
 const EventRegistry = require('./core/events/event-registry');
 const { get_request_logger } = require('./core/http/middleware/request_logger');
 const error_handler = require('./core/http/middleware/error-handler');
 const not_found_handler = require('./core/http/middleware/not-found-handler');
+const origin_validation = require('./core/http/middleware/origin-validation');
+const xss_sanitization = require('./core/http/middleware/xss-sanitization');
 
 // System context dependencies
 const UserRepository = require('./contexts/system/infrastructure/repositories/user-repository');
 const FeatureFlagRepository = require('./contexts/system/infrastructure/repositories/feature-flag-repository');
+const PresetRepository = require('./contexts/system/infrastructure/repositories/preset-repository');
+const CacheService = require('./contexts/system/infrastructure/cache/cache-service');
 const AuthService = require('./contexts/system/application/services/auth-service');
 const FeatureFlagService = require('./contexts/system/application/services/feature-flag-service');
 const HealthCheckService = require('./contexts/system/application/services/health-check-service');
+const GoogleOAuthService = require('./contexts/system/application/services/google-oauth-service');
+const PresetService = require('./contexts/system/application/services/preset-service');
 const RegisterUserUseCase = require('./contexts/system/application/use_cases/register-user');
 const LoginUserUseCase = require('./contexts/system/application/use_cases/login-user');
 const RefreshTokenUseCase = require('./contexts/system/application/use_cases/refresh-token');
 const AuthHandler = require('./contexts/system/interface/http/handlers/auth-handler');
 const OpsHandler = require('./contexts/system/interface/http/handlers/ops-handler');
-const create_auth_routes = require('./contexts/system/interface/http/routes');
+const PresetHandler = require('./contexts/system/interface/http/handlers/preset-handler');
+const { create_auth_routes, create_preset_routes } = require('./contexts/system/interface/http/routes');
 const create_ops_routes = require('./contexts/system/interface/http/ops-routes');
 const { initialize_channels_domain } = require('./contexts/channels');
 const { initialize_posts_domain } = require('./contexts/posts');
@@ -32,9 +37,6 @@ const { initialize_scheduling_domain } = require('./contexts/scheduling');
 
 async function bootstrap() {
     let system_logger = null;
-    let db_pool = null;
-    let cache_client = null;
-    let queue_connection = null;
     let server = null;
 
     // Graceful shutdown handler
@@ -54,7 +56,7 @@ async function bootstrap() {
                 await server.stop();
             }
       
-            // Log successful shutdown BEFORE closing database
+            // Log successful shutdown BEFORE closing connections
             if (system_logger) {
                 await system_logger.info(
                     'Application',
@@ -63,16 +65,8 @@ async function bootstrap() {
                 );
             }
 
-            // Now close all connections
-            if (db_pool) {
-                await db_pool.end();
-            }
-            if (cache_client) {
-                cache_client.end();
-            }
-            if (queue_connection) {
-                await queue_connection.close();
-            }
+            // Shutdown all connections via connection manager
+            await connection_manager.shutdown();
 
             console.log('Luxaris API stopped');
             process.exit(0);
@@ -116,26 +110,15 @@ async function bootstrap() {
 
         console.log(`Starting Luxaris API in ${app_config.node_env} mode...`);
 
-        // Initialize database
-        db_pool = create_database_pool();
-        await test_database_connection(db_pool);
+        // Initialize all connections via connection manager
+        await connection_manager.initialize();
 
         // Initialize logger early so we can use it for error logging
-        system_logger = get_logger(db_pool);
-
-        // Initialize cache
-        cache_client = create_cache_client();
-        await test_cache_connection(cache_client);
-
-        // Initialize queue
-        const queue_result = await create_queue_connection();
-        queue_connection = queue_result.connection;
-        const queue_channel = queue_result.channel;
-        await declare_queues(queue_channel);
+        system_logger = get_logger(connection_manager.get_db_pool());
 
         // Initialize event infrastructure
-        const event_registry = new EventRegistry(db_pool, system_logger);
-        const request_logger = get_request_logger(db_pool);
+        const event_registry = new EventRegistry(connection_manager.get_db_pool(), system_logger);
+        const request_logger = get_request_logger(connection_manager.get_db_pool());
 
         // Log application startup
         await system_logger.info(
@@ -147,29 +130,47 @@ async function bootstrap() {
         // Initialize HTTP server
         server = new Server(app_config);
 
+        // Store event emitter in app locals for middleware access
+        server.get_app().locals.event_emitter = event_registry;
+
+        // Register security middleware (MUST be early in the stack)
+        server.register_middleware(origin_validation);
+        server.register_middleware(xss_sanitization);
+
         // Register request logger middleware
         server.register_middleware(request_logger.middleware());
 
         // Initialize system context
-        const user_repository = new UserRepository(db_pool);
-        const feature_flag_repository = new FeatureFlagRepository(db_pool);
+        const user_repository = new UserRepository();
+        const feature_flag_repository = new FeatureFlagRepository();
+        const preset_repository = new PresetRepository();
+        const cache_service = new CacheService(connection_manager.get_cache_client());
     
         const auth_service = new AuthService(user_repository, auth_config, system_logger, event_registry);
-        const feature_flag_service = new FeatureFlagService(feature_flag_repository, cache_client);
-        const health_check_service = new HealthCheckService(db_pool, cache_client, queue_connection);
+        const feature_flag_service = new FeatureFlagService(feature_flag_repository, connection_manager.get_cache_client());
+        const health_check_service = new HealthCheckService(connection_manager.get_db_pool(), connection_manager.get_cache_client(), connection_manager.get_queue_connection());
+        const google_oauth_service = new GoogleOAuthService(auth_config, cache_service, system_logger);
+        const preset_service = new PresetService(preset_repository, event_registry, system_logger);
     
         const register_user_use_case = new RegisterUserUseCase(auth_service);
         const login_user_use_case = new LoginUserUseCase(auth_service);
         const refresh_token_use_case = new RefreshTokenUseCase(auth_service);
     
-        const auth_handler = new AuthHandler(register_user_use_case, login_user_use_case, refresh_token_use_case);
+        const auth_handler = new AuthHandler(
+            register_user_use_case, 
+            login_user_use_case, 
+            refresh_token_use_case,
+            google_oauth_service,
+            auth_service,
+            auth_config
+        );
         const ops_handler = new OpsHandler(health_check_service, feature_flag_service);
+        const preset_handler = new PresetHandler(preset_service);
 
         // Initialize domains in correct order (respecting dependencies)
 		
         // 1. Channels domain (depends only on system)
         const channels_domain = initialize_channels_domain({
-            db_pool,
             system_logger,
             acl_service: auth_service.acl_service,
             event_registry
@@ -177,7 +178,6 @@ async function bootstrap() {
 
         // 2. Posts domain (depends on channels for channel_service)
         const posts_domain = initialize_posts_domain({
-            db_pool,
             system_logger,
             event_registry,
             channel_service: channels_domain.channel_service
@@ -185,7 +185,6 @@ async function bootstrap() {
 
         // 3. Generation domain (depends on posts and channels)
         const generation_domain = initialize_generation_domain({
-            db_pool,
             system_logger,
             event_registry,
             post_service: posts_domain.post_service,
@@ -195,7 +194,6 @@ async function bootstrap() {
 
         // 4. Scheduling domain (depends on posts)
         const scheduling_domain = initialize_scheduling_domain({
-            db_pool,
             system_logger,
             event_registry,
             post_variant_service: posts_domain.post_variant_service,
@@ -220,7 +218,20 @@ async function bootstrap() {
 
             try {
                 const principal = auth_service.verify_token(token);
-                req.principal = principal;
+                // Map JWT payload to expected format
+                req.user = {
+                    id: principal.sub,
+                    email: principal.email,
+                    name: principal.name,
+                    timezone: principal.timezone,
+                    is_root: principal.is_root,
+                    roles: principal.roles
+                };
+                // Add id property for convenience (JWT uses 'sub')
+                req.principal = {
+                    ...principal,
+                    id: principal.sub
+                };
                 next();
             } catch (error) {
                 return res.status(401).json({
@@ -236,9 +247,11 @@ async function bootstrap() {
         // Register system context routes
         const auth_routes = create_auth_routes(auth_handler);
         const ops_routes = create_ops_routes(ops_handler);
+        const preset_routes = create_preset_routes(preset_handler, auth_middleware);
     
         server.register_routes(`/api/${app_config.api_version}/auth`, auth_routes);
         server.register_routes(`/api/${app_config.api_version}/ops`, ops_routes);
+        server.register_routes(`/api/${app_config.api_version}/system`, preset_routes);
 
         // Register channels domain routes
         const channel_routes = channels_domain.create_channel_routes({
@@ -322,15 +335,7 @@ async function bootstrap() {
 
         // Cleanup resources
         try {
-            if (db_pool) {
-                await db_pool.end();
-            }
-            if (cache_client) {
-                cache_client.end();
-            }
-            if (queue_connection) {
-                await queue_connection.close();
-            }
+            await connection_manager.shutdown();
         } catch (cleanup_error) {
             console.error('Error during cleanup:', cleanup_error);
         }

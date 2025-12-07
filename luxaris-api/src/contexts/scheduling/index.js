@@ -27,8 +27,8 @@ function initialize_scheduling_domain(dependencies) {
     } = dependencies;
 
     // Initialize repositories
-    const schedule_repository = new ScheduleRepository(db_pool);
-    const publish_event_repository = new PublishEventRepository(db_pool);
+    const schedule_repository = new ScheduleRepository();
+    const publish_event_repository = new PublishEventRepository();
 
     // Initialize services
     const schedule_service = new ScheduleService(

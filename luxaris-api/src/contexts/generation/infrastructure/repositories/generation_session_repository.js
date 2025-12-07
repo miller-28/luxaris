@@ -1,9 +1,7 @@
-class GenerationSessionRepository {
-    constructor(db_pool) {
-        this.db = db_pool;
-    }
+const connection_manager = require('../../../../core/infrastructure/connection-manager');
 
-    /**
+class GenerationSessionRepository {
+/**
    * Create a new generation session
    */
     async create(session_data) {
@@ -23,7 +21,7 @@ class GenerationSessionRepository {
             session_data.status || 'in_progress'
         ];
     
-        const result = await this.db.query(query, values);
+        const result = await connection_manager.get_db_pool().query(query, values);
         return result.rows[0];
     }
 
@@ -32,7 +30,7 @@ class GenerationSessionRepository {
    */
     async find_by_id(session_id) {
         const query = 'SELECT * FROM generation_sessions WHERE id = $1';
-        const result = await this.db.query(query, [session_id]);
+        const result = await connection_manager.get_db_pool().query(query, [session_id]);
         return result.rows[0] || null;
     }
 
@@ -81,7 +79,7 @@ class GenerationSessionRepository {
             values.push(filters.offset);
         }
 
-        const result = await this.db.query(query, values);
+        const result = await connection_manager.get_db_pool().query(query, values);
         return result.rows;
     }
 
@@ -111,7 +109,7 @@ class GenerationSessionRepository {
             values.push(filters.template_id);
         }
 
-        const result = await this.db.query(query, values);
+        const result = await connection_manager.get_db_pool().query(query, values);
         return parseInt(result.rows[0].count);
     }
 
@@ -126,7 +124,7 @@ class GenerationSessionRepository {
       RETURNING *
     `;
     
-        const result = await this.db.query(query, [status, session_id]);
+        const result = await connection_manager.get_db_pool().query(query, [status, session_id]);
         return result.rows[0] || null;
     }
 
@@ -135,7 +133,7 @@ class GenerationSessionRepository {
    */
     async get_owner_principal_id(session_id) {
         const query = 'SELECT owner_principal_id FROM generation_sessions WHERE id = $1';
-        const result = await this.db.query(query, [session_id]);
+        const result = await connection_manager.get_db_pool().query(query, [session_id]);
         return result.rows[0]?.owner_principal_id || null;
     }
 
@@ -144,7 +142,7 @@ class GenerationSessionRepository {
    */
     async delete(session_id) {
         const query = 'DELETE FROM generation_sessions WHERE id = $1 RETURNING id';
-        const result = await this.db.query(query, [session_id]);
+        const result = await connection_manager.get_db_pool().query(query, [session_id]);
         return result.rowCount > 0;
     }
 }

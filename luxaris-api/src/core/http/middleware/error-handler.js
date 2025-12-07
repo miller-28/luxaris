@@ -18,6 +18,35 @@ function error_handler(error, req, res, next) {
         return res.status(400).json({ errors: validation_errors });
     }
 
+    // Handle database errors - NEVER expose SQL details to client
+    if (error.code && (error.code.startsWith('22') || error.code.startsWith('23') || error.code.startsWith('42'))) {
+        
+		// PostgreSQL error codes
+        // 22xxx: Data exception
+        // 23xxx: Integrity constraint violation
+        // 42xxx: Syntax error or access rule violation
+        
+        // Log full error server-side for debugging
+        console.error(`[${request_id}] Database error:`, {
+            code: error.code,
+            message: error.message,
+            detail: error.detail,
+            table: error.table,
+            constraint: error.constraint
+        });
+        
+        // Return generic error to client
+        return res.status(400).json({
+            errors: [{
+                error_code: 'DATABASE_ERROR',
+                error_description: node_env === 'production' 
+                    ? 'A database error occurred' 
+                    : 'Database operation failed',
+                error_severity: 'error'
+            }]
+        });
+    }
+
     // Handle custom application errors
     if (error.status_code) {
         return res.status(error.status_code).json({
@@ -29,7 +58,7 @@ function error_handler(error, req, res, next) {
         });
     }
 
-    // Handle unexpected errors
+    // Handle unexpected errors - NEVER expose internal details in production
     const error_response = {
         errors: [{
             error_code: 'INTERNAL_SERVER_ERROR',
@@ -39,6 +68,13 @@ function error_handler(error, req, res, next) {
             error_severity: 'critical'
         }]
     };
+
+    // Log full error server-side
+    console.error(`[${request_id}] Unexpected error:`, {
+        message: error.message,
+        stack: error.stack,
+        error
+    });
 
     res.status(500).json(error_response);
 }

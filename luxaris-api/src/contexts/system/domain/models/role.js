@@ -2,7 +2,7 @@ const { z } = require('zod');
 
 // Validation schemas
 const RoleSchema = z.object({
-    id: z.string().uuid(),
+    id: z.number().int().positive(),
     name: z.string().min(1).max(100),
     slug: z.string().min(1).max(100),
     description: z.string().optional().nullable(),
@@ -45,14 +45,12 @@ class Role {
         };
     }
 
-    /**
-	 * Check if role is a system role (owner, editor, viewer)
+	/**
+	 * Check if role is a system role (admin, editor, viewer)
 	 */
-    is_system_role() {
-        return ['owner', 'editor', 'viewer'].includes(this.slug);
-    }
-
-    /**
+	is_system_role() {
+        return ['admin', 'editor', 'viewer'].includes(this.slug);
+	}    /**
 	 * Check if role can be deleted
 	 */
     can_delete() {

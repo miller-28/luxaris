@@ -1,4 +1,5 @@
 const PostVariant = require('../models/post_variant');
+const connection_manager = require('../../../../core/infrastructure/connection-manager');
 
 /**
  * PostVariantRepository
@@ -6,10 +7,6 @@ const PostVariant = require('../models/post_variant');
  * Data access layer for PostVariants.
  */
 class PostVariantRepository {
-    constructor(db_pool) {
-        this.db_pool = db_pool;
-    }
-
     /**
 	 * Create a new post variant
 	 */
@@ -34,7 +31,7 @@ class PostVariantRepository {
             JSON.stringify(variant_data.metadata || {})
         ];
 
-        const result = await this.db_pool.query(query, values);
+        const result = await connection_manager.get_db_pool().query(query, values);
         return this._map_to_model(result.rows[0]);
     }
 
@@ -43,7 +40,7 @@ class PostVariantRepository {
 	 */
     async find_by_id(variant_id) {
         const query = 'SELECT * FROM post_variants WHERE id = $1';
-        const result = await this.db_pool.query(query, [variant_id]);
+        const result = await connection_manager.get_db_pool().query(query, [variant_id]);
 		
         if (result.rows.length === 0) {
             return null;
@@ -62,7 +59,7 @@ class PostVariantRepository {
 			ORDER BY created_at DESC
 		`;
 
-        const result = await this.db_pool.query(query, [post_id]);
+        const result = await connection_manager.get_db_pool().query(query, [post_id]);
         return result.rows.map(row => this._map_to_model(row));
     }
 
@@ -101,7 +98,7 @@ class PostVariantRepository {
         query += ` LIMIT $${param_index} OFFSET $${param_index + 1}`;
         params.push(limit, offset);
 
-        const result = await this.db_pool.query(query, params);
+        const result = await connection_manager.get_db_pool().query(query, params);
         return result.rows.map(row => this._map_to_model(row));
     }
 
@@ -131,7 +128,7 @@ class PostVariantRepository {
             param_index++;
         }
 
-        const result = await this.db_pool.query(query, params);
+        const result = await connection_manager.get_db_pool().query(query, params);
         return parseInt(result.rows[0].count, 10);
     }
 
@@ -200,7 +197,7 @@ class PostVariantRepository {
 		`;
         params.push(variant_id);
 
-        const result = await this.db_pool.query(query, params);
+        const result = await connection_manager.get_db_pool().query(query, params);
         return this._map_to_model(result.rows[0]);
     }
 
@@ -215,7 +212,7 @@ class PostVariantRepository {
 			RETURNING *
 		`;
 
-        const result = await this.db_pool.query(query, [status, variant_id]);
+        const result = await connection_manager.get_db_pool().query(query, [status, variant_id]);
         return this._map_to_model(result.rows[0]);
     }
 
@@ -224,7 +221,7 @@ class PostVariantRepository {
 	 */
     async delete(variant_id) {
         const query = 'DELETE FROM post_variants WHERE id = $1';
-        await this.db_pool.query(query, [variant_id]);
+        await connection_manager.get_db_pool().query(query, [variant_id]);
         return true;
     }
 
@@ -239,7 +236,7 @@ class PostVariantRepository {
 			WHERE pv.id = $1
 		`;
 
-        const result = await this.db_pool.query(query, [variant_id]);
+        const result = await connection_manager.get_db_pool().query(query, [variant_id]);
 		
         if (result.rows.length === 0) {
             return null;

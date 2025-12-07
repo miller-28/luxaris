@@ -1,8 +1,10 @@
 const argon2 = require('argon2');
 const jwt = require('jsonwebtoken');
-const { UserStatus } = require('../../domain/models/user');
+const { UserStatus, AuthMethod } = require('../../domain/models/user');
 const RoleRepository = require('../../infrastructure/persistence/role_repository');
 const AclRepository = require('../../infrastructure/persistence/acl_repository');
+const OAuthProviderRepository = require('../../infrastructure/repositories/oauth-provider-repository');
+const OAuthAccountRepository = require('../../infrastructure/repositories/oauth-account-repository');
 
 class AuthService {
     constructor(user_repository, config, system_logger, event_registry) {
@@ -10,8 +12,10 @@ class AuthService {
         this.config = config;
         this.system_logger = system_logger;
         this.event_registry = event_registry;
-        this.role_repository = new RoleRepository(user_repository.db_pool);
-        this.acl_repository = new AclRepository(user_repository.db_pool);
+        this.role_repository = new RoleRepository();
+        this.acl_repository = new AclRepository();
+        this.oauth_provider_repository = new OAuthProviderRepository();
+        this.oauth_account_repository = new OAuthAccountRepository();
     }
 
     async hash_password(password) {
@@ -107,15 +111,15 @@ class AuthService {
 
         const user = await this.user_repository.create(user_data);
 
-        // Auto-assign owner role if this is a root user
+        // Auto-assign admin role if this is a root user
         if (user.is_root) {
-            const owner_role = await this.role_repository.find_by_slug('owner');
-            if (owner_role) {
-                await this.acl_repository.assign_role(user.id, 'user', owner_role.id);
+            const admin_role = await this.role_repository.find_by_slug('admin');
+            if (admin_role) {
+                await this.acl_repository.assign_role(user.id, 'user', admin_role.id);
                 await this.system_logger.info(
                     'AuthService',
-                    'Owner role assigned to root user',
-                    { user_id: user.id, role_id: owner_role.id }
+                    'Admin role assigned to root user',
+                    { user_id: user.id, role_id: admin_role.id }
                 );
             }
         }
@@ -208,6 +212,235 @@ class AuthService {
         }
 
         return this.generate_jwt(user);
+    }
+
+    /**
+     * Register user via OAuth (Google, etc.)
+     * @param {object} oauth_data - OAuth provider data and user info
+     * @returns {object} { user, tokens, needs_approval }
+     */
+    async register_oauth_user(oauth_data) {
+        const { provider_key, provider_user_id, email, name, avatar_url, token_data } = oauth_data;
+
+        // Get OAuth provider
+        const provider = await this.oauth_provider_repository.find_by_key(provider_key);
+        if (!provider) {
+            throw new Error(`OAuth provider '${provider_key}' not found`);
+        }
+
+        if (provider.status !== 'active') {
+            throw new Error(`OAuth provider '${provider_key}' is not active`);
+        }
+
+        // Check if OAuth account already exists
+        const existing_oauth_account = await this.oauth_account_repository.find_by_provider_user(
+            provider.id,
+            provider_user_id
+        );
+
+        if (existing_oauth_account) {
+            // User already registered with this OAuth account
+            const user = await this.user_repository.find_by_id(existing_oauth_account.user_id);
+            
+            if (!user) {
+                throw new Error('User not found');
+            }
+
+            // Update last login
+            await this.user_repository.update(user.id, {
+                last_login_at: new Date()
+            });
+
+            // Update OAuth tokens
+            const token_expires_at = token_data.expires_in 
+                ? new Date(Date.now() + token_data.expires_in * 1000)
+                : null;
+
+            await this.oauth_account_repository.update(existing_oauth_account.id, {
+                access_token: token_data.access_token,
+                refresh_token: token_data.refresh_token || existing_oauth_account.refresh_token,
+                token_expires_at: token_expires_at,
+                provider_name: name,
+                provider_avatar_url: avatar_url
+            });
+
+            // Check if user can login
+            const needs_approval = !user.can_login();
+
+            // Log login
+            await this.system_logger.info(
+                'AuthService',
+                'OAuth user logged in',
+                { user_id: user.id, email: user.email, provider: provider_key, needs_approval }
+            );
+
+            // Record event
+            await this.event_registry.record('auth', 'USER_LOGIN', {
+                principal_id: user.id,
+                principal_type: 'user',
+                resource_type: 'user',
+                resource_id: user.id,
+                metadata: { auth_method: 'oauth', provider: provider_key }
+            });
+
+            // Get user roles
+            const role_assignments = await this.acl_repository.get_principal_roles(user.id, 'user');
+            const roles = role_assignments.map(ra => ra.role);
+
+            return {
+                user,
+                tokens: needs_approval ? null : {
+                    access_token: this.generate_jwt(user, roles),
+                    refresh_token: this.generate_refresh_token(user)
+                },
+                needs_approval
+            };
+        }
+
+        // Check if email already exists (account linking case)
+        const existing_user = await this.user_repository.find_by_email(email);
+        
+        if (existing_user) {
+            // Link OAuth account to existing user
+            const token_expires_at = token_data.expires_in 
+                ? new Date(Date.now() + token_data.expires_in * 1000)
+                : null;
+
+            await this.oauth_account_repository.create({
+                user_id: existing_user.id,
+                provider_id: provider.id,
+                provider_user_id: provider_user_id,
+                provider_email: email,
+                provider_name: name,
+                provider_avatar_url: avatar_url,
+                access_token: token_data.access_token,
+                refresh_token: token_data.refresh_token,
+                token_expires_at: token_expires_at
+            });
+
+            // Update user avatar if not set
+            if (!existing_user.avatar_url && avatar_url) {
+                await this.user_repository.update(existing_user.id, {
+                    avatar_url: avatar_url
+                });
+                existing_user.avatar_url = avatar_url;
+            }
+
+            // Update last login
+            await this.user_repository.update(existing_user.id, {
+                last_login_at: new Date()
+            });
+
+            await this.system_logger.info(
+                'AuthService',
+                'OAuth account linked to existing user',
+                { user_id: existing_user.id, email: email, provider: provider_key }
+            );
+
+            // Record event
+            await this.event_registry.record('auth', 'OAUTH_ACCOUNT_LINKED', {
+                principal_id: existing_user.id,
+                principal_type: 'user',
+                resource_type: 'user',
+                resource_id: existing_user.id,
+                metadata: { provider: provider_key }
+            });
+
+            // Check if user can login
+            const needs_approval = !existing_user.can_login();
+
+            // Get user roles
+            const role_assignments = await this.acl_repository.get_principal_roles(existing_user.id, 'user');
+            const roles = role_assignments.map(ra => ra.role);
+
+            return {
+                user: existing_user,
+                tokens: needs_approval ? null : {
+                    access_token: this.generate_jwt(existing_user, roles),
+                    refresh_token: this.generate_refresh_token(existing_user)
+                },
+                needs_approval
+            };
+        }
+
+        // New user registration
+        const is_first = await this.user_repository.is_first_user();
+
+        // Create user
+        const user_data = {
+            email: email.toLowerCase(),
+            password_hash: null, // No password for OAuth users
+            name: name,
+            avatar_url: avatar_url,
+            timezone: 'UTC',
+            locale: 'en',
+            auth_method: AuthMethod.OAUTH,
+            status: is_first ? UserStatus.ACTIVE : UserStatus.PENDING_APPROVAL,
+            is_root: is_first
+        };
+
+        const user = await this.user_repository.create(user_data);
+
+        // Create OAuth account link
+        const token_expires_at = token_data.expires_in 
+            ? new Date(Date.now() + token_data.expires_in * 1000)
+            : null;
+
+        await this.oauth_account_repository.create({
+            user_id: user.id,
+            provider_id: provider.id,
+            provider_user_id: provider_user_id,
+            provider_email: email,
+            provider_name: name,
+            provider_avatar_url: avatar_url,
+            access_token: token_data.access_token,
+            refresh_token: token_data.refresh_token,
+            token_expires_at: token_expires_at
+        });
+
+        // Auto-assign admin role if this is a root user
+        if (user.is_root) {
+            const admin_role = await this.role_repository.find_by_slug('admin');
+            if (admin_role) {
+                await this.acl_repository.assign_role(user.id, 'user', admin_role.id);
+                await this.system_logger.info(
+                    'AuthService',
+                    'Admin role assigned to root user',
+                    { user_id: user.id, role_id: admin_role.id }
+                );
+            }
+        }
+
+        // Log registration
+        await this.system_logger.info(
+            'AuthService',
+            'OAuth user registered successfully',
+            { user_id: user.id, email: user.email, is_root: user.is_root, provider: provider_key }
+        );
+
+        // Record event
+        await this.event_registry.record('auth', 'USER_REGISTERED', {
+            principal_id: user.id,
+            principal_type: 'user',
+            resource_type: 'user',
+            resource_id: user.id,
+            metadata: { auth_method: 'oauth', provider: provider_key, is_root: user.is_root }
+        });
+
+        const needs_approval = !user.can_login();
+
+        // Get user roles
+        const role_assignments = await this.acl_repository.get_principal_roles(user.id, 'user');
+        const roles = role_assignments.map(ra => ra.role);
+
+        return {
+            user,
+            tokens: needs_approval ? null : {
+                access_token: this.generate_jwt(user, roles),
+                refresh_token: this.generate_refresh_token(user)
+            },
+            needs_approval
+        };
     }
 
     _parse_expiration(exp_string) {

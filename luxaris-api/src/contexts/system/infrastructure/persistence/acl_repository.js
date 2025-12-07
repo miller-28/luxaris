@@ -1,16 +1,13 @@
 const { Permission } = require('../../domain/models/permission');
 const { Role } = require('../../domain/models/role');
+const connection_manager = require('../../../../core/infrastructure/connection-manager');
 
 class AclRepository {
-    constructor(db_pool) {
-        this.db_pool = db_pool;
-    }
-
     /**
 	 * Assign role to principal (user or service account)
 	 */
     async assign_role(principal_id, principal_type, role_id, scope = null, scope_id = null) {
-        const result = await this.db_pool.query(
+        const result = await connection_manager.get_db_pool().query(
             `INSERT INTO acl_principal_role_assignments (principal_id, principal_type, role_id, scope, scope_id)
 			 VALUES ($1, $2, $3, $4, $5)
 			 ON CONFLICT (principal_id, principal_type, role_id, COALESCE(scope, ''), COALESCE(scope_id::text, '')) DO NOTHING
@@ -24,7 +21,7 @@ class AclRepository {
 	 * Remove role from principal
 	 */
     async remove_role(principal_id, principal_type, role_id, scope = null, scope_id = null) {
-        const result = await this.db_pool.query(
+        const result = await connection_manager.get_db_pool().query(
             `DELETE FROM acl_principal_role_assignments 
 			 WHERE principal_id = $1 AND principal_type = $2 AND role_id = $3
 			 AND (scope = $4 OR (scope IS NULL AND $4 IS NULL))
@@ -59,7 +56,7 @@ class AclRepository {
 
         query += ' ORDER BY r.name';
 
-        const result = await this.db_pool.query(query, params);
+        const result = await connection_manager.get_db_pool().query(query, params);
         return result.rows.map(row => ({
             role: Role.from_db_row(row),
             scope: row.scope,
@@ -72,7 +69,7 @@ class AclRepository {
 	 * Grant direct permission to principal
 	 */
     async grant_permission(principal_id, principal_type, permission_id, scope = null, scope_id = null) {
-        const result = await this.db_pool.query(
+        const result = await connection_manager.get_db_pool().query(
             `INSERT INTO acl_principal_permission_grants (principal_id, principal_type, permission_id, scope, scope_id)
 			 VALUES ($1, $2, $3, $4, $5)
 			 ON CONFLICT (principal_id, principal_type, permission_id, COALESCE(scope, ''), COALESCE(scope_id::text, '')) DO NOTHING
@@ -86,7 +83,7 @@ class AclRepository {
 	 * Revoke direct permission from principal
 	 */
     async revoke_permission(principal_id, principal_type, permission_id, scope = null, scope_id = null) {
-        const result = await this.db_pool.query(
+        const result = await connection_manager.get_db_pool().query(
             `DELETE FROM acl_principal_permission_grants 
 			 WHERE principal_id = $1 AND principal_type = $2 AND permission_id = $3
 			 AND (scope = $4 OR (scope IS NULL AND $4 IS NULL))
@@ -121,7 +118,7 @@ class AclRepository {
 
         query += ' ORDER BY p.resource, p.action';
 
-        const result = await this.db_pool.query(query, params);
+        const result = await connection_manager.get_db_pool().query(query, params);
         return result.rows.map(row => ({
             permission: Permission.from_db_row(row),
             scope: row.scope,
@@ -174,7 +171,7 @@ class AclRepository {
 
         query += ' ORDER BY p.resource, p.action';
 
-        const result = await this.db_pool.query(query, params);
+        const result = await connection_manager.get_db_pool().query(query, params);
         return result.rows.map(row => ({
             permission: Permission.from_db_row(row),
             scope: row.permission_scope,
@@ -224,7 +221,7 @@ class AclRepository {
 
         query += ')';
 
-        const result = await this.db_pool.query(query, params);
+        const result = await connection_manager.get_db_pool().query(query, params);
         return result.rows[0].exists;
     }
 
@@ -232,7 +229,7 @@ class AclRepository {
 	 * Remove all role assignments for a principal
 	 */
     async remove_all_roles(principal_id, principal_type) {
-        const result = await this.db_pool.query(
+        const result = await connection_manager.get_db_pool().query(
             'DELETE FROM acl_principal_role_assignments WHERE principal_id = $1 AND principal_type = $2',
             [principal_id, principal_type]
         );
@@ -243,7 +240,7 @@ class AclRepository {
 	 * Remove all permission grants for a principal
 	 */
     async remove_all_grants(principal_id, principal_type) {
-        const result = await this.db_pool.query(
+        const result = await connection_manager.get_db_pool().query(
             'DELETE FROM acl_principal_permission_grants WHERE principal_id = $1 AND principal_type = $2',
             [principal_id, principal_type]
         );

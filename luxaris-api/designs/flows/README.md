@@ -65,6 +65,25 @@ Core authentication and user management operations.
   - Activates user account and assigns default role
   - Sends activation notification email
 
+### UI Stateful Presets
+- **[flow-get-user-preset.md](flow-get-user-preset.md)** - `GET /api/v1/system/users/:user_id/ui-preset`
+  - Load user's UI preset with hierarchical resolution (user → role → global)
+  - Cache support for performance
+  - Returns empty settings if no preset found
+  - Client applies hardcoded defaults for empty settings
+
+- **[flow-update-user-preset.md](flow-update-user-preset.md)** - `PATCH /api/v1/system/ui-presets/:preset_id`
+  - Update UI preset settings (auto-save from client)
+  - Deep merge strategy preserves unmodified sections
+  - Cache invalidation on update
+  - Debounced auto-save support (2-second delay)
+
+- **[flow-clone-user-preset.md](flow-clone-user-preset.md)** - `POST /api/v1/system/ui-presets/:preset_id/clone`
+  - Clone role/global preset to user preset on first modification
+  - Automatic personalization for users
+  - Apply modifications during clone operation
+  - Handles race conditions with existing presets
+
 ---
 
 ## Post Management Flows
@@ -191,11 +210,12 @@ Connect and manage social media accounts.
 
 ## Flow Count Summary
 
-**Total Flows:** 24
+**Total Flows:** 27
 
 **By Category:**
 - Authentication & Identity: 6 flows
 - Admin Operations: 1 flow (root users only)
+- UI Stateful Presets: 3 flows
 - Post Management: 6 flows
 - Content Generation: 3 flows
 - Scheduling & Publishing: 5 flows

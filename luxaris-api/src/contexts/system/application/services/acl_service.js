@@ -2,9 +2,9 @@ const AclRepository = require('../../infrastructure/persistence/acl_repository')
 const PermissionRepository = require('../../infrastructure/persistence/permission_repository');
 
 class AclService {
-    constructor(db_pool) {
-        this.acl_repository = new AclRepository(db_pool);
-        this.permission_repository = new PermissionRepository(db_pool);
+    constructor() {
+        this.acl_repository = new AclRepository();
+        this.permission_repository = new PermissionRepository();
         this.permission_cache = new Map(); // Cache for permission lookups
     }
 

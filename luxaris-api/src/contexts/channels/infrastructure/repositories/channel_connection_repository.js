@@ -1,13 +1,11 @@
+const connection_manager = require('../../../../core/infrastructure/connection-manager');
+
 /**
  * Channel Connection Repository
  * 
  * Data access layer for channel_connections table (user OAuth connections)
  */
 class ChannelConnectionRepository {
-    constructor(db_pool) {
-        this.db = db_pool;
-    }
-
     /**
    * Create new channel connection
    */
@@ -32,7 +30,7 @@ class ChannelConnectionRepository {
             now
         ];
 
-        const result = await this.db.query(query, values);
+        const result = await connection_manager.get_db_pool().query(query, values);
         return result.rows[0];
     }
 
@@ -51,7 +49,7 @@ class ChannelConnectionRepository {
       WHERE cc.id = $1
     `;
 
-        const result = await this.db.query(query, [connection_id]);
+        const result = await connection_manager.get_db_pool().query(query, [connection_id]);
         return result.rows[0] || null;
     }
 
@@ -101,7 +99,7 @@ class ChannelConnectionRepository {
         query += ` LIMIT $${param_index} OFFSET $${param_index + 1}`;
         params.push(limit, offset);
 
-        const result = await this.db.query(query, params);
+        const result = await connection_manager.get_db_pool().query(query, params);
 
         // Get total count for pagination
         let count_query = `
@@ -129,7 +127,7 @@ class ChannelConnectionRepository {
             count_query += ' AND cc.status != \'disconnected\'';
         }
 
-        const count_result = await this.db.query(count_query, count_params);
+        const count_result = await connection_manager.get_db_pool().query(count_query, count_params);
         const total = parseInt(count_result.rows[0].total);
 
         return {
@@ -157,7 +155,7 @@ class ChannelConnectionRepository {
       RETURNING *
     `;
 
-        const result = await this.db.query(query, [status, connection_id]);
+        const result = await connection_manager.get_db_pool().query(query, [status, connection_id]);
         return result.rows[0] || null;
     }
 
@@ -174,7 +172,7 @@ class ChannelConnectionRepository {
       RETURNING *
     `;
 
-        const result = await this.db.query(query, [JSON.stringify(auth_state), connection_id]);
+        const result = await connection_manager.get_db_pool().query(query, [JSON.stringify(auth_state), connection_id]);
         return result.rows[0] || null;
     }
 
@@ -188,7 +186,7 @@ class ChannelConnectionRepository {
       WHERE id = $1
     `;
 
-        await this.db.query(query, [connection_id]);
+        await connection_manager.get_db_pool().query(query, [connection_id]);
     }
 
     /**
@@ -206,7 +204,7 @@ class ChannelConnectionRepository {
       RETURNING *
     `;
 
-        const result = await this.db.query(query, [connection_id]);
+        const result = await connection_manager.get_db_pool().query(query, [connection_id]);
         return result.rows[0] || null;
     }
 
@@ -220,7 +218,7 @@ class ChannelConnectionRepository {
       WHERE id = $1 AND owner_principal_id = $2
     `;
 
-        const result = await this.db.query(query, [connection_id, principal_id]);
+        const result = await connection_manager.get_db_pool().query(query, [connection_id, principal_id]);
         return result.rows.length > 0;
     }
 
@@ -236,7 +234,7 @@ class ChannelConnectionRepository {
         AND status = 'connected'
     `;
 
-        const result = await this.db.query(query, [principal_id, channel_id]);
+        const result = await connection_manager.get_db_pool().query(query, [principal_id, channel_id]);
         return result.rows[0] || null;
     }
 }

@@ -1,13 +1,11 @@
+const connection_manager = require('../../../../core/infrastructure/connection-manager');
+
 /**
  * Channel Repository
  * 
  * Data access layer for channels table (platform catalog)
  */
 class ChannelRepository {
-    constructor(db_pool) {
-        this.db = db_pool;
-    }
-
     /**
    * Get all active channels
    */
@@ -21,7 +19,7 @@ class ChannelRepository {
       ORDER BY name ASC
     `;
 
-        const result = await this.db.query(query);
+        const result = await connection_manager.get_db_pool().query(query);
         return result.rows;
     }
 
@@ -37,7 +35,7 @@ class ChannelRepository {
       WHERE id = $1
     `;
 
-        const result = await this.db.query(query, [channel_id]);
+        const result = await connection_manager.get_db_pool().query(query, [channel_id]);
         return result.rows[0] || null;
     }
 
@@ -53,7 +51,7 @@ class ChannelRepository {
       WHERE key = $1
     `;
 
-        const result = await this.db.query(query, [key]);
+        const result = await connection_manager.get_db_pool().query(query, [key]);
         return result.rows[0] || null;
     }
 
@@ -67,7 +65,7 @@ class ChannelRepository {
       WHERE id = $1 AND status = 'active'
     `;
 
-        const result = await this.db.query(query, [channel_id]);
+        const result = await connection_manager.get_db_pool().query(query, [channel_id]);
         return result.rows.length > 0;
     }
 }

@@ -34,9 +34,9 @@ function initialize_generation_domain(dependencies) {
     } = dependencies;
 
     // Initialize repositories
-    const post_template_repository = new PostTemplateRepository(db_pool);
-    const generation_session_repository = new GenerationSessionRepository(db_pool);
-    const generation_suggestion_repository = new GenerationSuggestionRepository(db_pool);
+    const post_template_repository = new PostTemplateRepository();
+    const generation_session_repository = new GenerationSessionRepository();
+    const generation_suggestion_repository = new GenerationSuggestionRepository();
 
     // Initialize generator adapter (use mock for now)
     const generator_adapter = new MockGeneratorAdapter();

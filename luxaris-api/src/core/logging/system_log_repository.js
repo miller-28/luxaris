@@ -1,8 +1,6 @@
-class SystemLogRepository {
-    constructor(db_pool) {
-        this.db_pool = db_pool;
-    }
+const connection_manager = require('../infrastructure/connection-manager');
 
+class SystemLogRepository {
     async create(log_data) {
         const query = `
 			INSERT INTO system_logs (
@@ -24,7 +22,7 @@ class SystemLogRepository {
         ];
 
         try {
-            const result = await this.db_pool.query(query, values);
+            const result = await connection_manager.get_db_pool().query(query, values);
             return result.rows[0].id;
         } catch (error) {
             // Fail silently to avoid breaking application
@@ -75,7 +73,7 @@ class SystemLogRepository {
             values.push(filters.limit);
         }
 
-        const result = await this.db_pool.query(query, values);
+        const result = await connection_manager.get_db_pool().query(query, values);
         return result.rows;
     }
 
@@ -84,7 +82,7 @@ class SystemLogRepository {
         cutoff_date.setDate(cutoff_date.getDate() - retention_days);
 
         const query = 'DELETE FROM system_logs WHERE created_at < $1';
-        const result = await this.db_pool.query(query, [cutoff_date]);
+        const result = await connection_manager.get_db_pool().query(query, [cutoff_date]);
         return result.rowCount;
     }
 }

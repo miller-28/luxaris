@@ -1,15 +1,12 @@
 const { Permission } = require('../../domain/models/permission');
+const connection_manager = require('../../../../core/infrastructure/connection-manager');
 
 class PermissionRepository {
-    constructor(db_pool) {
-        this.db_pool = db_pool;
-    }
-
     /**
 	 * Find permission by ID
 	 */
     async find_by_id(permission_id) {
-        const result = await this.db_pool.query(
+        const result = await connection_manager.get_db_pool().query(
             'SELECT * FROM acl_permissions WHERE id = $1',
             [permission_id]
         );
@@ -20,7 +17,7 @@ class PermissionRepository {
 	 * Find permission by resource and action
 	 */
     async find_by_resource_action(resource, action) {
-        const result = await this.db_pool.query(
+        const result = await connection_manager.get_db_pool().query(
             'SELECT * FROM acl_permissions WHERE resource = $1 AND action = $2',
             [resource, action]
         );
@@ -31,7 +28,7 @@ class PermissionRepository {
 	 * Find all permissions
 	 */
     async find_all() {
-        const result = await this.db_pool.query(
+        const result = await connection_manager.get_db_pool().query(
             'SELECT * FROM acl_permissions ORDER BY resource, action'
         );
         return result.rows.map(row => Permission.from_db_row(row));
@@ -41,7 +38,7 @@ class PermissionRepository {
 	 * Find permissions by resource
 	 */
     async find_by_resource(resource) {
-        const result = await this.db_pool.query(
+        const result = await connection_manager.get_db_pool().query(
             'SELECT * FROM acl_permissions WHERE resource = $1 ORDER BY action',
             [resource]
         );
@@ -52,7 +49,7 @@ class PermissionRepository {
 	 * Create new permission
 	 */
     async create(permission_data) {
-        const result = await this.db_pool.query(
+        const result = await connection_manager.get_db_pool().query(
             `INSERT INTO acl_permissions (resource, action, description, conditions)
 			 VALUES ($1, $2, $3, $4)
 			 RETURNING *`,
@@ -91,7 +88,7 @@ class PermissionRepository {
         updates.push('updated_at = NOW()');
         values.push(permission_id);
 
-        const result = await this.db_pool.query(
+        const result = await connection_manager.get_db_pool().query(
             `UPDATE acl_permissions 
 			 SET ${updates.join(', ')}
 			 WHERE id = $${param_index}
@@ -106,7 +103,7 @@ class PermissionRepository {
 	 * Delete permission
 	 */
     async delete(permission_id) {
-        const result = await this.db_pool.query(
+        const result = await connection_manager.get_db_pool().query(
             'DELETE FROM acl_permissions WHERE id = $1 RETURNING *',
             [permission_id]
         );
@@ -117,7 +114,7 @@ class PermissionRepository {
 	 * Check if permission exists
 	 */
     async exists(resource, action) {
-        const result = await this.db_pool.query(
+        const result = await connection_manager.get_db_pool().query(
             'SELECT EXISTS(SELECT 1 FROM acl_permissions WHERE resource = $1 AND action = $2)',
             [resource, action]
         );

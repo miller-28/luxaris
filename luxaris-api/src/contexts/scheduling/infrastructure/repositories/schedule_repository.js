@@ -1,15 +1,12 @@
 const Schedule = require('../models/schedule');
+const connection_manager = require('../../../../core/infrastructure/connection-manager');
 
 class ScheduleRepository {
-    constructor(db_pool) {
-        this.db = db_pool;
-    }
-
-    /**
+/**
    * Create a new schedule
    */
     async create(schedule_data) {
-        const result = await this.db.query(
+        const result = await connection_manager.get_db_pool().query(
             `INSERT INTO schedules (
         post_variant_id, channel_connection_id, run_at, timezone, 
         status, attempt_count
@@ -31,7 +28,7 @@ class ScheduleRepository {
    * Find schedule by ID
    */
     async find_by_id(schedule_id) {
-        const result = await this.db.query(
+        const result = await connection_manager.get_db_pool().query(
             'SELECT * FROM schedules WHERE id = $1',
             [schedule_id]
         );
@@ -97,7 +94,7 @@ class ScheduleRepository {
     `;
         params.push(limit, offset);
 
-        const result = await this.db.query(query, params);
+        const result = await connection_manager.get_db_pool().query(query, params);
         return result.rows.map(row => new Schedule(row));
     }
 
@@ -136,7 +133,7 @@ class ScheduleRepository {
 
         const where_clause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
-        const result = await this.db.query(
+        const result = await connection_manager.get_db_pool().query(
             `SELECT COUNT(*) as total FROM schedules ${where_clause}`,
             params
         );
@@ -148,7 +145,7 @@ class ScheduleRepository {
    * Returns schedules that are pending and past their run_at time
    */
     async find_due_schedules(current_time, limit = 100) {
-        const result = await this.db.query(
+        const result = await connection_manager.get_db_pool().query(
             `SELECT * FROM schedules
        WHERE status = 'pending' AND run_at <= $1
        ORDER BY run_at ASC
@@ -193,7 +190,7 @@ class ScheduleRepository {
       RETURNING *
     `;
 
-        const result = await this.db.query(query, params);
+        const result = await connection_manager.get_db_pool().query(query, params);
         return result.rows[0] ? new Schedule(result.rows[0]) : null;
     }
 
@@ -220,7 +217,7 @@ class ScheduleRepository {
    * Increment attempt count
    */
     async increment_attempt(schedule_id) {
-        const result = await this.db.query(
+        const result = await connection_manager.get_db_pool().query(
             `UPDATE schedules
        SET attempt_count = attempt_count + 1,
            last_attempt_at = CURRENT_TIMESTAMP,
@@ -236,14 +233,14 @@ class ScheduleRepository {
    * Delete schedule
    */
     async delete(schedule_id) {
-        await this.db.query('DELETE FROM schedules WHERE id = $1', [schedule_id]);
+        await connection_manager.get_db_pool().query('DELETE FROM schedules WHERE id = $1', [schedule_id]);
     }
 
     /**
    * Get the post_variant_id for a schedule (for ownership validation)
    */
     async get_post_variant_id(schedule_id) {
-        const result = await this.db.query(
+        const result = await connection_manager.get_db_pool().query(
             'SELECT post_variant_id FROM schedules WHERE id = $1',
             [schedule_id]
         );

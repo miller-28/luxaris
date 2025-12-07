@@ -28,8 +28,8 @@ function initialize_posts_domain(dependencies) {
     } = dependencies;
 
     // Initialize repositories
-    const post_repository = new PostRepository(db_pool);
-    const post_variant_repository = new PostVariantRepository(db_pool);
+    const post_repository = new PostRepository();
+    const post_variant_repository = new PostVariantRepository();
 
     // Initialize services
     const post_service = new PostService(

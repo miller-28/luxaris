@@ -1,16 +1,13 @@
 const { Role } = require('../../domain/models/role');
 const { Permission } = require('../../domain/models/permission');
+const connection_manager = require('../../../../core/infrastructure/connection-manager');
 
 class RoleRepository {
-    constructor(db_pool) {
-        this.db_pool = db_pool;
-    }
-
     /**
 	 * Find role by ID
 	 */
     async find_by_id(role_id) {
-        const result = await this.db_pool.query(
+        const result = await connection_manager.get_db_pool().query(
             'SELECT * FROM acl_roles WHERE id = $1',
             [role_id]
         );
@@ -21,7 +18,7 @@ class RoleRepository {
 	 * Find role by slug
 	 */
     async find_by_slug(slug) {
-        const result = await this.db_pool.query(
+        const result = await connection_manager.get_db_pool().query(
             'SELECT * FROM acl_roles WHERE slug = $1',
             [slug]
         );
@@ -32,7 +29,7 @@ class RoleRepository {
 	 * Find all roles
 	 */
     async find_all() {
-        const result = await this.db_pool.query(
+        const result = await connection_manager.get_db_pool().query(
             'SELECT * FROM acl_roles ORDER BY name'
         );
         return result.rows.map(row => Role.from_db_row(row));
@@ -42,7 +39,7 @@ class RoleRepository {
 	 * Find roles by scope
 	 */
     async find_by_scope(scope) {
-        const result = await this.db_pool.query(
+        const result = await connection_manager.get_db_pool().query(
             'SELECT * FROM acl_roles WHERE scope = $1 ORDER BY name',
             [scope]
         );
@@ -53,7 +50,7 @@ class RoleRepository {
 	 * Create new role
 	 */
     async create(role_data) {
-        const result = await this.db_pool.query(
+        const result = await connection_manager.get_db_pool().query(
             `INSERT INTO acl_roles (name, slug, description, scope)
 			 VALUES ($1, $2, $3, $4)
 			 RETURNING *`,
@@ -97,7 +94,7 @@ class RoleRepository {
         updates.push('updated_at = NOW()');
         values.push(role_id);
 
-        const result = await this.db_pool.query(
+        const result = await connection_manager.get_db_pool().query(
             `UPDATE acl_roles 
 			 SET ${updates.join(', ')}
 			 WHERE id = $${param_index}
@@ -112,7 +109,7 @@ class RoleRepository {
 	 * Delete role
 	 */
     async delete(role_id) {
-        const result = await this.db_pool.query(
+        const result = await connection_manager.get_db_pool().query(
             'DELETE FROM acl_roles WHERE id = $1 RETURNING *',
             [role_id]
         );
@@ -123,7 +120,7 @@ class RoleRepository {
 	 * Check if role exists by slug
 	 */
     async exists(slug) {
-        const result = await this.db_pool.query(
+        const result = await connection_manager.get_db_pool().query(
             'SELECT EXISTS(SELECT 1 FROM acl_roles WHERE slug = $1)',
             [slug]
         );
@@ -134,7 +131,7 @@ class RoleRepository {
 	 * Assign permission to role
 	 */
     async assign_permission(role_id, permission_id) {
-        await this.db_pool.query(
+        await connection_manager.get_db_pool().query(
             `INSERT INTO acl_role_permissions (role_id, permission_id)
 			 VALUES ($1, $2)
 			 ON CONFLICT (role_id, permission_id) DO NOTHING`,
@@ -146,7 +143,7 @@ class RoleRepository {
 	 * Remove permission from role
 	 */
     async remove_permission(role_id, permission_id) {
-        const result = await this.db_pool.query(
+        const result = await connection_manager.get_db_pool().query(
             'DELETE FROM acl_role_permissions WHERE role_id = $1 AND permission_id = $2',
             [role_id, permission_id]
         );
@@ -157,7 +154,7 @@ class RoleRepository {
 	 * Get all permissions for a role
 	 */
     async get_permissions(role_id) {
-        const result = await this.db_pool.query(
+        const result = await connection_manager.get_db_pool().query(
             `SELECT p.* FROM acl_permissions p
 			 JOIN acl_role_permissions rp ON rp.permission_id = p.id
 			 WHERE rp.role_id = $1
@@ -171,7 +168,7 @@ class RoleRepository {
 	 * Check if role has specific permission
 	 */
     async has_permission(role_id, permission_id) {
-        const result = await this.db_pool.query(
+        const result = await connection_manager.get_db_pool().query(
             'SELECT EXISTS(SELECT 1 FROM acl_role_permissions WHERE role_id = $1 AND permission_id = $2)',
             [role_id, permission_id]
         );
@@ -182,7 +179,7 @@ class RoleRepository {
 	 * Replace all permissions for a role
 	 */
     async set_permissions(role_id, permission_ids) {
-        const client = await this.db_pool.connect();
+        const client = await connection_manager.get_db_pool().connect();
         try {
             await client.query('BEGIN');
 

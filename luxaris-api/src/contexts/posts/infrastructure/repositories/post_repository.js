@@ -1,4 +1,5 @@
 const Post = require('../models/post');
+const connection_manager = require('../../../../core/infrastructure/connection-manager');
 
 /**
  * PostRepository
@@ -6,10 +7,6 @@ const Post = require('../models/post');
  * Data access layer for Posts.
  */
 class PostRepository {
-    constructor(db_pool) {
-        this.db_pool = db_pool;
-    }
-
     /**
 	 * Create a new post
 	 */
@@ -30,7 +27,7 @@ class PostRepository {
             JSON.stringify(post_data.metadata || {})
         ];
 
-        const result = await this.db_pool.query(query, values);
+        const result = await connection_manager.get_db_pool().query(query, values);
         return this._map_to_model(result.rows[0]);
     }
 
@@ -39,7 +36,7 @@ class PostRepository {
 	 */
     async find_by_id(post_id) {
         const query = 'SELECT * FROM posts WHERE id = $1';
-        const result = await this.db_pool.query(query, [post_id]);
+        const result = await connection_manager.get_db_pool().query(query, [post_id]);
 		
         if (result.rows.length === 0) {
             return null;
@@ -79,7 +76,7 @@ class PostRepository {
         query += ` LIMIT $${param_index} OFFSET $${param_index + 1}`;
         params.push(limit, offset);
 
-        const result = await this.db_pool.query(query, params);
+        const result = await connection_manager.get_db_pool().query(query, params);
         return result.rows.map(row => this._map_to_model(row));
     }
 
@@ -105,8 +102,8 @@ class PostRepository {
             param_index++;
         }
 
-        const result = await this.db_pool.query(query, params);
-        return parseInt(result.rows[0].count, 10);
+        const result = await connection_manager.get_db_pool().query(query, params);
+        return parseInt(result.rows[0].count);
     }
 
     /**
@@ -168,7 +165,7 @@ class PostRepository {
 		`;
         params.push(post_id);
 
-        const result = await this.db_pool.query(query, params);
+        const result = await connection_manager.get_db_pool().query(query, params);
         return this._map_to_model(result.rows[0]);
     }
 
@@ -183,7 +180,7 @@ class PostRepository {
 			RETURNING *
 		`;
 
-        const result = await this.db_pool.query(query, [status, post_id]);
+        const result = await connection_manager.get_db_pool().query(query, [status, post_id]);
         return this._map_to_model(result.rows[0]);
     }
 
@@ -192,7 +189,7 @@ class PostRepository {
 	 */
     async delete(post_id) {
         const query = 'DELETE FROM posts WHERE id = $1';
-        await this.db_pool.query(query, [post_id]);
+        await connection_manager.get_db_pool().query(query, [post_id]);
         return true;
     }
 

@@ -2,7 +2,7 @@ const RequestLogRepository = require('./request_log_repository');
 
 class RequestLogger {
     constructor(db_pool) {
-        this.repository = db_pool ? new RequestLogRepository(db_pool) : null;
+        this.repository = db_pool ? new RequestLogRepository() : null;
     }
 
     middleware() {

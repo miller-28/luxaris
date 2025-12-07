@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const AclService = require('../../../contexts/system/application/services/acl_service');
 
 function create_auth_middleware(user_repository, config) {
-    const acl_service = new AclService(user_repository.db_pool);
+    const acl_service = new AclService();
 	
     return async function auth_middleware(req, res, next) {
         try {

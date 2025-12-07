@@ -15,6 +15,9 @@ exports.setup = function(options, seedLink) {
 };
 
 exports.up = async function(db) {
+
+	  const schema = process.env.DB_SCHEMA || 'luxaris';
+
     // Convert all TIMESTAMP columns to TIMESTAMP WITH TIME ZONE (TIMESTAMPTZ)
     // All existing data is assumed to be in UTC (as per application design)
     // Each table is wrapped in try-catch to handle tables that may not exist yet
@@ -22,13 +25,12 @@ exports.up = async function(db) {
     // Identity tables - users
     try {
         await db.runSql(`
-      ALTER TABLE users 
+      ALTER TABLE ${schema}.users 
         ALTER COLUMN approved_at TYPE TIMESTAMP WITH TIME ZONE,
         ALTER COLUMN created_at TYPE TIMESTAMP WITH TIME ZONE,
         ALTER COLUMN updated_at TYPE TIMESTAMP WITH TIME ZONE,
         ALTER COLUMN last_login_at TYPE TIMESTAMP WITH TIME ZONE;
     `);
-        console.log('✓ Converted users table timestamps');
     } catch (err) {
         console.log('✗ Skipping users table:', err.message);
     }
@@ -36,11 +38,10 @@ exports.up = async function(db) {
     // OAuth Providers
     try {
         await db.runSql(`
-      ALTER TABLE oauth_providers
+      ALTER TABLE ${schema}.oauth_providers
         ALTER COLUMN created_at TYPE TIMESTAMP WITH TIME ZONE,
         ALTER COLUMN updated_at TYPE TIMESTAMP WITH TIME ZONE;
     `);
-        console.log('✓ Converted oauth_providers table timestamps');
     } catch (err) {
         console.log('✗ Skipping oauth_providers table:', err.message);
     }
@@ -48,13 +49,12 @@ exports.up = async function(db) {
     // OAuth Accounts
     try {
         await db.runSql(`
-      ALTER TABLE oauth_accounts
+      ALTER TABLE ${schema}.oauth_accounts
         ALTER COLUMN token_expires_at TYPE TIMESTAMP WITH TIME ZONE,
         ALTER COLUMN created_at TYPE TIMESTAMP WITH TIME ZONE,
         ALTER COLUMN updated_at TYPE TIMESTAMP WITH TIME ZONE,
         ALTER COLUMN last_used_at TYPE TIMESTAMP WITH TIME ZONE;
     `);
-        console.log('✓ Converted oauth_accounts table timestamps');
     } catch (err) {
         console.log('✗ Skipping oauth_accounts table:', err.message);
     }
@@ -62,11 +62,10 @@ exports.up = async function(db) {
     // Service Accounts
     try {
         await db.runSql(`
-      ALTER TABLE service_accounts
+      ALTER TABLE ${schema}.service_accounts
         ALTER COLUMN created_at TYPE TIMESTAMP WITH TIME ZONE,
         ALTER COLUMN updated_at TYPE TIMESTAMP WITH TIME ZONE;
     `);
-        console.log('✓ Converted service_accounts table timestamps');
     } catch (err) {
         console.log('✗ Skipping service_accounts table:', err.message);
     }
@@ -74,12 +73,11 @@ exports.up = async function(db) {
     // API Keys
     try {
         await db.runSql(`
-      ALTER TABLE api_keys
+      ALTER TABLE ${schema}.api_keys
         ALTER COLUMN created_at TYPE TIMESTAMP WITH TIME ZONE,
         ALTER COLUMN revoked_at TYPE TIMESTAMP WITH TIME ZONE,
         ALTER COLUMN last_used_at TYPE TIMESTAMP WITH TIME ZONE;
     `);
-        console.log('✓ Converted api_keys table timestamps');
     } catch (err) {
         console.log('✗ Skipping api_keys table:', err.message);
     }
@@ -87,11 +85,10 @@ exports.up = async function(db) {
     // Sessions
     try {
         await db.runSql(`
-      ALTER TABLE sessions
+      ALTER TABLE ${schema}.sessions
         ALTER COLUMN created_at TYPE TIMESTAMP WITH TIME ZONE,
         ALTER COLUMN expires_at TYPE TIMESTAMP WITH TIME ZONE;
     `);
-        console.log('✓ Converted sessions table timestamps');
     } catch (err) {
         console.log('✗ Skipping sessions table:', err.message);
     }
@@ -99,11 +96,10 @@ exports.up = async function(db) {
     // System Logs
     try {
         await db.runSql(`
-      ALTER TABLE system_logs
+      ALTER TABLE ${schema}.system_logs
         ALTER COLUMN timestamp TYPE TIMESTAMP WITH TIME ZONE,
         ALTER COLUMN created_at TYPE TIMESTAMP WITH TIME ZONE;
     `);
-        console.log('✓ Converted system_logs table timestamps');
     } catch (err) {
         console.log('✗ Skipping system_logs table:', err.message);
     }
@@ -111,11 +107,10 @@ exports.up = async function(db) {
     // System Events
     try {
         await db.runSql(`
-      ALTER TABLE system_events
+      ALTER TABLE ${schema}.system_events
         ALTER COLUMN timestamp TYPE TIMESTAMP WITH TIME ZONE,
         ALTER COLUMN created_at TYPE TIMESTAMP WITH TIME ZONE;
     `);
-        console.log('✓ Converted system_events table timestamps');
     } catch (err) {
         console.log('✗ Skipping system_events table:', err.message);
     }
@@ -123,11 +118,10 @@ exports.up = async function(db) {
     // Request Logs
     try {
         await db.runSql(`
-      ALTER TABLE request_logs
+      ALTER TABLE ${schema}.request_logs
         ALTER COLUMN timestamp TYPE TIMESTAMP WITH TIME ZONE,
         ALTER COLUMN created_at TYPE TIMESTAMP WITH TIME ZONE;
     `);
-        console.log('✓ Converted request_logs table timestamps');
     } catch (err) {
         console.log('✗ Skipping request_logs table:', err.message);
     }
@@ -135,133 +129,125 @@ exports.up = async function(db) {
     // Audit Logs
     try {
         await db.runSql(`
-      ALTER TABLE audit_logs
+      ALTER TABLE ${schema}.audit_logs
         ALTER COLUMN timestamp TYPE TIMESTAMP WITH TIME ZONE,
         ALTER COLUMN created_at TYPE TIMESTAMP WITH TIME ZONE;
     `);
-        console.log('✓ Converted audit_logs table timestamps');
     } catch (err) {
         console.log('✗ Skipping audit_logs table:', err.message);
     }
 
-    console.log('✓ Successfully completed timestamp normalization migration');
     return null;
 };
 
 exports.down = async function(db) {
+	
+    const schema = process.env.DB_SCHEMA || 'luxaris';
+
     // Revert all columns back to TIMESTAMP (without time zone)
     // This is not recommended in production as timezone information will be lost
   
     // Identity tables
     await db.runSql(`
-    ALTER TABLE users 
+    ALTER TABLE ${schema}.users 
       ALTER COLUMN approved_at TYPE TIMESTAMP,
       ALTER COLUMN created_at TYPE TIMESTAMP,
       ALTER COLUMN updated_at TYPE TIMESTAMP,
       ALTER COLUMN last_login_at TYPE TIMESTAMP;
     
-    ALTER TABLE oauth_providers
+    ALTER TABLE ${schema}.oauth_providers
       ALTER COLUMN created_at TYPE TIMESTAMP,
       ALTER COLUMN updated_at TYPE TIMESTAMP;
     
-    ALTER TABLE oauth_accounts
+    ALTER TABLE ${schema}.oauth_accounts
       ALTER COLUMN token_expires_at TYPE TIMESTAMP,
       ALTER COLUMN created_at TYPE TIMESTAMP,
       ALTER COLUMN updated_at TYPE TIMESTAMP,
       ALTER COLUMN last_used_at TYPE TIMESTAMP;
     
-    ALTER TABLE service_accounts
+    ALTER TABLE ${schema}.service_accounts
       ALTER COLUMN created_at TYPE TIMESTAMP,
       ALTER COLUMN updated_at TYPE TIMESTAMP;
     
-    ALTER TABLE api_keys
+    ALTER TABLE ${schema}.api_keys
       ALTER COLUMN created_at TYPE TIMESTAMP,
       ALTER COLUMN revoked_at TYPE TIMESTAMP,
       ALTER COLUMN last_used_at TYPE TIMESTAMP;
     
-    ALTER TABLE sessions
+    ALTER TABLE ${schema}.sessions
       ALTER COLUMN created_at TYPE TIMESTAMP,
       ALTER COLUMN expires_at TYPE TIMESTAMP;
   `);
 
     await db.runSql(`
-    ALTER TABLE acl_resources
-      ALTER COLUMN created_at TYPE TIMESTAMP,
-      ALTER COLUMN updated_at TYPE TIMESTAMP;
-    
-    ALTER TABLE acl_actions
-      ALTER COLUMN created_at TYPE TIMESTAMP,
-      ALTER COLUMN updated_at TYPE TIMESTAMP;
-    
-    ALTER TABLE acl_permissions
+    ALTER TABLE ${schema}.acl_permissions
       ALTER COLUMN created_at TYPE TIMESTAMP;
     
-    ALTER TABLE acl_roles
+    ALTER TABLE ${schema}.acl_roles
       ALTER COLUMN created_at TYPE TIMESTAMP,
       ALTER COLUMN updated_at TYPE TIMESTAMP;
   `);
 
     await db.runSql(`
-    ALTER TABLE system_logs
+    ALTER TABLE ${schema}.system_logs
       ALTER COLUMN timestamp TYPE TIMESTAMP,
       ALTER COLUMN created_at TYPE TIMESTAMP;
     
-    ALTER TABLE system_events
+    ALTER TABLE ${schema}.system_events
       ALTER COLUMN timestamp TYPE TIMESTAMP,
       ALTER COLUMN created_at TYPE TIMESTAMP;
     
-    ALTER TABLE request_logs
+    ALTER TABLE ${schema}.request_logs
       ALTER COLUMN timestamp TYPE TIMESTAMP,
       ALTER COLUMN created_at TYPE TIMESTAMP;
     
-    ALTER TABLE audit_logs
+    ALTER TABLE ${schema}.audit_logs
       ALTER COLUMN timestamp TYPE TIMESTAMP,
       ALTER COLUMN created_at TYPE TIMESTAMP;
   `);
 
     await db.runSql(`
-    ALTER TABLE feature_flags
+    ALTER TABLE ${schema}.feature_flags
       ALTER COLUMN created_at TYPE TIMESTAMP,
       ALTER COLUMN updated_at TYPE TIMESTAMP;
   `);
 
     await db.runSql(`
-    ALTER TABLE channels
+    ALTER TABLE ${schema}.channels
       ALTER COLUMN created_at TYPE TIMESTAMP,
       ALTER COLUMN updated_at TYPE TIMESTAMP;
     
-    ALTER TABLE channel_connections
-      ALTER COLUMN token_expires_at TYPE TIMESTAMP,
+    ALTER TABLE ${schema}.channel_connections
       ALTER COLUMN created_at TYPE TIMESTAMP,
       ALTER COLUMN updated_at TYPE TIMESTAMP,
-      ALTER COLUMN last_sync_at TYPE TIMESTAMP;
+      ALTER COLUMN last_used_at TYPE TIMESTAMP,
+      ALTER COLUMN disconnected_at TYPE TIMESTAMP;
   `);
 
     await db.runSql(`
-    ALTER TABLE posts
+    ALTER TABLE ${schema}.posts
       ALTER COLUMN created_at TYPE TIMESTAMP,
       ALTER COLUMN updated_at TYPE TIMESTAMP;
     
-    ALTER TABLE post_variants
+    ALTER TABLE ${schema}.post_variants
       ALTER COLUMN created_at TYPE TIMESTAMP,
       ALTER COLUMN updated_at TYPE TIMESTAMP,
       ALTER COLUMN published_at TYPE TIMESTAMP;
   `);
 
     await db.runSql(`
-    ALTER TABLE post_templates
+    ALTER TABLE ${schema}.post_templates
       ALTER COLUMN created_at TYPE TIMESTAMP,
       ALTER COLUMN updated_at TYPE TIMESTAMP;
     
-    ALTER TABLE generation_sessions
+    ALTER TABLE ${schema}.generation_sessions
       ALTER COLUMN created_at TYPE TIMESTAMP,
       ALTER COLUMN updated_at TYPE TIMESTAMP;
     
-    ALTER TABLE generation_suggestions
+    ALTER TABLE ${schema}.generation_suggestions
       ALTER COLUMN created_at TYPE TIMESTAMP;
   `);
 
-    console.log('Reverted all TIMESTAMP WITH TIME ZONE columns back to TIMESTAMP');
 };
 
 exports._meta = {

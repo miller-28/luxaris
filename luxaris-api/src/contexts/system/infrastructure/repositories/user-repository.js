@@ -1,10 +1,7 @@
 const { User, UserStatus } = require('../../domain/models/user');
+const connection_manager = require('../../../../core/infrastructure/connection-manager');
 
 class UserRepository {
-    constructor(db_pool) {
-        this.db_pool = db_pool;
-    }
-
     async create(user_data) {
         const query = `
 			INSERT INTO users (
@@ -26,13 +23,13 @@ class UserRepository {
             user_data.locale || 'en'
         ];
 
-        const result = await this.db_pool.query(query, values);
+        const result = await connection_manager.get_db_pool().query(query, values);
         return new User(result.rows[0]);
     }
 
     async find_by_id(user_id) {
         const query = 'SELECT * FROM users WHERE id = $1';
-        const result = await this.db_pool.query(query, [user_id]);
+        const result = await connection_manager.get_db_pool().query(query, [user_id]);
 
         if (result.rows.length === 0) {
             return null;
@@ -43,7 +40,7 @@ class UserRepository {
 
     async find_by_email(email) {
         const query = 'SELECT * FROM users WHERE email = $1';
-        const result = await this.db_pool.query(query, [email.toLowerCase()]);
+        const result = await connection_manager.get_db_pool().query(query, [email.toLowerCase()]);
 
         if (result.rows.length === 0) {
             return null;
@@ -54,13 +51,13 @@ class UserRepository {
 
     async email_exists(email) {
         const query = 'SELECT COUNT(*) as count FROM users WHERE email = $1';
-        const result = await this.db_pool.query(query, [email.toLowerCase()]);
+        const result = await connection_manager.get_db_pool().query(query, [email.toLowerCase()]);
         return parseInt(result.rows[0].count) > 0;
     }
 
     async count_users() {
         const query = 'SELECT COUNT(*) as count FROM users';
-        const result = await this.db_pool.query(query);
+        const result = await connection_manager.get_db_pool().query(query);
         return parseInt(result.rows[0].count);
     }
 
@@ -126,7 +123,7 @@ class UserRepository {
 			RETURNING *
 		`;
 
-        const result = await this.db_pool.query(query, values);
+        const result = await connection_manager.get_db_pool().query(query, values);
 		
         if (result.rows.length === 0) {
             return null;
@@ -137,7 +134,7 @@ class UserRepository {
 
     async delete(user_id) {
         const query = 'DELETE FROM users WHERE id = $1';
-        await this.db_pool.query(query, [user_id]);
+        await connection_manager.get_db_pool().query(query, [user_id]);
     }
 
     async find_all(filters = {}) {
@@ -172,7 +169,7 @@ class UserRepository {
             values.push(filters.offset);
         }
 
-        const result = await this.db_pool.query(query, values);
+        const result = await connection_manager.get_db_pool().query(query, values);
         return result.rows.map(row => new User(row));
     }
 }

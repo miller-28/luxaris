@@ -2,7 +2,7 @@ const { z } = require('zod');
 
 // Validation schemas
 const PermissionSchema = z.object({
-    id: z.string().uuid(),
+    id: z.number().int().positive(),
     resource: z.string().min(1).max(100),
     action: z.string().min(1).max(50),
     condition: z.record(z.any()).optional().nullable(),

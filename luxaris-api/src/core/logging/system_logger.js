@@ -1,9 +1,10 @@
 const winston = require('winston');
 const SystemLogRepository = require('./system_log_repository');
+const connection_manager = require('../infrastructure/connection-manager');
 
 class SystemLogger {
-    constructor(db_pool) {
-        this.repository = db_pool ? new SystemLogRepository(db_pool) : null;
+    constructor() {
+        this.repository = connection_manager.is_initialized() ? new SystemLogRepository() : null;
 		
         // Winston logger for console output
         this.winston = winston.createLogger({
@@ -101,9 +102,9 @@ let instance = null;
 
 module.exports = {
     SystemLogger,
-    get_logger: (db_pool) => {
+    get_logger: () => {
         if (!instance) {
-            instance = new SystemLogger(db_pool);
+            instance = new SystemLogger();
         }
         return instance;
     }

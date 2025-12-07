@@ -1,7 +1,7 @@
+const connection_manager = require('../../infrastructure/connection-manager');
+
 class RequestLogRepository {
-    constructor(db_pool) {
-        this.db_pool = db_pool;
-    }
+    
 
     async create(log_data) {
         const query = `
@@ -33,7 +33,7 @@ class RequestLogRepository {
         ];
 
         try {
-            const result = await this.db_pool.query(query, values);
+            const result = await connection_manager.get_db_pool().query(query, values);
             return result.rows[0].id;
         } catch (error) {
             console.error('Failed to create request log:', error.message);
@@ -88,7 +88,7 @@ class RequestLogRepository {
             values.push(filters.limit);
         }
 
-        const result = await this.db_pool.query(query, values);
+        const result = await connection_manager.get_db_pool().query(query, values);
         return result.rows;
     }
 
@@ -106,7 +106,7 @@ class RequestLogRepository {
 			LIMIT ${options.limit || 10}
 		`;
 
-        const avg_result = await this.db_pool.query(avg_query);
+        const avg_result = await connection_manager.get_db_pool().query(avg_query);
 
         // Request count by status code
         const status_query = `
@@ -119,7 +119,7 @@ class RequestLogRepository {
 			ORDER BY count DESC
 		`;
 
-        const status_result = await this.db_pool.query(status_query);
+        const status_result = await connection_manager.get_db_pool().query(status_query);
 
         return {
             avg_duration_by_path: avg_result.rows,
@@ -132,9 +132,10 @@ class RequestLogRepository {
         cutoff_date.setDate(cutoff_date.getDate() - retention_days);
 
         const query = 'DELETE FROM request_logs WHERE created_at < $1';
-        const result = await this.db_pool.query(query, [cutoff_date]);
+        const result = await connection_manager.get_db_pool().query(query, [cutoff_date]);
         return result.rowCount;
     }
 }
 
 module.exports = RequestLogRepository;
+

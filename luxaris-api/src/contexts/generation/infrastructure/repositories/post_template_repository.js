@@ -1,9 +1,7 @@
-class PostTemplateRepository {
-    constructor(db_pool) {
-        this.db = db_pool;
-    }
+const connection_manager = require('../../../../core/infrastructure/connection-manager');
 
-    /**
+class PostTemplateRepository {
+/**
    * Create a new post template
    */
     async create(template_data) {
@@ -25,7 +23,7 @@ class PostTemplateRepository {
             JSON.stringify(template_data.constraints || {})
         ];
     
-        const result = await this.db.query(query, values);
+        const result = await connection_manager.get_db_pool().query(query, values);
         return result.rows[0];
     }
 
@@ -34,7 +32,7 @@ class PostTemplateRepository {
    */
     async find_by_id(template_id) {
         const query = 'SELECT * FROM post_templates WHERE id = $1';
-        const result = await this.db.query(query, [template_id]);
+        const result = await connection_manager.get_db_pool().query(query, [template_id]);
         return result.rows[0] || null;
     }
 
@@ -76,7 +74,7 @@ class PostTemplateRepository {
             values.push(filters.offset);
         }
 
-        const result = await this.db.query(query, values);
+        const result = await connection_manager.get_db_pool().query(query, values);
         return result.rows;
     }
 
@@ -100,7 +98,7 @@ class PostTemplateRepository {
             values.push(filters.default_channel_id);
         }
 
-        const result = await this.db.query(query, values);
+        const result = await connection_manager.get_db_pool().query(query, values);
         return parseInt(result.rows[0].count);
     }
 
@@ -160,7 +158,7 @@ class PostTemplateRepository {
       RETURNING *
     `;
 
-        const result = await this.db.query(query, values);
+        const result = await connection_manager.get_db_pool().query(query, values);
         return result.rows[0] || null;
     }
 
@@ -169,7 +167,7 @@ class PostTemplateRepository {
    */
     async delete(template_id) {
         const query = 'DELETE FROM post_templates WHERE id = $1 RETURNING id';
-        const result = await this.db.query(query, [template_id]);
+        const result = await connection_manager.get_db_pool().query(query, [template_id]);
         return result.rowCount > 0;
     }
 
@@ -178,7 +176,7 @@ class PostTemplateRepository {
    */
     async get_owner_principal_id(template_id) {
         const query = 'SELECT owner_principal_id FROM post_templates WHERE id = $1';
-        const result = await this.db.query(query, [template_id]);
+        const result = await connection_manager.get_db_pool().query(query, [template_id]);
         return result.rows[0]?.owner_principal_id || null;
     }
 }

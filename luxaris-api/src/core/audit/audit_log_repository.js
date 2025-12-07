@@ -1,7 +1,7 @@
+const connection_manager = require('../infrastructure/connection-manager');
+
 class AuditLogRepository {
-    constructor(db_pool) {
-        this.db_pool = db_pool;
-    }
+    
 
     async create(audit_data) {
         const query = `
@@ -25,7 +25,7 @@ class AuditLogRepository {
             audit_data.data ? JSON.stringify(audit_data.data) : null
         ];
 
-        const result = await this.db_pool.query(query, values);
+        const result = await connection_manager.get_db_pool().query(query, values);
         return result.rows[0].id;
     }
 
@@ -76,9 +76,10 @@ class AuditLogRepository {
             values.push(filters.limit);
         }
 
-        const result = await this.db_pool.query(query, values);
+        const result = await connection_manager.get_db_pool().query(query, values);
         return result.rows;
     }
 }
 
 module.exports = AuditLogRepository;
+

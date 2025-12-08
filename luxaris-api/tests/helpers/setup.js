@@ -25,8 +25,7 @@ expect.extend({
     }
 });
 
-// Clean up after all tests
+// will work for each test file separately
 afterAll(async () => {
-    // Close database connections, etc.
-    // Will be implemented when database pool is created
+    
 });

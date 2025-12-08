@@ -1,7 +1,6 @@
 const TestServer = require('../../helpers/test-server');
 const DbCleaner = require('../../helpers/db-cleaner');
 const request = require('supertest');
-const { create_database_pool } = require('../../../src/connections/database');
 
 describe('System Context - UI Presets', () => {
     let test_server;
@@ -15,11 +14,11 @@ describe('System Context - UI Presets', () => {
     let editor_role_id;
 
     beforeAll(async () => {
-        db_pool = create_database_pool();
-        db_cleaner = new DbCleaner(db_pool);
         test_server = new TestServer();
         await test_server.start();
         app = test_server.get_app();
+        db_pool = test_server.db_pool;
+        db_cleaner = new DbCleaner(db_pool);
 
         const admin_email = 'admin' + Date.now() + '@preset-test.com';
         const admin_response = await request(app).post('/api/v1/auth/register').send({
@@ -59,8 +58,8 @@ describe('System Context - UI Presets', () => {
         await db_cleaner.clean_table_where('user_ui_stateful_presets', 'user_id IN ($1, $2)', [admin_user_id, normal_user_id]);
         await db_cleaner.clean_users_by_ids([admin_user_id, normal_user_id]);
         
-        if (test_server) await test_server.stop();
-        if (db_pool) await db_pool.end();
+        if (test_server) 
+            await test_server.stop();
     });
 
     beforeEach(async () => {

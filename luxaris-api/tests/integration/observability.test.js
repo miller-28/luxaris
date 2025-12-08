@@ -1,6 +1,6 @@
 const TestServer = require('../helpers/test-server');
+const DbCleaner = require('../helpers/db-cleaner');
 const request = require('supertest');
-const { create_database_pool } = require('../../src/connections/database');
 const { get_logger } = require('../../src/core/logging/system_logger');
 const EventRegistry = require('../../src/core/events/event-registry');
 const { get_request_logger } = require('../../src/core/http/middleware/request_logger');
@@ -11,18 +11,20 @@ describe('Observability Layer', () => {
     let test_server;
     let app;
     let db_pool;
+    let db_cleaner;
     let system_logger;
     let event_registry;
     let request_logger;
     let audit_service;
 
     beforeAll(async () => {
-        // Initialize database pool
-        db_pool = create_database_pool();
-
         // Start test server
         test_server = new TestServer();
         app = await test_server.start();
+        db_pool = test_server.db_pool;
+        
+        // Initialize database cleaner
+        db_cleaner = new DbCleaner(db_pool);
 
         // Initialize observability components
         system_logger = get_logger(db_pool);
@@ -33,26 +35,29 @@ describe('Observability Layer', () => {
 
     afterAll(async () => {
         await test_server.stop();
-        await db_pool.end();
     });
 
     beforeEach(async () => {
         // Clean up observability tables
-        await db_pool.query('DELETE FROM audit_logs');
-        await db_pool.query('DELETE FROM request_logs');
-        await db_pool.query('DELETE FROM system_events');
-        await db_pool.query('DELETE FROM system_logs');
-        await db_pool.query('DELETE FROM sessions');
-        await db_pool.query('DELETE FROM users');
+        await db_cleaner.clean_tables([
+            'audit_logs',
+            'request_logs',
+            'system_events',
+            'system_logs',
+            'sessions',
+            'users'
+        ]);
     });
 
     afterEach(async () => {
         // Clean up after tests
-        await db_pool.query('DELETE FROM audit_logs');
-        await db_pool.query('DELETE FROM request_logs');
-        await db_pool.query('DELETE FROM system_events');
-        await db_pool.query('DELETE FROM system_logs');
-        await db_pool.query('DELETE FROM users');
+        await db_cleaner.clean_tables([
+            'audit_logs',
+            'request_logs',
+            'system_events',
+            'system_logs',
+            'users'
+        ]);
     });
 
     describe('SystemLogger', () => {

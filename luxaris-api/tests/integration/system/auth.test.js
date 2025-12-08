@@ -1,7 +1,6 @@
 const TestServer = require('../../helpers/test-server');
 const DbCleaner = require('../../helpers/db-cleaner');
 const request = require('supertest');
-const { create_database_pool } = require('../../../src/connections/database');
 
 describe('System Context - Authentication', () => {
     let test_server;
@@ -10,12 +9,10 @@ describe('System Context - Authentication', () => {
     let db_cleaner;
 
     beforeAll(async () => {
-        // Initialize database pool
-        db_pool = create_database_pool();
-
         // Start test server
         test_server = new TestServer();
         app = await test_server.start();
+        db_pool = test_server.db_pool;
         
         // Initialize database cleaner
         db_cleaner = new DbCleaner(db_pool);
@@ -23,7 +20,6 @@ describe('System Context - Authentication', () => {
 
     afterAll(async () => {
         await test_server.stop();
-        await db_pool.end();
     });
 
     beforeEach(async () => {

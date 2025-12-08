@@ -1,6 +1,5 @@
 const TestServer = require('../helpers/test-server');
 const request = require('supertest');
-const { create_database_pool } = require('../../src/connections/database');
 
 describe('Operations & System Management', () => {
     let test_server;
@@ -8,14 +7,13 @@ describe('Operations & System Management', () => {
     let db_pool;
 
     beforeAll(async () => {
-        db_pool = create_database_pool();
         test_server = new TestServer();
         app = await test_server.start();
+        db_pool = test_server.db_pool;
     });
 
     afterAll(async () => {
         await test_server.stop();
-        await db_pool.end();
     });
 
     beforeEach(async () => {

@@ -183,10 +183,12 @@ class ConnectionManager {
     /**
      * Gracefully shutdown all connections
      * Should be called during application shutdown
+     * Closes database pool, cache client, and queue connection
      */
     async shutdown() {
         const errors = [];
 
+        // Close database pool
         if (this._db_pool) {
             try {
                 await this._db_pool.end();
@@ -196,6 +198,7 @@ class ConnectionManager {
             }
         }
 
+        // Close cache client
         if (this._cache_client) {
             try {
                 this._cache_client.end();
@@ -205,11 +208,17 @@ class ConnectionManager {
             }
         }
 
+        // Close queue connection
         if (this._queue_connection) {
             try {
+                // Remove event listeners before closing to prevent hanging
+                this._queue_connection.removeAllListeners();
+                if (this._queue_channel) {
+                    await this._queue_channel.close();
+                    this._queue_channel = null;
+                }
                 await this._queue_connection.close();
                 this._queue_connection = null;
-                this._queue_channel = null;
             } catch (error) {
                 errors.push({ connection: 'queue', error });
             }
@@ -220,6 +229,11 @@ class ConnectionManager {
         if (errors.length > 0) {
             const error = new Error('Failed to shutdown some connections');
             error.details = errors;
+            console.error('Shutdown errors:', JSON.stringify(errors.map(e => ({
+                connection: e.connection,
+                message: e.error.message,
+                code: e.error.code
+            })), null, 2));
             throw error;
         }
     }

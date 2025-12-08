@@ -1,7 +1,6 @@
 const TestServer = require('../../helpers/test-server');
 const DbCleaner = require('../../helpers/db-cleaner');
 const request = require('supertest');
-const { create_database_pool } = require('../../../src/connections/database');
 
 describe('Posts Integration Tests', () => {
     let test_server;
@@ -12,18 +11,16 @@ describe('Posts Integration Tests', () => {
     let normal_token;
 
     beforeAll(async () => {
-        // Initialize database pool
-        db_pool = create_database_pool();
+        // Start test server
+        test_server = new TestServer();
+        app = await test_server.start();
+        db_pool = test_server.db_pool;
 
         // Initialize database cleaner
         db_cleaner = new DbCleaner(db_pool);
 
         // Clean up any existing test users
         await db_cleaner.clean_users_by_emails(['root@posts-test.com', 'normal@posts-test.com']);
-
-        // Start test server
-        test_server = new TestServer();
-        app = await test_server.start();
 
         // Register root user and get token
         const root_response = await request(app)
@@ -50,7 +47,6 @@ describe('Posts Integration Tests', () => {
 
     afterAll(async () => {
         await test_server.stop();
-        await db_pool.end();
     });
 
     beforeEach(async () => {

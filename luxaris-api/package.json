@@ -11,9 +11,9 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "node --watch src/index.js",
-    "test": "jest --runInBand --forceExit",
-    "test:watch": "jest --watch --runInBand",
-    "test:coverage": "jest --coverage --runInBand --forceExit",
+    "test": "jest --runInBand --verbose",
+    "test:watch": "jest --watch --runInBand --verbose",
+    "test:coverage": "jest --coverage --runInBand --verbose",
     "test:coverage:open": "npm run test:coverage && start coverage/index.html",
     "lint": "eslint .",
     "lint:report": "eslint . --output-file eslint-report.txt --no-color",
@@ -60,6 +60,7 @@
     "eslint": "^9.39.1",
     "globals": "^16.5.0",
     "jest": "^30.2.0",
+    "jest-junit": "^16.0.0",
     "nock": "^14.0.10",
     "supertest": "^7.1.4"
   },
@@ -69,6 +70,7 @@
     "setupFilesAfterEnv": [
       "<rootDir>/tests/helpers/setup.js"
     ],
+    "globalTeardown": "<rootDir>/tests/helpers/teardown.js",
     "testMatch": [
       "**/tests/**/*.test.js"
     ],
@@ -81,6 +83,10 @@
       "text",
       "lcov",
       "html"
+    ],
+    "reporters": [
+      "default",
+      "<rootDir>/tests/helpers/summary-reporter.js"
     ]
   },
   "engines": {

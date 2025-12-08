@@ -1,7 +1,6 @@
 const TestServer = require('../helpers/test-server');
 const DbCleaner = require('../helpers/db-cleaner');
 const request = require('supertest');
-const { create_database_pool } = require('../../src/connections/database');
 const { User } = require('../../src/contexts/system/domain/models/user');
 const RoleRepository = require('../../src/contexts/system/infrastructure/persistence/role_repository');
 const PermissionRepository = require('../../src/contexts/system/infrastructure/persistence/permission_repository');
@@ -26,12 +25,10 @@ describe('ACL Integration Tests', () => {
     let viewer_role;
 
     beforeAll(async () => {
-        // Initialize database pool
-        db_pool = create_database_pool();
-
         // Start test server
         test_server = new TestServer();
         app = await test_server.start();
+        db_pool = test_server.db_pool;
         
         // Initialize database cleaner
         db_cleaner = new DbCleaner(db_pool);
@@ -100,7 +97,6 @@ describe('ACL Integration Tests', () => {
 
     afterAll(async () => {
         await test_server.stop();
-        await db_pool.end();
     });
 
     describe('Root User Permissions', () => {

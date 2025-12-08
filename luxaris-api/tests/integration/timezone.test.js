@@ -1,6 +1,5 @@
 const TestServer = require('../helpers/test-server');
 const request = require('supertest');
-const { create_database_pool } = require('../../src/connections/database');
 
 describe('Timezone Handling', () => {
     let test_server;
@@ -12,9 +11,9 @@ describe('Timezone Handling', () => {
     let schedule_id;
 
     beforeAll(async () => {
-        db_pool = create_database_pool();
         test_server = new TestServer();
-        await test_server.start();
+        app = await test_server.start();
+        db_pool = test_server.db_pool;
         app = test_server.get_app();
 
         const response = await request(app).post('/api/v1/auth/register').send({
@@ -34,7 +33,6 @@ describe('Timezone Handling', () => {
 
     afterAll(async () => {
         if (test_server) await test_server.stop();
-        if (db_pool) await db_pool.end();
     });
 
     describe('User Timezone Defaults', () => {

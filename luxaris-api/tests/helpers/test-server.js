@@ -31,6 +31,7 @@ const { initialize_generation_domain } = require('../../src/contexts/generation'
 const { initialize_scheduling_domain } = require('../../src/contexts/scheduling');
 
 class TestServer {
+
     constructor() {
         this.server = null;
         this.app = null;
@@ -244,8 +245,7 @@ class TestServer {
         if (this.server) {
             await this.server.stop();
         }
-        // Connection manager shutdown handled globally if needed
-        // Individual tests may want to keep connections alive between tests
+        await connection_manager.shutdown();
     }
 
     get db_pool() {

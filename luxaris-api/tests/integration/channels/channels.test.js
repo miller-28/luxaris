@@ -1,7 +1,6 @@
 const TestServer = require('../../helpers/test-server');
 const DbCleaner = require('../../helpers/db-cleaner');
 const request = require('supertest');
-const { create_database_pool } = require('../../../src/connections/database');
 
 describe('Channels Integration Tests', () => {
     let test_server;
@@ -16,18 +15,16 @@ describe('Channels Integration Tests', () => {
     let linkedin_channel_id;
 
     beforeAll(async () => {
-        // Initialize database pool
-        db_pool = create_database_pool();
+        // Start test server
+        test_server = new TestServer();
+        app = await test_server.start();
+        db_pool = test_server.db_pool;
 
         // Initialize database cleaner
         db_cleaner = new DbCleaner(db_pool);
 
         // Clean up any existing test users
         await db_cleaner.clean_users_by_emails(['root@channels-test.com', 'normal@channels-test.com']);
-
-        // Start test server
-        test_server = new TestServer();
-        app = await test_server.start();
 
         // Register root user and get token
         const root_response = await request(app)
@@ -61,7 +58,6 @@ describe('Channels Integration Tests', () => {
 
     afterAll(async () => {
         await test_server.stop();
-        await db_pool.end();
     });
 
     describe('GET /api/v1/channels', () => {

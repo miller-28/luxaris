@@ -16,7 +16,7 @@ exports.setup = function(options, seedLink) {
 
 exports.up = async function(db) {
 	
-	const schema = process.env.DB_SCHEMA || 'luxaris';
+    const schema = process.env.DB_SCHEMA || 'luxaris';
 	
     // Create schedules table - instructions to publish variants at specific times
     await db.runSql(`
@@ -71,7 +71,7 @@ exports.up = async function(db) {
 
 exports.down = async function(db) {
 	
-	const schema = process.env.DB_SCHEMA || 'luxaris';
+    const schema = process.env.DB_SCHEMA || 'luxaris';
 	
     // Drop tables in reverse order (children first)
     await db.runSql(`DROP TABLE IF EXISTS ${schema}.publish_events CASCADE`);

@@ -16,7 +16,7 @@ exports.setup = function(options, seedLink) {
 
 exports.up = async function(db) {
 	
-	const schema = process.env.DB_SCHEMA || 'luxaris';
+    const schema = process.env.DB_SCHEMA || 'luxaris';
 
     // Create channels table - platform catalog
     await db.runSql(`
@@ -70,7 +70,7 @@ exports.up = async function(db) {
 
 exports.down = async function(db) {
 	
-	const schema = process.env.DB_SCHEMA || 'luxaris';
+    const schema = process.env.DB_SCHEMA || 'luxaris';
 
     // Drop tables in reverse order
     await db.runSql(`DROP TABLE IF EXISTS ${schema}.channel_connections CASCADE`);

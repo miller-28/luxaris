@@ -24,7 +24,7 @@ exports.up = function(db) {
 };
 
 exports.down = function(db) {
-	const schema = process.env.DB_SCHEMA || 'luxaris';
+    const schema = process.env.DB_SCHEMA || 'luxaris';
     return db.runSql(`
         DROP SCHEMA IF EXISTS "${schema}" CASCADE;
     `);

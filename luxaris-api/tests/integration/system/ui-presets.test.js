@@ -46,8 +46,9 @@ describe('System Context - UI Presets', () => {
         await db_cleaner.clean_table_where('user_ui_stateful_presets', 'user_id IN ($1, $2)', [admin_user_id, normal_user_id]);
         await db_cleaner.clean_users_by_ids([admin_user_id, normal_user_id]);
         
-        if (test_server) 
+        if (test_server) {
             await test_server.stop();
+        }
     });
 
     beforeEach(async () => {

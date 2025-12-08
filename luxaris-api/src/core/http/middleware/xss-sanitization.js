@@ -67,8 +67,7 @@ function sanitize_recursive(data, field_name = '') {
     
     if (Array.isArray(data)) {
         return data.map((item, index) => 
-            sanitize_recursive(item, `${field_name}[${index}]`)
-        );
+            sanitize_recursive(item, `${field_name}[${index}]`));
     }
     
     if (typeof data === 'object') {

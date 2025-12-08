@@ -21,7 +21,7 @@ function error_handler(error, req, res, next) {
     // Handle database errors - NEVER expose SQL details to client
     if (error.code && (error.code.startsWith('22') || error.code.startsWith('23') || error.code.startsWith('42'))) {
         
-		// PostgreSQL error codes
+        // PostgreSQL error codes
         // 22xxx: Data exception
         // 23xxx: Integrity constraint violation
         // 42xxx: Syntax error or access rule violation

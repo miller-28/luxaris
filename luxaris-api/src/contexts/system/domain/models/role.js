@@ -45,12 +45,12 @@ class Role {
         };
     }
 
-	/**
+    /**
 	 * Check if role is a system role (admin, editor, viewer)
 	 */
-	is_system_role() {
+    is_system_role() {
         return ['admin', 'editor', 'viewer'].includes(this.slug);
-	}    /**
+    }    /**
 	 * Check if role can be deleted
 	 */
     can_delete() {

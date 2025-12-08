@@ -136,7 +136,9 @@ class DbCleaner {
      * Clean specific users by emails
      */
     async clean_users_by_emails(emails) {
-        if (!emails || emails.length === 0) return;
+        if (!emails || emails.length === 0) {
+            return;
+        }
         
         const placeholders = emails.map((_, i) => `$${i + 1}`).join(', ');
         await this.db_pool.query(
@@ -149,7 +151,9 @@ class DbCleaner {
      * Clean specific users by IDs
      */
     async clean_users_by_ids(user_ids) {
-        if (!user_ids || user_ids.length === 0) return;
+        if (!user_ids || user_ids.length === 0) {
+            return;
+        }
         
         const placeholders = user_ids.map((_, i) => `$${i + 1}`).join(', ');
         await this.db_pool.query(

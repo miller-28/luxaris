@@ -16,7 +16,7 @@ exports.setup = function(options, seedLink) {
 
 exports.up = async function(db) {
 	
-	const schema = process.env.DB_SCHEMA || 'luxaris';
+    const schema = process.env.DB_SCHEMA || 'luxaris';
 
     await db.runSql(`
 		CREATE SEQUENCE ${schema}.system_logs_id_seq;
@@ -132,7 +132,7 @@ exports.up = async function(db) {
 
 exports.down = async function(db) {
 	
-	const schema = process.env.DB_SCHEMA || 'luxaris';
+    const schema = process.env.DB_SCHEMA || 'luxaris';
 
     await db.runSql(`DROP TABLE IF EXISTS ${schema}.audit_logs CASCADE`);
     await db.runSql(`DROP SEQUENCE IF EXISTS ${schema}.audit_logs_id_seq CASCADE`);

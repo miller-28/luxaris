@@ -26,7 +26,9 @@ describe('Security - XSS Protection', () => {
     });
 
     afterAll(async () => {
-        if (test_server) await test_server.stop();
+        if (test_server) {
+            await test_server.stop();
+        }
     });
 
     describe('Basic Script Injection', () => {
@@ -161,7 +163,7 @@ describe('Security - XSS Protection', () => {
             
             const csp = response.headers['content-security-policy'];
             if (csp) {
-                expect(csp).toContain("default-src");
+                expect(csp).toContain('default-src');
             }
         });
 

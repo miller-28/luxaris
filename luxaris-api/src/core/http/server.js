@@ -23,7 +23,7 @@ class Server {
                     defaultSrc: ["'self'"],
                     scriptSrc: ["'self'"],
                     styleSrc: ["'self'", "'unsafe-inline'"], // Allow inline styles for compatibility
-                    imgSrc: ["'self'", "https:", "data:"],
+                    imgSrc: ["'self'", 'https:', 'data:'],
                     connectSrc: ["'self'"],
                     frameAncestors: ["'none'"],
                     baseUri: ["'self'"],

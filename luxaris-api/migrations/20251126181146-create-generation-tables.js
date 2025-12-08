@@ -16,7 +16,7 @@ exports.setup = function(options, seedLink) {
 
 exports.up = async function(db) {
 	
-	const schema = process.env.DB_SCHEMA || 'luxaris';
+    const schema = process.env.DB_SCHEMA || 'luxaris';
 	
     // Create post_templates table - reusable content patterns
     await db.runSql(`
@@ -83,7 +83,7 @@ exports.up = async function(db) {
 
 exports.down = async function(db) {
 	
-	const schema = process.env.DB_SCHEMA || 'luxaris';
+    const schema = process.env.DB_SCHEMA || 'luxaris';
 
     // Drop tables in reverse order (respect foreign keys)
     await db.runSql(`DROP TABLE IF EXISTS ${schema}.generation_suggestions CASCADE`);

@@ -96,7 +96,7 @@ class OAuthProviderRepository {
             return await this.find_by_id(provider_id);
         }
 
-        fields.push(`updated_at = NOW()`);
+        fields.push('updated_at = NOW()');
         values.push(provider_id);
 
         const query = `

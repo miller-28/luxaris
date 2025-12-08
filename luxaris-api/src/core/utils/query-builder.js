@@ -155,7 +155,9 @@ class QueryBuilder {
         
         // Validate column names
         const validated_columns = columns.map(col => {
-            if (col === '*') return '*';
+            if (col === '*') {
+                return '*';
+            }
             if (!/^[a-z0-9_\.]+$/.test(col)) {
                 throw new Error(`Invalid column name: ${col}`);
             }

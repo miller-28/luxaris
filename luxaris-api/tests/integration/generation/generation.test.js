@@ -12,6 +12,7 @@ describe('Generation Integration Tests', () => {
     let root_token;
     let normal_token;
     let root_user_id;
+    let normal_user_id;
     let test_channel_id;
 
     beforeAll(async () => {
@@ -25,6 +26,7 @@ describe('Generation Integration Tests', () => {
         
         // Register users
         ({ user_id: root_user_id, token: root_token } = await test_users.create_quick_root_user('root-gen'));
+        ({ user_id: normal_user_id, token: normal_token } = await test_users.create_quick_normal_user('normal-gen'));
 
         // Get X channel ID
         const channels_result = await db_pool.query('SELECT id FROM luxaris.channels WHERE key = $1', ['x']);
@@ -408,7 +410,9 @@ describe('Generation Integration Tests', () => {
         });
 
         afterEach(async () => {
-            if (!db_pool) return;
+            if (!db_pool) {
+                return;
+            }
             await db_pool.query('DELETE FROM generation_suggestions');
             await db_pool.query('DELETE FROM generation_sessions WHERE owner_principal_id IN (SELECT id FROM users WHERE email IN ($1, $2))', ['root@generation-test.com', 'normal@generation-test.com']);
         });

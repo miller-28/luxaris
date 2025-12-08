@@ -16,7 +16,7 @@ exports.setup = function(options, seedLink) {
 
 exports.up = async function(db) {
 	
-	const schema = process.env.DB_SCHEMA || 'luxaris';
+    const schema = process.env.DB_SCHEMA || 'luxaris';
 	
     // Create posts table - platform-agnostic content
     await db.runSql(`
@@ -73,7 +73,7 @@ exports.up = async function(db) {
 
 exports.down = async function(db) {
 	
-	const schema = process.env.DB_SCHEMA || 'luxaris';
+    const schema = process.env.DB_SCHEMA || 'luxaris';
 
     // Drop post_variants first (due to foreign key dependency)
     await db.runSql(`DROP TABLE IF EXISTS ${schema}.post_variants CASCADE`);

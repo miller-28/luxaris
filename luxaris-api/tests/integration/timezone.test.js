@@ -27,7 +27,9 @@ describe('Timezone Handling', () => {
     });
 
     afterAll(async () => {
-        if (test_server) await test_server.stop();
+        if (test_server) {
+            await test_server.stop();
+        }
     });
 
     describe('User Timezone Defaults', () => {

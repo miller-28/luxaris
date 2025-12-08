@@ -25,7 +25,9 @@ describe('Security - CSRF Protection', () => {
     });
 
     afterAll(async () => {
-        if (test_server) await test_server.stop();
+        if (test_server) {
+            await test_server.stop();
+        }
     });
 
     describe('JWT Token Authorization', () => {

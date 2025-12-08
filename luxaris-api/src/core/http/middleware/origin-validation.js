@@ -113,9 +113,8 @@ function origin_validation(req, res, next) {
                 }]
             });
         }
-    }
-    // If no Origin header, check Referer (less reliable but still useful)
-    else if (referer) {
+        // If no Origin header, check Referer (less reliable but still useful)
+    } else if (referer) {
         try {
             const referer_url = new URL(referer);
             const referer_origin = `${referer_url.protocol}//${referer_url.host}`;
@@ -155,9 +154,8 @@ function origin_validation(req, res, next) {
                 path: req.path
             });
         }
-    }
-    // No Origin or Referer header - log warning but allow (might be legitimate API client)
-    else {
+        // No Origin or Referer header - log warning but allow (might be legitimate API client)
+    } else {
         system_logger.log('info', 'Request without Origin or Referer header', {
             method,
             path: req.path,

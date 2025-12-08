@@ -149,7 +149,7 @@ class OAuthAccountRepository {
             return await this.find_by_id(oauth_account_id);
         }
 
-        fields.push(`updated_at = NOW()`);
+        fields.push('updated_at = NOW()');
         values.push(oauth_account_id);
 
         const query = `

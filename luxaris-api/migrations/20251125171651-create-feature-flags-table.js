@@ -16,7 +16,7 @@ exports.setup = function(options, seedLink) {
 
 exports.up = async function(db) {
 	
-	const schema = process.env.DB_SCHEMA || 'luxaris';
+    const schema = process.env.DB_SCHEMA || 'luxaris';
 
     // Create feature_flags table
     await db.runSql(`
@@ -48,7 +48,7 @@ exports.up = async function(db) {
 
 exports.down = async function(db) {
 	
-	const schema = process.env.DB_SCHEMA || 'luxaris';
+    const schema = process.env.DB_SCHEMA || 'luxaris';
 
     await db.runSql(`DROP TABLE IF EXISTS ${schema}.feature_flags CASCADE`);
     await db.runSql(`DROP SEQUENCE IF EXISTS ${schema}.feature_flags_id_seq CASCADE`);

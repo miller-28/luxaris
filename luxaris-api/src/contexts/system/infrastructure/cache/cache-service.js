@@ -42,7 +42,9 @@ class CacheService {
             try {
                 this.cache_client.get(key, (error, data) => {
                     if (error || !data) {
-                        if (error) console.error('Cache get error:', error);
+                        if (error) {
+                            console.error('Cache get error:', error);
+                        }
                         resolve(null);
                     } else {
                         try {

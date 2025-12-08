@@ -36,7 +36,9 @@ describe('Security - SQL Injection Protection', () => {
     });
 
     afterAll(async () => {
-        if (test_server) await test_server.stop();
+        if (test_server) {
+            await test_server.stop();
+        }
     });
 
     describe('Path Parameter Injection', () => {
@@ -49,7 +51,7 @@ describe('Security - SQL Injection Protection', () => {
         });
 
         test('SQL injection in post ID path parameter', async () => {
-            const malicious_id = "1; DROP TABLE posts; --";
+            const malicious_id = '1; DROP TABLE posts; --';
             const response = await request(app)
                 .get('/api/v1/posts/' + encodeURIComponent(malicious_id))
                 .set('Authorization', 'Bearer ' + auth_token);
@@ -91,7 +93,7 @@ describe('Security - SQL Injection Protection', () => {
         });
 
         test('SQL injection in sort query parameter', async () => {
-            const malicious_sort = "id; DELETE FROM posts WHERE 1=1; --";
+            const malicious_sort = 'id; DELETE FROM posts WHERE 1=1; --';
             const response = await request(app)
                 .get('/api/v1/posts?sort=' + encodeURIComponent(malicious_sort))
                 .set('Authorization', 'Bearer ' + auth_token);
@@ -103,7 +105,7 @@ describe('Security - SQL Injection Protection', () => {
         test('SQL injection in POST body fields', async () => {
             const malicious_data = {
                 title: "Test'; DROP TABLE posts; --",
-                content: "Normal content"
+                content: 'Normal content'
             };
             const response = await request(app)
                 .post('/api/v1/posts')
@@ -121,7 +123,7 @@ describe('Security - SQL Injection Protection', () => {
         test('SQL injection in PUT body fields', async () => {
             const malicious_data = {
                 title: "Updated' OR '1'='1",
-                content: "Updated content"
+                content: 'Updated content'
             };
             const response = await request(app)
                 .put('/api/v1/posts/' + post_id)

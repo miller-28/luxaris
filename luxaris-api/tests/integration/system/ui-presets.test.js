@@ -1,4 +1,5 @@
 const TestServer = require('../../helpers/test-server');
+const DbCleaner = require('../../helpers/db-cleaner');
 const request = require('supertest');
 const { create_database_pool } = require('../../../src/connections/database');
 
@@ -6,6 +7,7 @@ describe('System Context - UI Presets', () => {
     let test_server;
     let app;
     let db_pool;
+    let db_cleaner;
     let admin_token;
     let user_token;
     let admin_user_id;
@@ -14,6 +16,7 @@ describe('System Context - UI Presets', () => {
 
     beforeAll(async () => {
         db_pool = create_database_pool();
+        db_cleaner = new DbCleaner(db_pool);
         test_server = new TestServer();
         await test_server.start();
         app = test_server.get_app();
@@ -53,8 +56,8 @@ describe('System Context - UI Presets', () => {
 
     afterAll(async () => {
         // Clean up test data
-        await db_pool.query('DELETE FROM user_ui_stateful_presets WHERE user_id IN ($1, $2)', [admin_user_id, normal_user_id]);
-        await db_pool.query('DELETE FROM users WHERE id IN ($1, $2)', [admin_user_id, normal_user_id]);
+        await db_cleaner.clean_table_where('user_ui_stateful_presets', 'user_id IN ($1, $2)', [admin_user_id, normal_user_id]);
+        await db_cleaner.clean_users_by_ids([admin_user_id, normal_user_id]);
         
         if (test_server) await test_server.stop();
         if (db_pool) await db_pool.end();
@@ -62,16 +65,16 @@ describe('System Context - UI Presets', () => {
 
     beforeEach(async () => {
         // Delete test user presets
-        await db_pool.query('DELETE FROM user_ui_stateful_presets WHERE user_id IN ($1, $2)', [admin_user_id, normal_user_id]);
+        await db_cleaner.clean_table_where('user_ui_stateful_presets', 'user_id IN ($1, $2)', [admin_user_id, normal_user_id]);
         
         // Delete any role presets for editor role (to avoid unique constraint violations)
-        await db_pool.query('DELETE FROM user_ui_stateful_presets WHERE role_id = $1 AND is_default = true', [editor_role_id]);
+        await db_cleaner.clean_table_where('user_ui_stateful_presets', 'role_id = $1 AND is_default = true', [editor_role_id]);
         
         // Delete all global presets created by tests (tests will create their own if needed)
-        await db_pool.query('DELETE FROM user_ui_stateful_presets WHERE is_global = true');
+        await db_cleaner.clean_table_where('user_ui_stateful_presets', 'is_global = true', []);
         
         // Delete test role assignments to avoid duplicate key violations
-        await db_pool.query('DELETE FROM acl_principal_role_assignments WHERE principal_id = $1 AND principal_type = $2 AND role_id = $3',
+        await db_cleaner.clean_table_where('acl_principal_role_assignments', 'principal_id = $1 AND principal_type = $2 AND role_id = $3',
             [normal_user_id, 'user', editor_role_id]);
     });
 
@@ -389,7 +392,7 @@ describe('System Context - UI Presets', () => {
                 ['Editor', editor_role_id, true, JSON.stringify({ value: 'role' })]);
             await db_pool.query('INSERT INTO acl_principal_role_assignments (principal_type, principal_id, role_id) VALUES (\$1, \$2, \$3)',
                 ['user', normal_user_id, editor_role_id]);
-            await db_pool.query('DELETE FROM user_ui_stateful_presets WHERE role_id = \$1', [editor_role_id]);
+            await db_cleaner.clean_table_where('user_ui_stateful_presets', 'role_id = $1', [editor_role_id]);
             const endpoint = '/api/v1/system/users/' + normal_user_id + '/ui-preset';
             const response = await request(app)
                 .get(endpoint)

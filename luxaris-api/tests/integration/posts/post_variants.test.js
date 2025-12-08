@@ -1,10 +1,12 @@
 const TestServer = require('../../helpers/test-server');
+const DbCleaner = require('../../helpers/db-cleaner');
 const request = require('supertest');
 
 describe('Post Variants Integration Tests', () => {
     let test_server;
     let app;
     let db_pool;
+    let db_cleaner;
     let root_token;
     let normal_token;
     let x_channel_id;
@@ -15,6 +17,9 @@ describe('Post Variants Integration Tests', () => {
         test_server = new TestServer();
         app = await test_server.start();
         db_pool = test_server.db_pool;
+        
+        // Initialize database cleaner
+        db_cleaner = new DbCleaner(db_pool);
 
         // Register root user and get token
         const root_response = await request(app)
@@ -57,14 +62,12 @@ describe('Post Variants Integration Tests', () => {
 
     beforeEach(async () => {
         // Clean up test data before each test
-        await db_pool.query('DELETE FROM post_variants');
-        await db_pool.query('DELETE FROM posts');
+        await db_cleaner.clean_post_tables();
     });
 
     afterEach(async () => {
         // Clean up test data
-        await db_pool.query('DELETE FROM post_variants');
-        await db_pool.query('DELETE FROM posts');
+        await db_cleaner.clean_post_tables();
     });
 
     describe('POST /api/v1/posts/:post_id/variants', () => {
@@ -80,12 +83,6 @@ describe('Post Variants Integration Tests', () => {
                     base_content: 'Base content for creating variants'
                 });
             test_post_id = response.body.data.id;
-        });
-
-        afterEach(async () => {
-            // Clean up variants and posts after each test
-            await db_pool.query('DELETE FROM post_variants WHERE post_id = $1', [test_post_id]);
-            await db_pool.query('DELETE FROM posts WHERE id = $1', [test_post_id]);
         });
 
         it('should create a variant for a post', async () => {
@@ -186,8 +183,6 @@ describe('Post Variants Integration Tests', () => {
         });
 
         afterEach(async () => {
-            await db_pool.query('DELETE FROM post_variants WHERE post_id = $1', [test_post_id]);
-            await db_pool.query('DELETE FROM posts WHERE id = $1', [test_post_id]);
             variant_ids = [];
         });
 
@@ -239,12 +234,7 @@ describe('Post Variants Integration Tests', () => {
             test_variant_id = variant_response.body.data.id;
         });
 
-        afterEach(async () => {
-            await db_pool.query('DELETE FROM post_variants WHERE post_id = $1', [test_post_id]);
-            await db_pool.query('DELETE FROM posts WHERE id = $1', [test_post_id]);
-        });
-
-        it('should get a variant by ID', async () => {
+        it('should get variant by ID', async () => {
             const response = await request(app)
                 .get(`/api/v1/variants/${test_variant_id}`)
                 .set('Authorization', `Bearer ${root_token}`);
@@ -297,11 +287,6 @@ describe('Post Variants Integration Tests', () => {
                     content: 'Original variant content'
                 });
             test_variant_id = variant_response.body.data.id;
-        });
-
-        afterEach(async () => {
-            await db_pool.query('DELETE FROM post_variants WHERE post_id = $1', [test_post_id]);
-            await db_pool.query('DELETE FROM posts WHERE id = $1', [test_post_id]);
         });
 
         it('should update a variant', async () => {
@@ -377,11 +362,6 @@ describe('Post Variants Integration Tests', () => {
             test_variant_id = variant_response.body.data.id;
         });
 
-        afterEach(async () => {
-            await db_pool.query('DELETE FROM post_variants WHERE post_id = $1', [test_post_id]);
-            await db_pool.query('DELETE FROM posts WHERE id = $1', [test_post_id]);
-        });
-
         it('should mark a draft variant as ready', async () => {
             const response = await request(app)
                 .post(`/api/v1/variants/${test_variant_id}/mark-ready`)
@@ -443,11 +423,6 @@ describe('Post Variants Integration Tests', () => {
                     content: 'Variant to delete'
                 });
             test_variant_id = variant_response.body.data.id;
-        });
-
-        afterEach(async () => {
-            await db_pool.query('DELETE FROM post_variants WHERE post_id = $1', [test_post_id]);
-            await db_pool.query('DELETE FROM posts WHERE id = $1', [test_post_id]);
         });
 
         it('should delete a variant', async () => {

@@ -1,4 +1,5 @@
 const TestServer = require('../helpers/test-server');
+const DbCleaner = require('../helpers/db-cleaner');
 const request = require('supertest');
 const { create_database_pool } = require('../../src/connections/database');
 const { User } = require('../../src/contexts/system/domain/models/user');
@@ -11,6 +12,7 @@ describe('ACL Integration Tests', () => {
     let test_server;
     let app;
     let db_pool;
+    let db_cleaner;
     let role_repository;
     let permission_repository;
     let acl_repository;
@@ -30,6 +32,9 @@ describe('ACL Integration Tests', () => {
         // Start test server
         test_server = new TestServer();
         app = await test_server.start();
+        
+        // Initialize database cleaner
+        db_cleaner = new DbCleaner(db_pool);
 
         role_repository = new RoleRepository(db_pool);
         permission_repository = new PermissionRepository(db_pool);
@@ -44,14 +49,7 @@ describe('ACL Integration Tests', () => {
 
     beforeEach(async () => {
         // Clean up test data
-        await db_pool.query('DELETE FROM audit_logs');
-        await db_pool.query('DELETE FROM request_logs');
-        await db_pool.query('DELETE FROM system_events');
-        await db_pool.query('DELETE FROM system_logs');
-        await db_pool.query('DELETE FROM acl_principal_permission_grants WHERE principal_type = $1', ['user']);
-        await db_pool.query('DELETE FROM acl_principal_role_assignments WHERE principal_type = $1', ['user']);
-        await db_pool.query('DELETE FROM sessions');
-        await db_pool.query('DELETE FROM users');
+        await db_cleaner.clean_auth_tables();
 
         // Create root user (first user)
         const root_response = await request(app)

@@ -1,10 +1,12 @@
 const TestServer = require('../../helpers/test-server');
+const DbCleaner = require('../../helpers/db-cleaner');
 const request = require('supertest');
 
 describe('Schedules API', () => {
     let test_server;
     let app;
     let db_pool;
+    let db_cleaner;
     let root_token;
     let root_user_id;
     let channel_connection_id;
@@ -16,6 +18,9 @@ describe('Schedules API', () => {
         test_server = new TestServer();
         app = await test_server.start();
         db_pool = test_server.db_pool;
+        
+        // Initialize database cleaner
+        db_cleaner = new DbCleaner(db_pool);
 
         // Register root user
         const root_response = await request(app)
@@ -75,12 +80,12 @@ describe('Schedules API', () => {
 
     afterAll(async () => {
         // Cleanup test data
-        if (db_pool && root_user_id) {
-            await db_pool.query('DELETE FROM schedules WHERE channel_connection_id = $1', [channel_connection_id]);
-            await db_pool.query('DELETE FROM post_variants WHERE post_id = $1', [post_id]);
-            await db_pool.query('DELETE FROM posts WHERE id = $1', [post_id]);
-            await db_pool.query('DELETE FROM channel_connections WHERE id = $1', [channel_connection_id]);
-            await db_pool.query("DELETE FROM users WHERE id = $1", [root_user_id]);
+        if (db_cleaner && root_user_id) {
+            await db_cleaner.clean_table_where('schedules', 'channel_connection_id = $1', [channel_connection_id]);
+            await db_cleaner.clean_table_where('post_variants', 'post_id = $1', [post_id]);
+            await db_cleaner.clean_table_where('posts', 'id = $1', [post_id]);
+            await db_cleaner.clean_table_where('channel_connections', 'id = $1', [channel_connection_id]);
+            await db_cleaner.clean_users_by_ids([root_user_id]);
         }
         if (test_server) {
             await test_server.stop();

@@ -1,4 +1,5 @@
 const TestServer = require('../../helpers/test-server');
+const DbCleaner = require('../../helpers/db-cleaner');
 const request = require('supertest');
 const { create_database_pool } = require('../../../src/connections/database');
 
@@ -6,6 +7,7 @@ describe('Channels Integration Tests', () => {
     let test_server;
     let app;
     let db_pool;
+    let db_cleaner;
     let root_token;
     let root_user_id;
     let normal_token;
@@ -17,8 +19,11 @@ describe('Channels Integration Tests', () => {
         // Initialize database pool
         db_pool = create_database_pool();
 
+        // Initialize database cleaner
+        db_cleaner = new DbCleaner(db_pool);
+
         // Clean up any existing test users
-        await db_pool.query("DELETE FROM users WHERE email IN ('root@channels-test.com', 'normal@channels-test.com')");
+        await db_cleaner.clean_users_by_emails(['root@channels-test.com', 'normal@channels-test.com']);
 
         // Start test server
         test_server = new TestServer();
@@ -131,7 +136,10 @@ describe('Channels Integration Tests', () => {
             // Cleanup
             const connections = await db_pool.query('SELECT id FROM channel_connections WHERE owner_principal_id = $1 AND channel_id = $2', [root_user_id, linkedin_channel_id]);
             if (connections.rows.length > 0) {
-                await db_pool.query('DELETE FROM channel_connections WHERE id = ANY($1)', [connections.rows.map(r => r.id)]);
+                const connection_ids = connections.rows.map(r => r.id);
+                for (const id of connection_ids) {
+                    await db_cleaner.clean_table_where('channel_connections', 'id = $1', [id]);
+                }
             }
         });
 

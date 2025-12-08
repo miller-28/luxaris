@@ -1,4 +1,5 @@
 const TestServer = require('../../helpers/test-server');
+const DbCleaner = require('../../helpers/db-cleaner');
 const request = require('supertest');
 const { create_database_pool } = require('../../../src/connections/database');
 
@@ -6,6 +7,7 @@ describe('System Context - Authentication', () => {
     let test_server;
     let app;
     let db_pool;
+    let db_cleaner;
 
     beforeAll(async () => {
         // Initialize database pool
@@ -14,6 +16,9 @@ describe('System Context - Authentication', () => {
         // Start test server
         test_server = new TestServer();
         app = await test_server.start();
+        
+        // Initialize database cleaner
+        db_cleaner = new DbCleaner(db_pool);
     });
 
     afterAll(async () => {
@@ -23,21 +28,12 @@ describe('System Context - Authentication', () => {
 
     beforeEach(async () => {
         // Clean up test data before each test
-        await db_pool.query('DELETE FROM audit_logs');
-        await db_pool.query('DELETE FROM request_logs');
-        await db_pool.query('DELETE FROM system_events');
-        await db_pool.query('DELETE FROM system_logs');
-        await db_pool.query('DELETE FROM sessions');
-        await db_pool.query('DELETE FROM users');
+        await db_cleaner.clean_auth_tables();
     });
 
     afterEach(async () => {
         // Clean up test data
-        await db_pool.query('DELETE FROM audit_logs');
-        await db_pool.query('DELETE FROM request_logs');
-        await db_pool.query('DELETE FROM system_events');
-        await db_pool.query('DELETE FROM system_logs');
-        await db_pool.query('DELETE FROM users');
+        await db_cleaner.clean_auth_tables();
     });
 
     describe('POST /api/v1/auth/register', () => {

@@ -1,4 +1,5 @@
 const TestServer = require('../../helpers/test-server');
+const DbCleaner = require('../../helpers/db-cleaner');
 const request = require('supertest');
 const { create_database_pool } = require('../../../src/connections/database');
 
@@ -6,6 +7,7 @@ describe('Posts Integration Tests', () => {
     let test_server;
     let app;
     let db_pool;
+    let db_cleaner;
     let root_token;
     let normal_token;
 
@@ -13,8 +15,11 @@ describe('Posts Integration Tests', () => {
         // Initialize database pool
         db_pool = create_database_pool();
 
+        // Initialize database cleaner
+        db_cleaner = new DbCleaner(db_pool);
+
         // Clean up any existing test users
-        await db_pool.query("DELETE FROM users WHERE email IN ('root@posts-test.com', 'normal@posts-test.com')");
+        await db_cleaner.clean_users_by_emails(['root@posts-test.com', 'normal@posts-test.com']);
 
         // Start test server
         test_server = new TestServer();
@@ -50,12 +55,12 @@ describe('Posts Integration Tests', () => {
 
     beforeEach(async () => {
         // Clean up test data before each test
-        await db_pool.query('DELETE FROM posts');
+        await db_cleaner.clean_table('posts');
     });
 
     afterEach(async () => {
         // Clean up test data
-        await db_pool.query('DELETE FROM posts');
+        await db_cleaner.clean_table('posts');
     });
 
     describe('POST /api/v1/posts', () => {

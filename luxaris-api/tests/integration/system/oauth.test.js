@@ -1,15 +1,20 @@
 const TestServer = require('../../helpers/test-server');
+const DbCleaner = require('../../helpers/db-cleaner');
 const request = require('supertest');
 
 describe('System Context - OAuth Authentication', () => {
     let test_server;
     let app;
     let db_pool;
+    let db_cleaner;
 
     beforeAll(async () => {
         test_server = new TestServer();
         app = await test_server.start();
         db_pool = test_server.db_pool;
+        
+        // Initialize database cleaner
+        db_cleaner = new DbCleaner(db_pool);
     });
 
     afterAll(async () => {
@@ -20,8 +25,7 @@ describe('System Context - OAuth Authentication', () => {
 
     beforeEach(async () => {
         // Clean up test data before each test
-        await db_pool.query('DELETE FROM luxaris.oauth_accounts WHERE provider_email LIKE \'%@oauth-test.com\'');
-        await db_pool.query('DELETE FROM luxaris.users WHERE email LIKE \'%@oauth-test.com\'');
+        await db_cleaner.clean_test_users('%@oauth-test.com');
     });
 
     describe('OAuth Provider Management', () => {
@@ -114,7 +118,7 @@ describe('System Context - OAuth Authentication', () => {
             // This test verifies the database logic for first user = root
             
             // Delete ALL users to ensure this is truly the first user
-            await db_pool.query('DELETE FROM luxaris.users');
+            await db_cleaner.clean_table('users');
             
             // Register first user via regular registration to test root logic
             const register_response = await request(app)

@@ -1,10 +1,12 @@
 const TestServer = require('../../helpers/test-server');
+const DbCleaner = require('../../helpers/db-cleaner');
 const request = require('supertest');
 
 describe('Generation Integration Tests', () => {
     let test_server;
     let app;
     let db_pool;
+    let db_cleaner;
     let root_token;
     let normal_token;
     let root_user_id;
@@ -15,6 +17,9 @@ describe('Generation Integration Tests', () => {
         test_server = new TestServer();
         app = await test_server.start();
         db_pool = test_server.db_pool;
+        
+        // Initialize database cleaner
+        db_cleaner = new DbCleaner(db_pool);
         
         // Register root user with unique email
         const root_response = await request(app)
@@ -50,13 +55,10 @@ describe('Generation Integration Tests', () => {
 
     afterAll(async () => {
         // Clean up test data
-        if (db_pool) {
-            await db_pool.query('DELETE FROM luxaris.generation_suggestions');
-            await db_pool.query('DELETE FROM luxaris.generation_sessions');
-            await db_pool.query('DELETE FROM luxaris.post_templates');
-            await db_pool.query('DELETE FROM luxaris.post_variants');
-            await db_pool.query('DELETE FROM luxaris.posts');
-            await db_pool.query('DELETE FROM luxaris.channel_connections');
+        if (db_cleaner) {
+            await db_cleaner.clean_generation_tables();
+            await db_cleaner.clean_post_tables();
+            await db_cleaner.clean_channel_tables();
         }
         if (test_server) {
             await test_server.stop();
@@ -65,12 +67,9 @@ describe('Generation Integration Tests', () => {
 
     beforeEach(async () => {
         // Clean up between tests
-        if (db_pool) {
-            await db_pool.query('DELETE FROM luxaris.generation_suggestions');
-            await db_pool.query('DELETE FROM luxaris.generation_sessions');
-            await db_pool.query('DELETE FROM luxaris.post_templates');
-            await db_pool.query('DELETE FROM luxaris.post_variants');
-            await db_pool.query('DELETE FROM luxaris.posts');
+        if (db_cleaner) {
+            await db_cleaner.clean_generation_tables();
+            await db_cleaner.clean_post_tables();
         }
     });
 
@@ -124,11 +123,6 @@ describe('Generation Integration Tests', () => {
             template_id = response.body.data.id;
         });
 
-        afterEach(async () => {
-            if (!db_pool) return;
-            await db_pool.query('DELETE FROM post_templates WHERE owner_principal_id IN (SELECT id FROM users WHERE email IN ($1, $2))', ['root@generation-test.com', 'normal@generation-test.com']);
-        });
-
         it('should list templates', async () => {
             const response = await request(app)
                 .get('/api/v1/templates')
@@ -174,11 +168,6 @@ describe('Generation Integration Tests', () => {
             template_id = response.body.data.id;
         });
 
-        afterEach(async () => {
-            if (!db_pool) return;
-            await db_pool.query('DELETE FROM post_templates WHERE owner_principal_id IN (SELECT id FROM users WHERE email IN ($1, $2))', ['root@generation-test.com', 'normal@generation-test.com']);
-        });
-
         it('should update template', async () => {
             const response = await request(app)
                 .patch(`/api/v1/templates/${template_id}`)
@@ -206,11 +195,6 @@ describe('Generation Integration Tests', () => {
                     template_body: 'Delete me {{soon}}'
                 });
             template_id = response.body.data.id;
-        });
-
-        afterEach(async () => {
-            if (!db_pool) return;
-            await db_pool.query('DELETE FROM post_templates WHERE owner_principal_id IN (SELECT id FROM users WHERE email IN ($1, $2))', ['root@generation-test.com', 'normal@generation-test.com']);
         });
 
         it('should delete template', async () => {
@@ -246,11 +230,6 @@ describe('Generation Integration Tests', () => {
             template_id = response.body.data.id;
         });
 
-        afterEach(async () => {
-            if (!db_pool) return;
-            await db_pool.query('DELETE FROM post_templates WHERE owner_principal_id IN (SELECT id FROM users WHERE email IN ($1, $2))', ['root@generation-test.com', 'normal@generation-test.com']);
-        });
-
         it('should render template with values', async () => {
             const response = await request(app)
                 .post(`/api/v1/templates/${template_id}/render`)
@@ -284,12 +263,6 @@ describe('Generation Integration Tests', () => {
     });
 
     describe('POST /api/v1/generation/generate', () => {
-        afterEach(async () => {
-            if (!db_pool) return;
-            await db_pool.query('DELETE FROM generation_suggestions');
-            await db_pool.query('DELETE FROM generation_sessions WHERE owner_principal_id IN (SELECT id FROM users WHERE email IN ($1, $2))', ['root@generation-test.com', 'normal@generation-test.com']);
-        });
-
         it('should generate content suggestions', async () => {
             const response = await request(app)
                 .post('/api/v1/generation/generate')
@@ -367,12 +340,6 @@ describe('Generation Integration Tests', () => {
             session_id = response.body.data.session.id;
         });
 
-        afterEach(async () => {
-            if (!db_pool) return;
-            await db_pool.query('DELETE FROM generation_suggestions');
-            await db_pool.query('DELETE FROM generation_sessions WHERE owner_principal_id IN (SELECT id FROM users WHERE email IN ($1, $2))', ['root@generation-test.com', 'normal@generation-test.com']);
-        });
-
         it('should list generation sessions', async () => {
             const response = await request(app)
                 .get('/api/v1/generation/sessions')
@@ -408,14 +375,6 @@ describe('Generation Integration Tests', () => {
                     channel_ids: [test_channel_id]
                 });
             suggestion_id = gen_response.body.data.suggestions[0].id;
-        });
-
-        afterEach(async () => {
-            if (!db_pool) return;
-            await db_pool.query('DELETE FROM post_variants');
-            await db_pool.query('DELETE FROM posts');
-            await db_pool.query('DELETE FROM generation_suggestions');
-            await db_pool.query('DELETE FROM generation_sessions WHERE owner_principal_id IN (SELECT id FROM users WHERE email IN ($1, $2))', ['root@generation-test.com', 'normal@generation-test.com']);
         });
 
         it('should accept suggestion and create post/variant', async () => {

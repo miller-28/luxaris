@@ -30,9 +30,9 @@ describe('Security - SQL Injection Protection', () => {
         channel_id = channel_response.body.id;
 
         const post_response = await request(app).post('/api/v1/posts').set('Authorization', 'Bearer ' + auth_token).send({
-            title: 'Test Post', content: 'Test content'
+            title: 'Test Post', base_content: 'Test content'
         });
-        post_id = post_response.body.id;
+        post_id = post_response.body.data.id;
     });
 
     afterAll(async () => {

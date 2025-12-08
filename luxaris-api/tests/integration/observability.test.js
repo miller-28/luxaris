@@ -158,7 +158,7 @@ describe('Observability Layer', () => {
 
     describe('EventRegistry', () => {
         test('should record successful events to database', async () => {
-            const user_id = crypto.randomUUID();
+            const user_id = 12345; // Use integer ID to match database schema
 			
             const event_id = await event_registry.record('auth', 'USER_REGISTERED', {
                 principal_id: user_id,
@@ -188,7 +188,7 @@ describe('Observability Layer', () => {
         });
 
         test('should record failed events to database', async () => {
-            const user_id = crypto.randomUUID();
+            const user_id = 12346; // Use integer ID to match database schema
             const error = new Error('Login failed');
 			
             const event_id = await event_registry.record_failure('auth', 'USER_LOGIN', error, {
@@ -213,10 +213,10 @@ describe('Observability Layer', () => {
         });
 
         test('should query events with filters', async () => {
-            const user_1 = crypto.randomUUID();
-            const post_1 = crypto.randomUUID();
-            const post_2 = crypto.randomUUID();
-            const post_3 = crypto.randomUUID();
+            const user_1 = 12347; // Use integer ID
+            const post_1 = 101; // Use integer ID
+            const post_2 = 102;
+            const post_3 = 103;
 			
             // Create multiple events
             await event_registry.record('auth', 'USER_REGISTERED', {
@@ -264,8 +264,8 @@ describe('Observability Layer', () => {
 
     describe('AuditService', () => {
         test('should log audit events to database', async () => {
-            const actor_id = crypto.randomUUID();
-            const resource_id = crypto.randomUUID();
+            const actor_id = 12348; // Use integer ID
+            const resource_id = 12349;
 			
             await audit_service.log('USER_DELETED', {
                 actor_type: 'user',
@@ -290,11 +290,11 @@ describe('Observability Layer', () => {
         });
 
         test('should query audit logs with filters', async () => {
-            const user_1 = crypto.randomUUID();
-            const user_2 = crypto.randomUUID();
-            const post_1 = crypto.randomUUID();
-            const post_2 = crypto.randomUUID();
-            const post_3 = crypto.randomUUID();
+            const user_1 = 12350; // Use integer IDs
+            const user_2 = 12351;
+            const post_1 = 201;
+            const post_2 = 202;
+            const post_3 = 203;
 			
             // Create multiple audit logs
             await audit_service.log('POST_UPDATED', {

@@ -97,7 +97,7 @@ class PresetRepository {
                 created_at,
                 updated_at
             FROM user_ui_stateful_presets
-            WHERE id = $1 AND is_deleted = false
+            WHERE id = $1
         `;
         
         const result = await connection_manager.get_db_pool().query(query, [preset_id]);

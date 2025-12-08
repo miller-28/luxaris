@@ -39,7 +39,7 @@ class PostVariantRepository {
 	 * Find variant by ID
 	 */
     async find_by_id(variant_id) {
-        const query = 'SELECT * FROM post_variants WHERE id = $1 AND is_deleted = false';
+        const query = 'SELECT * FROM post_variants WHERE id = $1';
         const result = await connection_manager.get_db_pool().query(query, [variant_id]);
 		
         if (result.rows.length === 0) {

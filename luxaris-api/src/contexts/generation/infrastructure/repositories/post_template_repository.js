@@ -6,7 +6,7 @@ class PostTemplateRepository {
    */
     async create(template_data) {
         const query = `
-      INSERT INTO post_templates (
+      INSERT INTO luxaris.post_templates (
         owner_principal_id, name, description, template_body, 
         default_channel_id, constraints
       )
@@ -31,7 +31,7 @@ class PostTemplateRepository {
    * Find template by ID
    */
     async find_by_id(template_id) {
-        const query = 'SELECT * FROM post_templates WHERE id = $1 AND is_deleted = false';
+        const query = 'SELECT * FROM luxaris.post_templates WHERE id = $1 AND is_deleted = false';
         const result = await connection_manager.get_db_pool().query(query, [template_id]);
         return result.rows[0] || null;
     }
@@ -40,7 +40,7 @@ class PostTemplateRepository {
    * List templates by owner with optional filters
    */
     async list_by_owner(owner_principal_id, filters = {}) {
-        let query = 'SELECT * FROM post_templates WHERE owner_principal_id = $1 AND is_deleted = false';
+        let query = 'SELECT * FROM luxaris.post_templates WHERE owner_principal_id = $1 AND is_deleted = false';
         const values = [owner_principal_id];
         let param_count = 1;
 
@@ -82,7 +82,7 @@ class PostTemplateRepository {
    * Count templates by owner
    */
     async count_by_owner(owner_principal_id, filters = {}) {
-        let query = 'SELECT COUNT(*) FROM post_templates WHERE owner_principal_id = $1';
+        let query = 'SELECT COUNT(*) FROM luxaris.post_templates WHERE owner_principal_id = $1';
         const values = [owner_principal_id];
         let param_count = 1;
 
@@ -152,7 +152,7 @@ class PostTemplateRepository {
         values.push(template_id);
 
         const query = `
-      UPDATE post_templates 
+      UPDATE luxaris.post_templates 
       SET ${fields.join(', ')}
       WHERE id = $${param_count}
       RETURNING *
@@ -166,7 +166,7 @@ class PostTemplateRepository {
    * Delete template (soft delete)
    */
     async delete(template_id) {
-        const query = 'UPDATE post_templates SET is_deleted = true, deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND is_deleted = false RETURNING id';
+        const query = 'UPDATE luxaris.post_templates SET is_deleted = true, deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND is_deleted = false RETURNING id';
         const result = await connection_manager.get_db_pool().query(query, [template_id]);
         return result.rowCount > 0;
     }
@@ -175,7 +175,7 @@ class PostTemplateRepository {
    * Get owner principal ID for a template
    */
     async get_owner_principal_id(template_id) {
-        const query = 'SELECT owner_principal_id FROM post_templates WHERE id = $1';
+        const query = 'SELECT owner_principal_id FROM luxaris.post_templates WHERE id = $1';
         const result = await connection_manager.get_db_pool().query(query, [template_id]);
         return result.rows[0]?.owner_principal_id || null;
     }

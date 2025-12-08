@@ -6,7 +6,7 @@ class GenerationSessionRepository {
    */
     async create(session_data) {
         const query = `
-      INSERT INTO generation_sessions (
+      INSERT INTO luxaris.generation_sessions (
         owner_principal_id, post_id, template_id, prompt, status
       )
       VALUES ($1, $2, $3, $4, $5)
@@ -29,7 +29,7 @@ class GenerationSessionRepository {
    * Find session by ID
    */
     async find_by_id(session_id) {
-        const query = 'SELECT * FROM generation_sessions WHERE id = $1 AND is_deleted = false';
+        const query = 'SELECT * FROM luxaris.generation_sessions WHERE id = $1 AND is_deleted = false';
         const result = await connection_manager.get_db_pool().query(query, [session_id]);
         return result.rows[0] || null;
     }
@@ -38,7 +38,7 @@ class GenerationSessionRepository {
    * List sessions by owner with optional filters
    */
     async list_by_owner(owner_principal_id, filters = {}) {
-        let query = 'SELECT * FROM generation_sessions WHERE owner_principal_id = $1 AND is_deleted = false';
+        let query = 'SELECT * FROM luxaris.generation_sessions WHERE owner_principal_id = $1 AND is_deleted = false';
         const values = [owner_principal_id];
         let param_count = 1;
 
@@ -87,7 +87,7 @@ class GenerationSessionRepository {
    * Count sessions by owner
    */
     async count_by_owner(owner_principal_id, filters = {}) {
-        let query = 'SELECT COUNT(*) FROM generation_sessions WHERE owner_principal_id = $1';
+        let query = 'SELECT COUNT(*) FROM luxaris.generation_sessions WHERE owner_principal_id = $1';
         const values = [owner_principal_id];
         let param_count = 1;
 
@@ -118,7 +118,7 @@ class GenerationSessionRepository {
    */
     async update_status(session_id, status) {
         const query = `
-      UPDATE generation_sessions 
+      UPDATE luxaris.generation_sessions 
       SET status = $1, updated_at = CURRENT_TIMESTAMP
       WHERE id = $2
       RETURNING *
@@ -132,7 +132,7 @@ class GenerationSessionRepository {
    * Get owner principal ID for a session
    */
     async get_owner_principal_id(session_id) {
-        const query = 'SELECT owner_principal_id FROM generation_sessions WHERE id = $1';
+        const query = 'SELECT owner_principal_id FROM luxaris.generation_sessions WHERE id = $1';
         const result = await connection_manager.get_db_pool().query(query, [session_id]);
         return result.rows[0]?.owner_principal_id || null;
     }
@@ -141,7 +141,7 @@ class GenerationSessionRepository {
    * Delete session (soft delete - cascade will soft delete suggestions via trigger or app logic)
    */
     async delete(session_id) {
-        const query = 'UPDATE generation_sessions SET is_deleted = true, deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND is_deleted = false RETURNING id';
+        const query = 'UPDATE luxaris.generation_sessions SET is_deleted = true, deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND is_deleted = false RETURNING id';
         const result = await connection_manager.get_db_pool().query(query, [session_id]);
         return result.rowCount > 0;
     }

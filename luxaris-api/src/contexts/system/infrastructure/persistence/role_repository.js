@@ -8,7 +8,7 @@ class RoleRepository {
 	 */
     async find_by_id(role_id) {
         const result = await connection_manager.get_db_pool().query(
-            'SELECT * FROM acl_roles WHERE id = $1 AND is_deleted = false',
+            'SELECT * FROM acl_roles WHERE id = $1',
             [role_id]
         );
         return result.rows[0] ? Role.from_db_row(result.rows[0]) : null;

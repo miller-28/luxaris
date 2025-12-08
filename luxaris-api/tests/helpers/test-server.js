@@ -202,12 +202,19 @@ class TestServer {
         });
 
         // Register generation domain routes
+        const post_template_routes = generation_domain.create_post_template_routes({
+            post_template_service: generation_domain.post_template_service,
+            auth_middleware,
+            error_handler
+        });
+        this.server.register_routes(`/api/${merged_config.api_version}/templates`, post_template_routes);
+
         const generation_routes = generation_domain.create_generation_routes({
             generation_service: generation_domain.generation_service,
             auth_middleware,
             error_handler
         });
-        this.server.register_routes(`/api/${merged_config.api_version}`, generation_routes);
+        this.server.register_routes(`/api/${merged_config.api_version}/generation`, generation_routes);
 
         // Initialize scheduling domain
         const scheduling_domain = initialize_scheduling_domain({
@@ -239,6 +246,10 @@ class TestServer {
         }
         // Connection manager shutdown handled globally if needed
         // Individual tests may want to keep connections alive between tests
+    }
+
+    get db_pool() {
+        return connection_manager.get_db_pool();
     }
 
     get_app() {

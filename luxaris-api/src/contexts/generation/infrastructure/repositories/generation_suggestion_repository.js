@@ -6,7 +6,7 @@ class GenerationSuggestionRepository {
    */
     async create(suggestion_data) {
         const query = `
-      INSERT INTO generation_suggestions (
+      INSERT INTO luxaris.generation_suggestions (
         generation_session_id, channel_id, content, score, accepted
       )
       VALUES ($1, $2, $3, $4, $5)
@@ -50,7 +50,7 @@ class GenerationSuggestionRepository {
         });
 
         const query = `
-      INSERT INTO generation_suggestions (
+      INSERT INTO luxaris.generation_suggestions (
         generation_session_id, channel_id, content, score, accepted
       )
       VALUES ${placeholders.join(', ')}
@@ -65,7 +65,7 @@ class GenerationSuggestionRepository {
    * Find suggestion by ID
    */
     async find_by_id(suggestion_id) {
-        const query = 'SELECT * FROM generation_suggestions WHERE id = $1 AND is_deleted = false';
+        const query = 'SELECT * FROM luxaris.generation_suggestions WHERE id = $1';
         const result = await connection_manager.get_db_pool().query(query, [suggestion_id]);
         return result.rows[0] || null;
     }
@@ -74,7 +74,7 @@ class GenerationSuggestionRepository {
    * List suggestions by session
    */
     async list_by_session(session_id, filters = {}) {
-        let query = 'SELECT * FROM generation_suggestions WHERE generation_session_id = $1 AND is_deleted = false';
+        let query = 'SELECT * FROM luxaris.generation_suggestions WHERE generation_session_id = $1 AND is_deleted = false';
         const values = [session_id];
         let param_count = 1;
 
@@ -104,7 +104,7 @@ class GenerationSuggestionRepository {
    */
     async mark_as_accepted(suggestion_id) {
         const query = `
-      UPDATE generation_suggestions 
+      UPDATE luxaris.generation_suggestions 
       SET accepted = true
       WHERE id = $1
       RETURNING *
@@ -120,7 +120,7 @@ class GenerationSuggestionRepository {
     async get_owner_principal_id(suggestion_id) {
         const query = `
       SELECT gs.owner_principal_id 
-      FROM generation_suggestions gsug
+      FROM luxaris.generation_suggestions gsug
       JOIN generation_sessions gs ON gsug.generation_session_id = gs.id
       WHERE gsug.id = $1
     `;
@@ -132,7 +132,7 @@ class GenerationSuggestionRepository {
    * Delete suggestion (soft delete)
    */
     async delete(suggestion_id) {
-        const query = 'UPDATE generation_suggestions SET is_deleted = true, deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND is_deleted = false RETURNING id';
+        const query = 'UPDATE luxaris.generation_suggestions SET is_deleted = true, deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND is_deleted = false RETURNING id';
         const result = await connection_manager.get_db_pool().query(query, [suggestion_id]);
         return result.rowCount > 0;
     }
@@ -141,7 +141,7 @@ class GenerationSuggestionRepository {
    * Delete all suggestions for a session (soft delete)
    */
     async delete_by_session(session_id) {
-        const query = 'UPDATE generation_suggestions SET is_deleted = true, deleted_at = NOW(), updated_at = NOW() WHERE generation_session_id = $1 AND is_deleted = false';
+        const query = 'UPDATE luxaris.generation_suggestions SET is_deleted = true, deleted_at = NOW(), updated_at = NOW() WHERE generation_session_id = $1 AND is_deleted = false';
         const result = await connection_manager.get_db_pool().query(query, [session_id]);
         return result.rowCount;
     }

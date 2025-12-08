@@ -46,7 +46,7 @@ class ChannelConnectionRepository {
         c.key as channel_key, c.name as channel_name, c.limits as channel_limits
       FROM channel_connections cc
       JOIN channels c ON cc.channel_id = c.id
-      WHERE cc.id = $1 AND cc.is_deleted = false
+      WHERE cc.id = $1
     `;
 
         const result = await connection_manager.get_db_pool().query(query, [connection_id]);

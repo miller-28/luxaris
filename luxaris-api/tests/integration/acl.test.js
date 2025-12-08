@@ -19,7 +19,7 @@ describe('ACL Integration Tests', () => {
     let normal_user_token;
     let root_user_id;
     let normal_user_id;
-    let owner_role;
+    let admin_role;
     let editor_role;
     let viewer_role;
 
@@ -37,7 +37,7 @@ describe('ACL Integration Tests', () => {
         acl_service = new AclService(db_pool);
 
         // Load default roles
-        owner_role = await role_repository.find_by_slug('owner');
+        admin_role = await role_repository.find_by_slug('admin');
         editor_role = await role_repository.find_by_slug('editor');
         viewer_role = await role_repository.find_by_slug('viewer');
     });
@@ -143,8 +143,9 @@ describe('ACL Integration Tests', () => {
             const roles = await acl_repository.get_principal_roles(root_user_id, 'user');
             expect(roles.length).toBeGreaterThan(0);
 			
-            const has_owner = roles.some(r => r.role.slug === 'owner');
-            expect(has_owner).toBe(true);
+            // Root user should have admin role assigned
+            const has_admin = roles.some(r => r.role.slug === 'admin');
+            expect(has_admin).toBe(true);
         });
     });
 
@@ -239,7 +240,7 @@ describe('ACL Integration Tests', () => {
         });
 
         test('User with owner role has all permissions', async () => {
-            await acl_repository.assign_role(normal_user_id, 'user', owner_role.id);
+            await acl_repository.assign_role(normal_user_id, 'user', admin_role.id);
 
             const can_read = await acl_service.can(
                 normal_user_id,

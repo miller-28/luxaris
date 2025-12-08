@@ -1,6 +1,5 @@
 const TestServer = require('../../helpers/test-server');
 const request = require('supertest');
-const { create_database_pool } = require('../../../src/connections/database');
 
 describe('System Context - OAuth Authentication', () => {
     let test_server;
@@ -8,31 +7,27 @@ describe('System Context - OAuth Authentication', () => {
     let db_pool;
 
     beforeAll(async () => {
-        db_pool = create_database_pool();
         test_server = new TestServer();
-        await test_server.start();
-        app = test_server.get_app();
+        app = await test_server.start();
+        db_pool = test_server.db_pool;
     });
 
     afterAll(async () => {
         if (test_server) {
             await test_server.stop();
         }
-        if (db_pool) {
-            await db_pool.end();
-        }
     });
 
     beforeEach(async () => {
         // Clean up test data before each test
-        await db_pool.query('DELETE FROM oauth_accounts WHERE provider_email LIKE \'%@oauth-test.com\'');
-        await db_pool.query('DELETE FROM users WHERE email LIKE \'%@oauth-test.com\'');
+        await db_pool.query('DELETE FROM luxaris.oauth_accounts WHERE provider_email LIKE \'%@oauth-test.com\'');
+        await db_pool.query('DELETE FROM luxaris.users WHERE email LIKE \'%@oauth-test.com\'');
     });
 
     describe('OAuth Provider Management', () => {
         test('Google OAuth provider should exist in database', async () => {
             const result = await db_pool.query(
-                'SELECT * FROM oauth_providers WHERE key = $1',
+                'SELECT * FROM luxaris.oauth_providers WHERE key = $1',
                 ['google']
             );
 
@@ -118,6 +113,9 @@ describe('System Context - OAuth Authentication', () => {
             // Note: Full OAuth flow requires mocking Google APIs
             // This test verifies the database logic for first user = root
             
+            // Delete ALL users to ensure this is truly the first user
+            await db_pool.query('DELETE FROM luxaris.users');
+            
             // Register first user via regular registration to test root logic
             const register_response = await request(app)
                 .post('/api/v1/auth/register')
@@ -135,8 +133,8 @@ describe('System Context - OAuth Authentication', () => {
             // Verify root role assigned
             const role_result = await db_pool.query(
                 `SELECT r.slug 
-                 FROM acl_principal_role_assignments pra
-                 JOIN acl_roles r ON pra.role_id = r.id 
+                 FROM luxaris.acl_principal_role_assignments pra
+                 JOIN luxaris.acl_roles r ON pra.role_id = r.id 
                  WHERE pra.principal_type = 'user' AND pra.principal_id = $1`,
                 [register_response.body.user.id]
             );

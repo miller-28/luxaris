@@ -29,7 +29,7 @@ class ScheduleRepository {
    */
     async find_by_id(schedule_id) {
         const result = await connection_manager.get_db_pool().query(
-            'SELECT * FROM schedules WHERE id = $1 AND is_deleted = false',
+            'SELECT * FROM schedules WHERE id = $1',
             [schedule_id]
         );
         return result.rows[0] ? new Schedule(result.rows[0]) : null;

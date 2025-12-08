@@ -28,7 +28,7 @@ class UserRepository {
     }
 
     async find_by_id(user_id) {
-        const query = 'SELECT * FROM users WHERE id = $1 AND is_deleted = false';
+        const query = 'SELECT * FROM users WHERE id = $1';
         const result = await connection_manager.get_db_pool().query(query, [user_id]);
 
         if (result.rows.length === 0) {

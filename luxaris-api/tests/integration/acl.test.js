@@ -1,4 +1,5 @@
 const TestServer = require('../helpers/test-server');
+const TestUsers = require('../helpers/test-users');
 const DbCleaner = require('../helpers/db-cleaner');
 const request = require('supertest');
 const { User } = require('../../src/contexts/system/domain/models/user');
@@ -12,6 +13,7 @@ describe('ACL Integration Tests', () => {
     let app;
     let db_pool;
     let db_cleaner;
+    let test_users;
     let role_repository;
     let permission_repository;
     let acl_repository;
@@ -30,8 +32,9 @@ describe('ACL Integration Tests', () => {
         app = await test_server.start();
         db_pool = test_server.db_pool;
         
-        // Initialize database cleaner
+        // Initialize database cleaner and test users helper
         db_cleaner = new DbCleaner(db_pool);
+        test_users = new TestUsers(app, db_pool);
 
         role_repository = new RoleRepository(db_pool);
         permission_repository = new PermissionRepository(db_pool);
@@ -48,51 +51,27 @@ describe('ACL Integration Tests', () => {
         // Clean up test data
         await db_cleaner.clean_auth_tables();
 
-        // Create root user (first user)
-        const root_response = await request(app)
-            .post('/api/v1/auth/register')
-            .send({
-                email: 'root@test.com',
-                password: 'RootPassword123!',
-                name: 'Root User'
-            });
+        // Create root user (first user becomes root automatically)
+        const root_user = await test_users.create_root_user({
+            email: 'root@test.com',
+            password: 'RootPassword123!',
+            name: 'Root User'
+        });
+        root_user_token = root_user.access_token;
+        root_user_id = root_user.user_id;
 
-        if (root_response.status !== 201) {
-            console.error('Root registration failed:', root_response.body);
-        }
+        // Create and approve normal user
+        const normal_user = await test_users.create_normal_user({
+            email: 'normal@test.com',
+            password: 'NormalPassword123!',
+            name: 'Normal User',
+            approve: true
+        });
 
-        expect(root_response.status).toBe(201);
-        root_user_token = root_response.body.access_token;
-        root_user_id = root_response.body.user.id;
-
-        // Create normal user
-        const normal_response = await request(app)
-            .post('/api/v1/auth/register')
-            .send({
-                email: 'normal@test.com',
-                password: 'NormalPassword123!',
-                name: 'Normal User'
-            });
-
-        expect(normal_response.status).toBe(201);
-
-        // Approve normal user
-        await db_pool.query(
-            "UPDATE users SET status = 'active' WHERE id = $1",
-            [normal_response.body.user.id]
-        );
-
-        // Login normal user
-        const login_response = await request(app)
-            .post('/api/v1/auth/login')
-            .send({
-                email: 'normal@test.com',
-                password: 'NormalPassword123!'
-            });
-
-        expect(login_response.status).toBe(200);
-        normal_user_token = login_response.body.access_token;
-        normal_user_id = normal_response.body.user.id;
+        // Login normal user to get fresh token
+        const login_result = await test_users.login_user('normal@test.com', 'NormalPassword123!');
+        normal_user_token = login_result.access_token;
+        normal_user_id = normal_user.user_id;
     });
 
     afterAll(async () => {

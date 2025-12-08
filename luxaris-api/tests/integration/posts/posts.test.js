@@ -1,4 +1,5 @@
 const TestServer = require('../../helpers/test-server');
+const TestUsers = require('../../helpers/test-users');
 const DbCleaner = require('../../helpers/db-cleaner');
 const request = require('supertest');
 
@@ -7,6 +8,7 @@ describe('Posts Integration Tests', () => {
     let app;
     let db_pool;
     let db_cleaner;
+    let test_users;
     let root_token;
     let normal_token;
 
@@ -16,33 +18,13 @@ describe('Posts Integration Tests', () => {
         app = await test_server.start();
         db_pool = test_server.db_pool;
 
-        // Initialize database cleaner
+        // Initialize database cleaner and test users helper
         db_cleaner = new DbCleaner(db_pool);
+        test_users = new TestUsers(app, db_pool);
 
-        // Clean up any existing test users
-        await db_cleaner.clean_users_by_emails(['root@posts-test.com', 'normal@posts-test.com']);
-
-        // Register root user and get token
-        const root_response = await request(app)
-            .post('/api/v1/auth/register')
-            .send({
-                email: 'root@posts-test.com',
-                password: 'SecurePassword123!',
-                name: 'Root User',
-                timezone: 'America/New_York'
-            });
-        root_token = root_response.body.access_token;
-
-        // Register normal user and get token
-        const normal_response = await request(app)
-            .post('/api/v1/auth/register')
-            .send({
-                email: 'normal@posts-test.com',
-                password: 'SecurePassword123!',
-                name: 'Normal User',
-                timezone: 'America/New_York'
-            });
-        normal_token = normal_response.body.access_token;
+        // Register users
+        ({ token: root_token } = await test_users.create_quick_root_user('root-posts'));
+        ({ token: normal_token } = await test_users.create_quick_normal_user('normal-posts'));
     });
 
     afterAll(async () => {

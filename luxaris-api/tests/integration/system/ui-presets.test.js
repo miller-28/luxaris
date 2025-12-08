@@ -1,4 +1,5 @@
 const TestServer = require('../../helpers/test-server');
+const TestUsers = require('../../helpers/test-users');
 const DbCleaner = require('../../helpers/db-cleaner');
 const request = require('supertest');
 
@@ -7,6 +8,7 @@ describe('System Context - UI Presets', () => {
     let app;
     let db_pool;
     let db_cleaner;
+    let test_users;
     let admin_token;
     let user_token;
     let admin_user_id;
@@ -19,35 +21,21 @@ describe('System Context - UI Presets', () => {
         app = test_server.get_app();
         db_pool = test_server.db_pool;
         db_cleaner = new DbCleaner(db_pool);
+        test_users = new TestUsers(app, db_pool);
 
-        const admin_email = 'admin' + Date.now() + '@preset-test.com';
-        const admin_response = await request(app).post('/api/v1/auth/register').send({
-            email: admin_email,
+        // Create admin user and login to get token with is_root in JWT payload
+        const admin_result = await test_users.create_user_with_unique_email('admin', {
             password: 'Admin123!',
             name: 'Admin User',
-            timezone: 'UTC'
+            timezone: 'UTC',
+            make_root: true
         });
-        admin_user_id = admin_response.body.user.id;
+        admin_user_id = admin_result.user_id;
+        const admin_login = await test_users.login_user(admin_result.email, 'Admin123!');
+        admin_token = admin_login.access_token;
 
-        // Make admin user root and active before getting new token
-        await db_pool.query('UPDATE users SET is_root = true, status = $1 WHERE id = $2', ['active', admin_user_id]);
-
-        // Get new token with is_root = true in JWT payload
-        const admin_login = await request(app).post('/api/v1/auth/login').send({
-            email: admin_email,
-            password: 'Admin123!'
-        });
-        admin_token = admin_login.body.access_token;
-
-        const user_email = 'user' + Date.now() + '@preset-test.com';
-        const user_response = await request(app).post('/api/v1/auth/register').send({
-            email: user_email,
-            password: 'User123!',
-            name: 'Normal User',
-            timezone: 'UTC'
-        });
-        normal_user_id = user_response.body.user.id;
-        user_token = user_response.body.access_token;
+        // Create normal user
+        ({ user_id: normal_user_id, token: user_token } = await test_users.create_quick_normal_user('user'));
 
         const role_result = await db_pool.query('SELECT id FROM acl_roles WHERE slug = \$1', ['editor']);
         editor_role_id = role_result.rows[0].id;

@@ -1,10 +1,12 @@
 const TestServer = require('../helpers/test-server');
+const TestUsers = require('../helpers/test-users');
 const request = require('supertest');
 
 describe('Timezone Handling', () => {
     let test_server;
     let app;
     let db_pool;
+    let test_users;
     let auth_token;
     let user_id;
     let post_id;
@@ -14,16 +16,9 @@ describe('Timezone Handling', () => {
         test_server = new TestServer();
         app = await test_server.start();
         db_pool = test_server.db_pool;
-        app = test_server.get_app();
+        test_users = new TestUsers(app, db_pool);
 
-        const response = await request(app).post('/api/v1/auth/register').send({
-            email: 'tztest' + Date.now() + '@example.com',
-            password: 'SecurePass123!',
-            name: 'TZ Test User',
-            timezone: 'America/New_York'
-        });
-        user_id = response.body.user.id;
-        auth_token = response.body.access_token;
+        ({ user_id, token: auth_token } = await test_users.create_quick_normal_user('tztest'));
 
         const post_response = await request(app).post('/api/v1/posts')
             .set('Authorization', 'Bearer ' + auth_token)

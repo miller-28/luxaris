@@ -1,4 +1,5 @@
 const TestServer = require('../../helpers/test-server');
+const TestUsers = require('../../helpers/test-users');
 const DbCleaner = require('../../helpers/db-cleaner');
 const request = require('supertest');
 
@@ -7,6 +8,7 @@ describe('Schedules API', () => {
     let app;
     let db_pool;
     let db_cleaner;
+    let test_users;
     let root_token;
     let root_user_id;
     let channel_connection_id;
@@ -19,23 +21,12 @@ describe('Schedules API', () => {
         app = await test_server.start();
         db_pool = test_server.db_pool;
         
-        // Initialize database cleaner
+        // Initialize database cleaner and test users helper
         db_cleaner = new DbCleaner(db_pool);
+        test_users = new TestUsers(app, db_pool);
 
         // Register root user
-        const root_response = await request(app)
-            .post('/api/v1/auth/register')
-            .send({
-                email: `root-sched-${Date.now()}@test.com`,
-                password: 'SecurePassword123!',
-                name: 'Root User',
-                timezone: 'America/New_York'
-            });
-        root_user_id = root_response.body.user.id;
-        root_token = root_response.body.access_token;
-
-        // Make root user an actual root
-        await db_pool.query('UPDATE users SET is_root = true WHERE id = $1', [root_user_id]);
+        ({ user_id: root_user_id, token: root_token } = await test_users.create_quick_root_user('root-sched'));
 
         // Get X channel ID from database (seeded channels)
         const channels_result = await db_pool.query('SELECT id FROM channels WHERE key = $1', ['x']);

@@ -1,4 +1,5 @@
 const TestServer = require('../../helpers/test-server');
+const TestUsers = require('../../helpers/test-users');
 const DbCleaner = require('../../helpers/db-cleaner');
 const request = require('supertest');
 
@@ -7,10 +8,10 @@ describe('Generation Integration Tests', () => {
     let app;
     let db_pool;
     let db_cleaner;
+    let test_users;
     let root_token;
     let normal_token;
     let root_user_id;
-    let normal_user_id;
     let test_channel_id;
 
     beforeAll(async () => {
@@ -18,35 +19,12 @@ describe('Generation Integration Tests', () => {
         app = await test_server.start();
         db_pool = test_server.db_pool;
         
-        // Initialize database cleaner
+        // Initialize database cleaner and test users helper
         db_cleaner = new DbCleaner(db_pool);
+        test_users = new TestUsers(app, db_pool);
         
-        // Register root user with unique email
-        const root_response = await request(app)
-            .post('/api/v1/auth/register')
-            .send({
-                email: `root-gen-${Date.now()}@test.com`,
-                password: 'SecurePassword123!',
-                name: 'Root User',
-                timezone: 'America/New_York'
-            });
-        root_user_id = root_response.body.user.id;
-        root_token = root_response.body.access_token;
-        
-        // Make root user an actual root
-        await db_pool.query('UPDATE luxaris.users SET is_root = true WHERE id = $1', [root_user_id]);
-        
-        // Register normal user with unique email
-        const normal_response = await request(app)
-            .post('/api/v1/auth/register')
-            .send({
-                email: `normal-gen-${Date.now()}@test.com`,
-                password: 'SecurePassword123!',
-                name: 'Normal User',
-                timezone: 'America/New_York'
-            });
-        normal_user_id = normal_response.body.user.id;
-        normal_token = normal_response.body.access_token;
+        // Register users
+        ({ user_id: root_user_id, token: root_token } = await test_users.create_quick_root_user('root-gen'));
 
         // Get X channel ID
         const channels_result = await db_pool.query('SELECT id FROM luxaris.channels WHERE key = $1', ['x']);

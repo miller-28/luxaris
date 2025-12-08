@@ -1,4 +1,5 @@
 const TestServer = require('../../helpers/test-server');
+const TestUsers = require('../../helpers/test-users');
 const DbCleaner = require('../../helpers/db-cleaner');
 const request = require('supertest');
 
@@ -7,10 +8,10 @@ describe('Channels Integration Tests', () => {
     let app;
     let db_pool;
     let db_cleaner;
+    let test_users;
     let root_token;
     let root_user_id;
     let normal_token;
-    let normal_user_id;
     let x_channel_id;
     let linkedin_channel_id;
 
@@ -20,35 +21,13 @@ describe('Channels Integration Tests', () => {
         app = await test_server.start();
         db_pool = test_server.db_pool;
 
-        // Initialize database cleaner
+        // Initialize database cleaner and test users helper
         db_cleaner = new DbCleaner(db_pool);
+        test_users = new TestUsers(app, db_pool);
 
-        // Clean up any existing test users
-        await db_cleaner.clean_users_by_emails(['root@channels-test.com', 'normal@channels-test.com']);
-
-        // Register root user and get token
-        const root_response = await request(app)
-            .post('/api/v1/auth/register')
-            .send({
-                email: 'root@channels-test.com',
-                password: 'SecurePassword123!',
-                name: 'Root User',
-                timezone: 'America/New_York'
-            });
-        root_token = root_response.body.access_token;
-        root_user_id = root_response.body.user.id;
-
-        // Register normal user and get token
-        const normal_response = await request(app)
-            .post('/api/v1/auth/register')
-            .send({
-                email: 'normal@channels-test.com',
-                password: 'SecurePassword123!',
-                name: 'Normal User',
-                timezone: 'America/New_York'
-            });
-        normal_token = normal_response.body.access_token;
-        normal_user_id = normal_response.body.user.id;
+        // Register users
+        ({ user_id: root_user_id, token: root_token } = await test_users.create_quick_root_user('root-channels'));
+        ({ token: normal_token } = await test_users.create_quick_normal_user('normal-channels'));
 
         // Get channel IDs
         const channels_result = await db_pool.query('SELECT id, key FROM channels');

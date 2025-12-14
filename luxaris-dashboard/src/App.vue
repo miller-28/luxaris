@@ -1,14 +1,14 @@
 <template>
-  <v-app>
-    <router-view />
-    <v-snackbar
-      v-model="snackbar.show"
-      :color="snackbar.color"
-      :timeout="snackbar.timeout"
-    >
-      {{ snackbar.message }}
-    </v-snackbar>
-  </v-app>
+    <v-app>
+        <router-view />
+        <v-snackbar
+            v-model="snackbar.show"
+            :color="snackbar.color"
+            :timeout="snackbar.timeout"
+        >
+            {{ snackbar.message }}
+        </v-snackbar>
+    </v-app>
 </template>
 
 <script setup>
@@ -16,10 +16,10 @@ import { reactive } from 'vue';
 
 // Global snackbar state (can be moved to Pinia store later)
 const snackbar = reactive({
-  show: false,
-  message: '',
-  color: 'info',
-  timeout: 3000,
+    show: false,
+    message: '',
+    color: 'info',
+    timeout: 3000,
 });
 </script>
 

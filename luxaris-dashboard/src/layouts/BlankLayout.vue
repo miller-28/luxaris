@@ -1,7 +1,7 @@
 <template>
-  <v-container fluid class="fill-height">
-    <slot />
-  </v-container>
+    <v-container fluid class="fill-height">
+        <slot />
+    </v-container>
 </template>
 
 <script setup>

@@ -66,7 +66,7 @@
             "skipFiles": ["<node_internals>/**"]
         },
         {
-            "name": "Luxaris - API - Lint API",
+            "name": "Luxaris - API - Lint",
             "type": "node",
             "request": "launch",
             "runtimeExecutable": "npm",
@@ -76,7 +76,7 @@
             "skipFiles": ["<node_internals>/**"]
         },
         {
-            "name": "Luxaris - API - Lint API (create report file)",
+            "name": "Luxaris - API - Lint (create report file)",
             "type": "node",
             "request": "launch",
             "runtimeExecutable": "npm",
@@ -86,7 +86,7 @@
             "skipFiles": ["<node_internals>/**"]
         },     
         {
-            "name": "Luxaris - API - Lint API (Fix)",
+            "name": "Luxaris - API - Lint (Fix)",
             "type": "node",
             "request": "launch",
             "runtimeExecutable": "npm",
@@ -151,6 +151,26 @@
             "request": "launch",
             "runtimeExecutable": "npm",
             "runtimeArgs": ["run", "preview"],
+            "cwd": "${workspaceFolder}/luxaris-dashboard",
+            "console": "integratedTerminal",
+            "skipFiles": ["<node_internals>/**"]
+        },
+        {
+            "name": "Luxaris - Dashboard - Lint",
+            "type": "node",
+            "request": "launch",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": ["run", "lint"],
+            "cwd": "${workspaceFolder}/luxaris-dashboard",
+            "console": "integratedTerminal",
+            "skipFiles": ["<node_internals>/**"]
+        },
+        {
+            "name": "Luxaris - Dashboard - Lint (Fix)",
+            "type": "node",
+            "request": "launch",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": ["run", "lint:fix"],
             "cwd": "${workspaceFolder}/luxaris-dashboard",
             "console": "integratedTerminal",
             "skipFiles": ["<node_internals>/**"]

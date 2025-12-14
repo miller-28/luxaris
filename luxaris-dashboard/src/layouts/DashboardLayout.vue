@@ -1,93 +1,93 @@
 <template>
-  <v-layout>
-    <!-- App Bar -->
-    <v-app-bar color="surface" elevation="0" border="b">
-      <!-- Mobile Menu Toggle -->
-      <v-app-bar-nav-icon
-        class="d-md-none"
-        @click="openMobileNav"
-      />
+    <v-layout>
+        <!-- App Bar -->
+        <v-app-bar color="surface" elevation="0" border="b">
+            <!-- Mobile Menu Toggle -->
+            <v-app-bar-nav-icon
+                class="d-md-none"
+                @click="openMobileNav"
+            />
 
-      <!-- Desktop Sidebar Toggle -->
-      <v-app-bar-nav-icon
-        class="d-none d-md-flex"
-        @click="rail = !rail"
-      />
+            <!-- Desktop Sidebar Toggle -->
+            <v-app-bar-nav-icon
+                class="d-none d-md-flex"
+                @click="rail = !rail"
+            />
 
-      <!-- Logo / Title -->
-      <v-toolbar-title class="d-flex align-center">
-        <v-icon size="28" color="primary" class="mr-2">mdi-infinity</v-icon>
-        <span class="font-weight-bold">Luxaris</span>
-      </v-toolbar-title>
+            <!-- Logo / Title -->
+            <v-toolbar-title class="d-flex align-center">
+                <v-icon size="28" color="primary" class="mr-2">mdi-infinity</v-icon>
+                <span class="font-weight-bold">Luxaris</span>
+            </v-toolbar-title>
 
-      <v-spacer />
+            <v-spacer />
 
-      <!-- Global Search (Desktop) -->
-      <div class="d-none d-md-block mx-4">
-        <GlobalSearch />
-      </div>
+            <!-- Global Search (Desktop) -->
+            <div class="d-none d-md-block mx-4">
+                <GlobalSearch />
+            </div>
 
-      <v-spacer />
+            <v-spacer />
 
-      <!-- Notification Center -->
-      <NotificationCenter />
+            <!-- Notification Center -->
+            <NotificationCenter />
 
-      <!-- User Menu -->
-      <UserMenu />
-    </v-app-bar>
+            <!-- User Menu -->
+            <UserMenu />
+        </v-app-bar>
 
-    <!-- Desktop Navigation Drawer -->
-    <v-navigation-drawer
-      v-model="drawer"
-      :rail="rail"
-      permanent
-      class="d-none d-md-flex"
-    >
-      <template v-slot:prepend>
-        <v-list-item
-          v-if="!rail"
-          class="px-2"
-          prepend-icon="mdi-infinity"
-          title="Luxaris"
-          subtitle="Dashboard"
-        />
-      </template>
+        <!-- Desktop Navigation Drawer -->
+        <v-navigation-drawer
+            v-model="drawer"
+            :rail="rail"
+            permanent
+            class="d-none d-md-flex"
+        >
+            <template v-slot:prepend>
+                <v-list-item
+                    v-if="!rail"
+                    class="px-2"
+                    prepend-icon="mdi-infinity"
+                    title="Luxaris"
+                    subtitle="Dashboard"
+                />
+            </template>
 
-      <SidebarNav />
+            <SidebarNav />
 
-      <template v-slot:append>
-        <div class="pa-2">
-          <v-btn
-            v-if="!rail"
-            block
-            variant="outlined"
-            prepend-icon="mdi-chevron-left"
-            @click="rail = true"
-          >
-            Collapse
-          </v-btn>
-          <v-btn
-            v-else
-            icon
-            variant="text"
-            @click="rail = false"
-          >
-            <v-icon>mdi-chevron-right</v-icon>
-          </v-btn>
-        </div>
-      </template>
-    </v-navigation-drawer>
+            <template v-slot:append>
+                <div class="pa-2">
+                    <v-btn
+                        v-if="!rail"
+                        block
+                        variant="outlined"
+                        prepend-icon="mdi-chevron-left"
+                        @click="rail = true"
+                    >
+                        Collapse
+                    </v-btn>
+                    <v-btn
+                        v-else
+                        icon
+                        variant="text"
+                        @click="rail = false"
+                    >
+                        <v-icon>mdi-chevron-right</v-icon>
+                    </v-btn>
+                </div>
+            </template>
+        </v-navigation-drawer>
 
-    <!-- Mobile Navigation Drawer -->
-    <MobileNav ref="mobileNavRef" class="d-md-none" />
+        <!-- Mobile Navigation Drawer -->
+        <MobileNav ref="mobileNavRef" class="d-md-none" />
 
-    <!-- Main Content -->
-    <v-main style="background-color: #0A0A0A;">
-      <v-container fluid>
-        <slot />
-      </v-container>
-    </v-main>
-  </v-layout>
+        <!-- Main Content -->
+        <v-main style="background-color: #0A0A0A;">
+            <v-container fluid>
+                <slot />
+            </v-container>
+        </v-main>
+    </v-layout>
 </template>
 
 <script setup>
@@ -107,27 +107,27 @@ const mobileNavRef = ref(null);
 
 // Load saved sidebar state from preset
 onMounted(() => {
-  if (isLoaded.value) {
-    rail.value = sidebarState.value.collapsed;
-  }
+    if (isLoaded.value) {
+        rail.value = sidebarState.value.collapsed;
+    }
 });
 
 // Watch for preset loading
 watch(isLoaded, (loaded) => {
-  if (loaded) {
-    rail.value = sidebarState.value.collapsed;
-  }
+    if (loaded) {
+        rail.value = sidebarState.value.collapsed;
+    }
 });
 
 // Save sidebar state changes to preset
 watch(rail, (newValue) => {
-  if (isLoaded.value) {
-    updateSidebarState({ collapsed: newValue });
-  }
+    if (isLoaded.value) {
+        updateSidebarState({ collapsed: newValue });
+    }
 });
 
 // Open mobile navigation
 const openMobileNav = () => {
-  mobileNavRef.value?.open();
+    mobileNavRef.value?.open();
 };
 </script>

@@ -18,7 +18,7 @@ function create_post_template_routes({ post_template_service, auth_middleware, e
                 data: template
             });
         } catch (error) {
-            if (error.message === 'TEMPLATE_NAME_AND_BODY_REQUIRED') {
+            if (error.error_code === 'TEMPLATE_NAME_AND_BODY_REQUIRED') {
                 return res.status(400).json({
                     errors: [{
                         error_code: 'TEMPLATE_NAME_AND_BODY_REQUIRED',
@@ -69,7 +69,7 @@ function create_post_template_routes({ post_template_service, auth_middleware, e
                 data: template
             });
         } catch (error) {
-            if (error.message === 'TEMPLATE_NOT_FOUND') {
+            if (error.error_code === 'TEMPLATE_NOT_FOUND') {
                 return res.status(404).json({
                     errors: [{
                         error_code: 'TEMPLATE_NOT_FOUND',
@@ -78,7 +78,7 @@ function create_post_template_routes({ post_template_service, auth_middleware, e
                     }]
                 });
             }
-            if (error.message === 'TEMPLATE_ACCESS_DENIED') {
+            if (error.error_code === 'TEMPLATE_ACCESS_DENIED') {
                 return res.status(403).json({
                     errors: [{
                         error_code: 'TEMPLATE_ACCESS_DENIED',
@@ -104,7 +104,7 @@ function create_post_template_routes({ post_template_service, auth_middleware, e
                 data: template
             });
         } catch (error) {
-            if (error.message === 'TEMPLATE_NOT_FOUND') {
+            if (error.error_code === 'TEMPLATE_NOT_FOUND') {
                 return res.status(404).json({
                     errors: [{
                         error_code: 'TEMPLATE_NOT_FOUND',
@@ -113,7 +113,7 @@ function create_post_template_routes({ post_template_service, auth_middleware, e
                     }]
                 });
             }
-            if (error.message === 'TEMPLATE_ACCESS_DENIED') {
+            if (error.error_code === 'TEMPLATE_ACCESS_DENIED') {
                 return res.status(403).json({
                     errors: [{
                         error_code: 'TEMPLATE_ACCESS_DENIED',
@@ -136,7 +136,7 @@ function create_post_template_routes({ post_template_service, auth_middleware, e
 
             res.status(204).send();
         } catch (error) {
-            if (error.message === 'TEMPLATE_NOT_FOUND') {
+            if (error.error_code === 'TEMPLATE_NOT_FOUND') {
                 return res.status(404).json({
                     errors: [{
                         error_code: 'TEMPLATE_NOT_FOUND',
@@ -145,7 +145,7 @@ function create_post_template_routes({ post_template_service, auth_middleware, e
                     }]
                 });
             }
-            if (error.message === 'TEMPLATE_ACCESS_DENIED') {
+            if (error.error_code === 'TEMPLATE_ACCESS_DENIED') {
                 return res.status(403).json({
                     errors: [{
                         error_code: 'TEMPLATE_ACCESS_DENIED',
@@ -171,7 +171,7 @@ function create_post_template_routes({ post_template_service, auth_middleware, e
                 data: result
             });
         } catch (error) {
-            if (error.message === 'TEMPLATE_NOT_FOUND') {
+            if (error.error_code === 'TEMPLATE_NOT_FOUND') {
                 return res.status(404).json({
                     errors: [{
                         error_code: 'TEMPLATE_NOT_FOUND',
@@ -180,7 +180,7 @@ function create_post_template_routes({ post_template_service, auth_middleware, e
                     }]
                 });
             }
-            if (error.message === 'TEMPLATE_ACCESS_DENIED') {
+            if (error.error_code === 'TEMPLATE_ACCESS_DENIED') {
                 return res.status(403).json({
                     errors: [{
                         error_code: 'TEMPLATE_ACCESS_DENIED',

@@ -205,8 +205,8 @@ describe('System Context - OAuth Authentication', () => {
                     password: 'Password123!'
                 });
 
-            // Should fail with error (either 403 or 500)
-            expect([403, 500]).toContain(login_response.status);
+            // Should fail with 403 forbidden
+            expect(login_response.status).toBe(403);
             expect(login_response.body.errors[0].error_description).toContain('pending approval');
         });
     });

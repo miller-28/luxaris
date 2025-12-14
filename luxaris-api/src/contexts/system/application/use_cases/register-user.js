@@ -10,13 +10,14 @@ class RegisterUserUseCase {
         const validated_data = UserRegistrationSchema.parse(registration_data);
 
         // Register user
-        const user = await this.auth_service.register_user(validated_data);
+        const {user, is_first} = await this.auth_service.register_user(validated_data);
 
         // Generate tokens
         const access_token = this.auth_service.generate_jwt(user);
         const refresh_token = this.auth_service.generate_refresh_token(user);
 
         return {
+            is_pending: !is_first,
             user: user.to_json(),
             access_token,
             refresh_token,

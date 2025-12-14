@@ -27,7 +27,7 @@ function create_generation_routes({ generation_service, auth_middleware, error_h
                 }
             });
         } catch (error) {
-            if (error.message === 'PROMPT_REQUIRED') {
+            if (error.error_code === 'PROMPT_REQUIRED') {
                 return res.status(400).json({
                     errors: [{
                         error_code: 'PROMPT_REQUIRED',
@@ -36,7 +36,7 @@ function create_generation_routes({ generation_service, auth_middleware, error_h
                     }]
                 });
             }
-            if (error.message === 'CHANNEL_IDS_REQUIRED') {
+            if (error.error_code === 'CHANNEL_IDS_REQUIRED') {
                 return res.status(400).json({
                     errors: [{
                         error_code: 'CHANNEL_IDS_REQUIRED',
@@ -45,7 +45,7 @@ function create_generation_routes({ generation_service, auth_middleware, error_h
                     }]
                 });
             }
-            if (error.message === 'TEMPLATE_NOT_FOUND') {
+            if (error.error_code === 'TEMPLATE_NOT_FOUND') {
                 return res.status(404).json({
                     errors: [{
                         error_code: 'TEMPLATE_NOT_FOUND',
@@ -54,7 +54,7 @@ function create_generation_routes({ generation_service, auth_middleware, error_h
                     }]
                 });
             }
-            if (error.message === 'TEMPLATE_ACCESS_DENIED') {
+            if (error.error_code === 'TEMPLATE_ACCESS_DENIED') {
                 return res.status(403).json({
                     errors: [{
                         error_code: 'TEMPLATE_ACCESS_DENIED',
@@ -63,7 +63,7 @@ function create_generation_routes({ generation_service, auth_middleware, error_h
                     }]
                 });
             }
-            if (error.message === 'POST_NOT_FOUND') {
+            if (error.error_code === 'POST_NOT_FOUND') {
                 return res.status(404).json({
                     errors: [{
                         error_code: 'POST_NOT_FOUND',
@@ -127,7 +127,7 @@ function create_generation_routes({ generation_service, auth_middleware, error_h
                 }
             });
         } catch (error) {
-            if (error.message === 'SESSION_NOT_FOUND') {
+            if (error.error_code === 'SESSION_NOT_FOUND') {
                 return res.status(404).json({
                     errors: [{
                         error_code: 'SESSION_NOT_FOUND',
@@ -136,7 +136,7 @@ function create_generation_routes({ generation_service, auth_middleware, error_h
                     }]
                 });
             }
-            if (error.message === 'SESSION_ACCESS_DENIED') {
+            if (error.error_code === 'SESSION_ACCESS_DENIED') {
                 return res.status(403).json({
                     errors: [{
                         error_code: 'SESSION_ACCESS_DENIED',
@@ -171,7 +171,7 @@ function create_generation_routes({ generation_service, auth_middleware, error_h
                 }
             });
         } catch (error) {
-            if (error.message === 'SUGGESTION_NOT_FOUND') {
+            if (error.error_code === 'SUGGESTION_NOT_FOUND') {
                 return res.status(404).json({
                     errors: [{
                         error_code: 'SUGGESTION_NOT_FOUND',
@@ -180,7 +180,7 @@ function create_generation_routes({ generation_service, auth_middleware, error_h
                     }]
                 });
             }
-            if (error.message === 'SUGGESTION_ACCESS_DENIED') {
+            if (error.error_code === 'SUGGESTION_ACCESS_DENIED') {
                 return res.status(403).json({
                     errors: [{
                         error_code: 'SUGGESTION_ACCESS_DENIED',
@@ -189,11 +189,11 @@ function create_generation_routes({ generation_service, auth_middleware, error_h
                     }]
                 });
             }
-            if (error.message === 'SUGGESTION_ALREADY_ACCEPTED') {
-                return res.status(400).json({
+            if (error.error_code === 'SUGGESTION_ALREADY_ACCEPTED') {
+                return res.status(409).json({
                     errors: [{
                         error_code: 'SUGGESTION_ALREADY_ACCEPTED',
-                        error_description: 'This suggestion has already been accepted',
+                        error_description: error.message,
                         error_severity: 'error'
                     }]
                 });
@@ -212,7 +212,7 @@ function create_generation_routes({ generation_service, auth_middleware, error_h
 
             res.status(204).send();
         } catch (error) {
-            if (error.message === 'SESSION_NOT_FOUND') {
+            if (error.error_code === 'SESSION_NOT_FOUND') {
                 return res.status(404).json({
                     errors: [{
                         error_code: 'SESSION_NOT_FOUND',
@@ -221,7 +221,7 @@ function create_generation_routes({ generation_service, auth_middleware, error_h
                     }]
                 });
             }
-            if (error.message === 'SESSION_ACCESS_DENIED') {
+            if (error.error_code === 'SESSION_ACCESS_DENIED') {
                 return res.status(403).json({
                     errors: [{
                         error_code: 'SESSION_ACCESS_DENIED',

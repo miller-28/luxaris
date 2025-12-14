@@ -20,7 +20,7 @@ function create_schedule_routes(schedule_service, auth_middleware) {
             });
         } catch (error) {
             // Handle known validation errors
-            if (error.message === 'SCHEDULE_REQUIRED_FIELDS_MISSING') {
+            if (error.error_code === 'SCHEDULE_REQUIRED_FIELDS_MISSING') {
                 return res.status(400).json({
                     errors: [{
                         error_code: 'SCHEDULE_REQUIRED_FIELDS_MISSING',
@@ -29,7 +29,7 @@ function create_schedule_routes(schedule_service, auth_middleware) {
                     }]
                 });
             }
-            if (error.message === 'VARIANT_NOT_FOUND') {
+            if (error.error_code === 'VARIANT_NOT_FOUND') {
                 return res.status(404).json({
                     errors: [{
                         error_code: 'VARIANT_NOT_FOUND',
@@ -38,7 +38,7 @@ function create_schedule_routes(schedule_service, auth_middleware) {
                     }]
                 });
             }
-            if (error.message === 'SCHEDULE_TIME_MUST_BE_FUTURE') {
+            if (error.error_code === 'SCHEDULE_TIME_MUST_BE_FUTURE') {
                 return res.status(400).json({
                     errors: [{
                         error_code: 'SCHEDULE_TIME_MUST_BE_FUTURE',
@@ -47,7 +47,7 @@ function create_schedule_routes(schedule_service, auth_middleware) {
                     }]
                 });
             }
-            if (error.message === 'SCHEDULE_TIME_TOO_FAR') {
+            if (error.error_code === 'SCHEDULE_TIME_TOO_FAR') {
                 return res.status(400).json({
                     errors: [{
                         error_code: 'SCHEDULE_TIME_TOO_FAR',
@@ -162,7 +162,7 @@ function create_schedule_routes(schedule_service, auth_middleware) {
                 data: result
             });
         } catch (error) {
-            if (error.message === 'SCHEDULE_NOT_FOUND') {
+            if (error.error_code === 'SCHEDULE_NOT_FOUND') {
                 return res.status(404).json({
                     errors: [{
                         error_code: 'SCHEDULE_NOT_FOUND',
@@ -171,7 +171,7 @@ function create_schedule_routes(schedule_service, auth_middleware) {
                     }]
                 });
             }
-            if (error.message === 'SCHEDULE_ACCESS_DENIED' || error.message === 'VARIANT_NOT_FOUND') {
+            if (error.error_code === 'SCHEDULE_ACCESS_DENIED' || error.error_code === 'VARIANT_NOT_FOUND') {
                 return res.status(403).json({
                     errors: [{
                         error_code: 'SCHEDULE_ACCESS_DENIED',
@@ -199,7 +199,7 @@ function create_schedule_routes(schedule_service, auth_middleware) {
                 data: schedule
             });
         } catch (error) {
-            if (error.message === 'SCHEDULE_NOT_FOUND') {
+            if (error.error_code === 'SCHEDULE_NOT_FOUND') {
                 return res.status(404).json({
                     errors: [{
                         error_code: 'SCHEDULE_NOT_FOUND',
@@ -208,7 +208,7 @@ function create_schedule_routes(schedule_service, auth_middleware) {
                     }]
                 });
             }
-            if (error.message === 'SCHEDULE_ACCESS_DENIED' || error.message === 'VARIANT_NOT_FOUND') {
+            if (error.error_code === 'SCHEDULE_ACCESS_DENIED' || error.error_code === 'VARIANT_NOT_FOUND') {
                 return res.status(403).json({
                     errors: [{
                         error_code: 'SCHEDULE_ACCESS_DENIED',
@@ -217,7 +217,7 @@ function create_schedule_routes(schedule_service, auth_middleware) {
                     }]
                 });
             }
-            if (error.message === 'SCHEDULE_TIME_MUST_BE_FUTURE') {
+            if (error.error_code === 'SCHEDULE_TIME_MUST_BE_FUTURE') {
                 return res.status(400).json({
                     errors: [{
                         error_code: 'SCHEDULE_TIME_MUST_BE_FUTURE',
@@ -226,7 +226,7 @@ function create_schedule_routes(schedule_service, auth_middleware) {
                     }]
                 });
             }
-            if (error.message === 'SCHEDULE_TIME_TOO_FAR') {
+            if (error.error_code === 'SCHEDULE_TIME_TOO_FAR') {
                 return res.status(400).json({
                     errors: [{
                         error_code: 'SCHEDULE_TIME_TOO_FAR',
@@ -253,7 +253,7 @@ function create_schedule_routes(schedule_service, auth_middleware) {
                 data: schedule
             });
         } catch (error) {
-            if (error.message === 'SCHEDULE_NOT_FOUND') {
+            if (error.error_code === 'SCHEDULE_NOT_FOUND') {
                 return res.status(404).json({
                     errors: [{
                         error_code: 'SCHEDULE_NOT_FOUND',
@@ -262,7 +262,7 @@ function create_schedule_routes(schedule_service, auth_middleware) {
                     }]
                 });
             }
-            if (error.message === 'SCHEDULE_ACCESS_DENIED' || error.message === 'VARIANT_NOT_FOUND') {
+            if (error.error_code === 'SCHEDULE_ACCESS_DENIED' || error.error_code === 'VARIANT_NOT_FOUND') {
                 return res.status(403).json({
                     errors: [{
                         error_code: 'SCHEDULE_ACCESS_DENIED',
@@ -291,7 +291,7 @@ function create_schedule_routes(schedule_service, auth_middleware) {
             }
             res.status(204).send();
         } catch (error) {
-            if (error.message === 'SCHEDULE_NOT_FOUND') {
+            if (error.error_code === 'SCHEDULE_NOT_FOUND') {
                 return res.status(404).json({
                     errors: [{
                         error_code: 'SCHEDULE_NOT_FOUND',
@@ -300,7 +300,7 @@ function create_schedule_routes(schedule_service, auth_middleware) {
                     }]
                 });
             }
-            if (error.message === 'SCHEDULE_ACCESS_DENIED' || error.message === 'VARIANT_NOT_FOUND') {
+            if (error.error_code === 'SCHEDULE_ACCESS_DENIED' || error.error_code === 'VARIANT_NOT_FOUND') {
                 return res.status(403).json({
                     errors: [{
                         error_code: 'SCHEDULE_ACCESS_DENIED',

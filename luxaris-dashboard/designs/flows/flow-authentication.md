@@ -32,10 +32,13 @@ All authentication flows follow secure JWT-based authentication with token refre
    - "Remember me" checkbox (optional)
    - Link to registration page
 
-2. **Input Validation**
-   - Email format validation (client-side)
-   - Password minimum length check
+2. **Input Validation (Zod Schema)**
+   - **Validation Library**: Zod (matches server-side validation exactly)
+   - **Schema Location**: `src/contexts/system/domain/rules/userSchemas.js`
+   - Email format validation using `UserLoginSchema`
+   - Password required validation
    - Enable submit button only when valid
+   - **Consistency**: Client and server validation rules are identical
 
 3. **Submit Credentials**
    - User clicks "Login" button
@@ -139,17 +142,20 @@ All authentication flows follow secure JWT-based authentication with token refre
    - Terms of service checkbox
    - Link to login page
 
-2. **Real-time Validation**
-   - **Name**: Minimum 2 characters
-   - **Email**: Valid email format
-   - **Password**: 
+2. **Real-time Validation (Zod Schema)**
+   - **Validation Library**: Zod (matches server-side validation exactly)
+   - **Schema Location**: `src/contexts/system/domain/rules/userSchemas.js`
+   - **Name**: Minimum 1 character, maximum 255 characters
+   - **Email**: Valid email format, automatically converted to lowercase
+   - **Password** (matches API `UserRegistrationSchema`): 
      - Minimum 8 characters
      - At least one uppercase letter
      - At least one lowercase letter
      - At least one number
      - At least one special character
-   - **Confirm Password**: Must match password
+   - **Confirm Password**: Must match password (client-side only)
    - Show validation feedback as user types
+   - **Consistency**: Client and server validation rules are identical
 
 3. **Password Strength Indicator**
    - Visual indicator (weak/medium/strong)
@@ -219,26 +225,28 @@ All authentication flows follow secure JWT-based authentication with token refre
 }
 ```
 - Highlight email field
-- Show error below field
-- Suggest "Login instead" link
-
 **Validation Errors (400)**
 ```json
 {
     "errors": [
         {
-            "error_code": "INVALID_EMAIL",
-            "error_description": "Email format is invalid",
+            "error_code": "VALIDATION_ERROR",
+            "error_description": "Invalid email format",
             "error_severity": "error"
         },
         {
-            "error_code": "WEAK_PASSWORD",
-            "error_description": "Password must be at least 8 characters",
+            "error_code": "VALIDATION_ERROR",
+            "error_description": "Password must contain at least one special character",
             "error_severity": "error"
         }
     ]
 }
 ```
+- Server errors are formatted using `formatServerErrors()` helper
+- All error descriptions are displayed to the user
+- Errors are concatenated with `. ` separator
+- Client-side Zod validation prevents most server errors
+- Keep valid data intact
 - Show all errors
 - Highlight affected fields
 - Keep valid data intact

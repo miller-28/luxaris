@@ -15,7 +15,11 @@ class PostTemplateService {
 
         // Validate required fields
         if (!template_data.name || !template_data.template_body) {
-            throw new Error('TEMPLATE_NAME_AND_BODY_REQUIRED');
+            const error = new Error('Template name and body are required');
+            error.status_code = 400;
+            error.error_code = 'TEMPLATE_NAME_AND_BODY_REQUIRED';
+            error.severity = 'error';
+            throw error;
         }
 
         const template_record = await this.template_repository.create({
@@ -53,12 +57,20 @@ class PostTemplateService {
         const template_record = await this.template_repository.find_by_id(template_id);
     
         if (!template_record) {
-            throw new Error('TEMPLATE_NOT_FOUND');
+            const error = new Error('Template not found');
+            error.status_code = 404;
+            error.error_code = 'TEMPLATE_NOT_FOUND';
+            error.severity = 'error';
+            throw error;
         }
 
         // Validate ownership
         if (template_record.owner_principal_id !== principal_id) {
-            throw new Error('TEMPLATE_ACCESS_DENIED');
+            const error = new Error('Access denied to this template');
+            error.status_code = 403;
+            error.error_code = 'TEMPLATE_ACCESS_DENIED';
+            error.severity = 'error';
+            throw error;
         }
 
         return new PostTemplate(template_record);
@@ -88,10 +100,18 @@ class PostTemplateService {
         // Verify ownership
         const owner_id = await this.template_repository.get_owner_principal_id(template_id);
         if (!owner_id) {
-            throw new Error('TEMPLATE_NOT_FOUND');
+            const error = new Error('Template not found');
+            error.status_code = 404;
+            error.error_code = 'TEMPLATE_NOT_FOUND';
+            error.severity = 'error';
+            throw error;
         }
         if (owner_id !== principal_id) {
-            throw new Error('TEMPLATE_ACCESS_DENIED');
+            const error = new Error('Access denied to this template');
+            error.status_code = 403;
+            error.error_code = 'TEMPLATE_ACCESS_DENIED';
+            error.severity = 'error';
+            throw error;
         }
 
         const template_record = await this.template_repository.update(template_id, updates);
@@ -122,10 +142,18 @@ class PostTemplateService {
         // Verify ownership
         const owner_id = await this.template_repository.get_owner_principal_id(template_id);
         if (!owner_id) {
-            throw new Error('TEMPLATE_NOT_FOUND');
+            const error = new Error('Template not found');
+            error.status_code = 404;
+            error.error_code = 'TEMPLATE_NOT_FOUND';
+            error.severity = 'error';
+            throw error;
         }
         if (owner_id !== principal_id) {
-            throw new Error('TEMPLATE_ACCESS_DENIED');
+            const error = new Error('Access denied to this template');
+            error.status_code = 403;
+            error.error_code = 'TEMPLATE_ACCESS_DENIED';
+            error.severity = 'error';
+            throw error;
         }
 
         await this.template_repository.delete(template_id);
@@ -155,7 +183,11 @@ class PostTemplateService {
         // Check if all required placeholders have values
         const missing_placeholders = placeholders.filter(p => !(p in values));
         if (missing_placeholders.length > 0) {
-            throw new Error('MISSING_PLACEHOLDER_VALUES: ' + missing_placeholders.join(', '));
+            const error = new Error('Missing placeholder values: ' + missing_placeholders.join(', '));
+            error.status_code = 400;
+            error.error_code = 'MISSING_PLACEHOLDER_VALUES';
+            error.severity = 'error';
+            throw error;
         }
 
         return {

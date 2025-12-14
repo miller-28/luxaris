@@ -1,0 +1,117 @@
+{
+  "app": {
+    "name": "Luxaris Dashboard",
+    "welcome": "Welcome to Luxaris",
+    "welcomeMessage": "Manage your social media content in one place",
+    "title": "Luxaris",
+    "signInToYourAccount": "Sign in to your account",
+    "createYourAccount": "Create your account"
+  },
+  "auth": {
+    "login": {
+      "title": "Login",
+      "email": "Email",
+      "emailPlaceholder": "Enter your email",
+      "emailHint": "Please enter a valid email address (e.g., user@example.com)",
+      "password": "Password",
+      "passwordPlaceholder": "Enter your password",
+      "passwordHint": "Enter your password",
+      "submit": "Login",
+      "noAccount": "Don't have an account?",
+      "forgotPassword": "Forgot Password?",
+      "continueWithGoogle": "Continue with Google",
+      "orRegister": "Or Register",
+      "or": "OR",
+      "pendingApproval": "Your registration is pending approval. You'll receive an email once your account is activated.",
+      "oauthError": "Authentication failed. Please try again."
+    },
+    "oauth": {
+      "authenticationFailed": "Authentication Failed",
+      "authenticationSuccessful": "Authentication Successful",
+      "pendingApproval": "Pending Approval",
+      "pendingApprovalMessage": "Your account is pending approval. You'll receive an email once activated.",
+      "redirectingToDashboard": "Redirecting to dashboard...",
+      "returnToLogin": "Return to Login",
+      "invalidOAuthParameters": "Invalid OAuth callback parameters",
+      "authenticationFailedGeneric": "Authentication failed"
+    },
+    "register": {
+      "title": "Register",
+      "name": "Full Name",
+      "namePlaceholder": "Enter your full name",
+      "nameHint": "Enter your full name (1-255 characters)",
+      "email": "Email",
+      "emailHint": "Please enter a valid email address (e.g., user@example.com)",
+      "password": "Password",
+      "passwordHint": "Enter a password (min 8 chars, uppercase, lowercase, number, special char)",
+      "confirmPassword": "Confirm Password",
+      "confirmPasswordHint": "Confirm the password",
+      "submit": "Register",
+      "haveAccount": "Already have an account?",
+      "continueWithGoogle": "Continue with Google",
+      "orLogin": "Or Login",
+      "or": "OR",
+      "successTitle": "Registration Successful",
+      "successMessage": "Your account has been created successfully !",
+      "pendingTitle": "Account Pending Approval",
+      "pendingMessage": "Your account has been created successfully! However, it requires administrator approval before you can sign in.<br><br>You will receive an email notification once your account is activated.",
+      "understand": "I Understand",
+      "registrationFailed": "Registration failed. Please try again."
+    },
+    "validation": {
+      "nameRequired": "Name is required",
+      "invalidName": "Invalid name",
+      "emailRequired": "Email is required",
+      "invalidEmail": "Invalid email",
+      "passwordRequired": "Password is required",
+      "invalidPassword": "Invalid password",
+      "passwordConfirmRequired": "Password confirmation is required",
+      "passwordsDoNotMatch": "Passwords do not match"
+    },
+    "logout": "Logout"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "posts": "Posts",
+    "scheduling": "Scheduling",
+    "schedules": "Schedules",
+    "channels": "Channels",
+    "templates": "Templates",
+    "generation": "AI Generation",
+    "admin": "Admin",
+    "users": "Users",
+    "settings": "Settings"
+  },
+  "user": {
+    "profile": "Profile",
+    "settings": "Settings",
+    "theme": "Theme",
+    "logout": "Logout",
+    "user": "User"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search",
+    "searchPlaceholder": "Search... (Ctrl+K)",
+    "searchDetailedPlaceholder": "Search posts, schedules, templates...",
+    "noResultsFound": "No results found",
+    "filter": "Filter",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "confirm": "Confirm",
+    "close": "Close"
+  },
+  "dashboard": {
+    "totalPosts": "Total Posts",
+    "channels": "Channels",
+    "scheduled": "Scheduled",
+    "generated": "Generated",
+    "recentActivity": "Recent Activity",
+    "noRecentActivity": "No recent activity"
+  }
+}

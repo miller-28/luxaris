@@ -100,7 +100,7 @@ describe('System Context - Authentication', () => {
             const response = await request(app)
                 .post('/api/v1/auth/register')
                 .send(registration_data)
-                .expect(500);
+                .expect(409);
 
             expect(response.body.errors[0].error_description).toContain('Email already registered');
         });
@@ -175,7 +175,7 @@ describe('System Context - Authentication', () => {
             const response = await request(app)
                 .post('/api/v1/auth/login')
                 .send(login_data)
-                .expect(500);
+                .expect(401);
 
             expect(response.body.errors[0].error_description).toContain('Invalid credentials');
         });
@@ -189,7 +189,7 @@ describe('System Context - Authentication', () => {
             const response = await request(app)
                 .post('/api/v1/auth/login')
                 .send(login_data)
-                .expect(500);
+                .expect(401);
 
             expect(response.body.errors[0].error_description).toContain('Invalid credentials');
         });
@@ -212,7 +212,7 @@ describe('System Context - Authentication', () => {
             const response = await request(app)
                 .post('/api/v1/auth/login')
                 .send(login_data)
-                .expect(500);
+                .expect(403);
 
             expect(response.body.errors[0].error_description).toContain('pending approval');
         });
@@ -248,7 +248,7 @@ describe('System Context - Authentication', () => {
             const response = await request(app)
                 .post('/api/v1/auth/refresh')
                 .send({ refresh_token: 'invalid-token' })
-                .expect(500);
+                .expect(401);
 
             expect(response.body.errors[0].error_description).toContain('Invalid or expired token');
         });

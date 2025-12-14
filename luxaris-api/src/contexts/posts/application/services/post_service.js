@@ -21,7 +21,11 @@ class PostService {
 
         // Validate base content
         if (!post_data.base_content || post_data.base_content.trim().length === 0) {
-            throw new Error('BASE_CONTENT_REQUIRED');
+            const error = new Error('Base content is required');
+            error.status_code = 400;
+            error.error_code = 'BASE_CONTENT_REQUIRED';
+            error.severity = 'error';
+            throw error;
         }
 
         // Create post
@@ -55,12 +59,20 @@ class PostService {
         const post = await this.post_repository.find_by_id(post_id);
 
         if (!post) {
-            throw new Error('POST_NOT_FOUND');
+            const error = new Error('Post not found');
+            error.status_code = 404;
+            error.error_code = 'POST_NOT_FOUND';
+            error.severity = 'error';
+            throw error;
         }
 
         // Verify ownership
         if (post.owner_principal_id !== principal.id) {
-            throw new Error('POST_ACCESS_DENIED');
+            const error = new Error('Access denied to this post');
+            error.status_code = 403;
+            error.error_code = 'POST_ACCESS_DENIED';
+            error.severity = 'error';
+            throw error;
         }
 
         return post;
@@ -106,7 +118,11 @@ class PostService {
 
         // Validate updates
         if (updates.base_content !== undefined && updates.base_content.trim().length === 0) {
-            throw new Error('BASE_CONTENT_REQUIRED');
+            const error = new Error('Base content is required');
+            error.status_code = 400;
+            error.error_code = 'BASE_CONTENT_REQUIRED';
+            error.severity = 'error';
+            throw error;
         }
 
         // Prevent direct status updates (use dedicated methods)

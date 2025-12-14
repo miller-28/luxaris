@@ -109,7 +109,7 @@ function create_channel_routes(dependencies) {
             try {
                 await channel_service.validate_channel_active(channel_id);
             } catch (error) {
-                if (error.message === 'CHANNEL_NOT_FOUND') {
+                if (error.error_code === 'CHANNEL_NOT_FOUND') {
                     return res.status(404).json({
                         errors: [{
                             error_code: 'CHANNEL_NOT_FOUND',
@@ -118,7 +118,7 @@ function create_channel_routes(dependencies) {
                         }]
                     });
                 }
-                if (error.message === 'CHANNEL_NOT_ACTIVE') {
+                if (error.error_code === 'CHANNEL_NOT_ACTIVE') {
                     return res.status(400).json({
                         errors: [{
                             error_code: 'CHANNEL_NOT_ACTIVE',
@@ -168,11 +168,11 @@ function create_channel_routes(dependencies) {
                 }]
             });
         } catch (error) {
-            if (error.message === 'CONNECTION_ALREADY_EXISTS') {
-                return res.status(400).json({
+            if (error.error_code === 'CONNECTION_ALREADY_EXISTS') {
+                return res.status(409).json({
                     errors: [{
                         error_code: 'CONNECTION_ALREADY_EXISTS',
-                        error_description: 'You already have a connection to this channel',
+                        error_description: error.message,
                         error_severity: 'error'
                     }]
                 });
@@ -201,20 +201,20 @@ function create_channel_routes(dependencies) {
                 message: 'Channel connection successfully disconnected'
             });
         } catch (error) {
-            if (error.message === 'CONNECTION_NOT_FOUND') {
+            if (error.error_code === 'CONNECTION_NOT_FOUND') {
                 return res.status(404).json({
                     errors: [{
                         error_code: 'CONNECTION_NOT_FOUND',
-                        error_description: 'Channel connection not found',
+                        error_description: error.message,
                         error_severity: 'error'
                     }]
                 });
             }
-            if (error.message === 'CONNECTION_NOT_OWNED') {
+            if (error.error_code === 'CONNECTION_NOT_OWNED') {
                 return res.status(403).json({
                     errors: [{
                         error_code: 'FORBIDDEN',
-                        error_description: 'You do not have permission to disconnect this connection',
+                        error_description: error.message,
                         error_severity: 'error'
                     }]
                 });

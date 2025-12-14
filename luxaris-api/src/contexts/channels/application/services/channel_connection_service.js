@@ -33,7 +33,11 @@ class ChannelConnectionService {
         );
 
         if (existing) {
-            throw new Error('CONNECTION_ALREADY_EXISTS');
+            const error = new Error('Connection already exists');
+            error.status_code = 409;
+            error.error_code = 'CONNECTION_ALREADY_EXISTS';
+            error.severity = 'error';
+            throw error;
         }
 
         // Create connection
@@ -94,12 +98,20 @@ class ChannelConnectionService {
         const connection = await this.connection_repo.find_by_id(connection_id);
 
         if (!connection) {
-            throw new Error('CONNECTION_NOT_FOUND');
+            const error = new Error('Connection not found');
+            error.status_code = 404;
+            error.error_code = 'CONNECTION_NOT_FOUND';
+            error.severity = 'error';
+            throw error;
         }
 
         // Check ownership
         if (connection.owner_principal_id !== principal.id) {
-            throw new Error('CONNECTION_NOT_OWNED');
+            const error = new Error('Access denied to this connection');
+            error.status_code = 403;
+            error.error_code = 'CONNECTION_NOT_OWNED';
+            error.severity = 'error';
+            throw error;
         }
 
         // Sanitize auth state

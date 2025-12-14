@@ -176,7 +176,11 @@ class ScheduleRepository {
         }
 
         if (fields.length === 0) {
-            throw new Error('No valid fields to update');
+            const error = new Error('No valid fields to update');
+            error.status_code = 400;
+            error.error_code = 'NO_FIELDS_TO_UPDATE';
+            error.severity = 'error';
+            throw error;
         }
 
         // Always update updated_at

@@ -48,7 +48,7 @@ function create_post_variant_routes(dependencies) {
                 }
             });
         } catch (error) {
-            if (error.message === 'POST_NOT_FOUND') {
+            if (error.error_code === 'POST_NOT_FOUND') {
                 return res.status(404).json({
                     errors: [{
                         error_code: 'POST_NOT_FOUND',
@@ -57,7 +57,7 @@ function create_post_variant_routes(dependencies) {
                     }]
                 });
             }
-            if (error.message === 'POST_ACCESS_DENIED') {
+            if (error.error_code === 'POST_ACCESS_DENIED') {
                 return res.status(403).json({
                     errors: [{
                         error_code: 'POST_ACCESS_DENIED',
@@ -66,16 +66,25 @@ function create_post_variant_routes(dependencies) {
                     }]
                 });
             }
-            if (error.message === 'CHANNEL_NOT_FOUND' || error.message === 'CHANNEL_NOT_ACTIVE') {
-                return res.status(400).json({
+            if (error.error_code === 'CHANNEL_NOT_FOUND') {
+                return res.status(404).json({
                     errors: [{
-                        error_code: error.message,
-                        error_description: error.message === 'CHANNEL_NOT_FOUND' ? 'Channel not found' : 'Channel is not active',
+                        error_code: error.error_code,
+                        error_description: error.message,
                         error_severity: 'error'
                     }]
                 });
             }
-            if (error.message === 'VARIANT_CONTENT_REQUIRED') {
+            if (error.error_code === 'CHANNEL_NOT_ACTIVE') {
+                return res.status(400).json({
+                    errors: [{
+                        error_code: error.error_code,
+                        error_description: error.message,
+                        error_severity: 'error'
+                    }]
+                });
+            }
+            if (error.error_code === 'VARIANT_CONTENT_REQUIRED') {
                 return res.status(400).json({
                     errors: [{
                         error_code: 'VARIANT_CONTENT_REQUIRED',
@@ -114,7 +123,7 @@ function create_post_variant_routes(dependencies) {
                 }))
             });
         } catch (error) {
-            if (error.message === 'POST_NOT_FOUND') {
+            if (error.error_code === 'POST_NOT_FOUND') {
                 return res.status(404).json({
                     errors: [{
                         error_code: 'POST_NOT_FOUND',
@@ -123,7 +132,7 @@ function create_post_variant_routes(dependencies) {
                     }]
                 });
             }
-            if (error.message === 'POST_ACCESS_DENIED') {
+            if (error.error_code === 'POST_ACCESS_DENIED') {
                 return res.status(403).json({
                     errors: [{
                         error_code: 'POST_ACCESS_DENIED',
@@ -162,7 +171,7 @@ function create_post_variant_routes(dependencies) {
                 }
             });
         } catch (error) {
-            if (error.message === 'VARIANT_NOT_FOUND') {
+            if (error.error_code === 'VARIANT_NOT_FOUND') {
                 return res.status(404).json({
                     errors: [{
                         error_code: 'VARIANT_NOT_FOUND',
@@ -171,7 +180,7 @@ function create_post_variant_routes(dependencies) {
                     }]
                 });
             }
-            if (error.message === 'VARIANT_ACCESS_DENIED') {
+            if (error.error_code === 'VARIANT_ACCESS_DENIED') {
                 return res.status(403).json({
                     errors: [{
                         error_code: 'VARIANT_ACCESS_DENIED',
@@ -228,7 +237,7 @@ function create_post_variant_routes(dependencies) {
                 }
             });
         } catch (error) {
-            if (error.message === 'VARIANT_NOT_FOUND') {
+            if (error.error_code === 'VARIANT_NOT_FOUND') {
                 return res.status(404).json({
                     errors: [{
                         error_code: 'VARIANT_NOT_FOUND',
@@ -237,7 +246,7 @@ function create_post_variant_routes(dependencies) {
                     }]
                 });
             }
-            if (error.message === 'VARIANT_ACCESS_DENIED') {
+            if (error.error_code === 'VARIANT_ACCESS_DENIED') {
                 return res.status(403).json({
                     errors: [{
                         error_code: 'VARIANT_ACCESS_DENIED',
@@ -246,16 +255,16 @@ function create_post_variant_routes(dependencies) {
                     }]
                 });
             }
-            if (error.message === 'VARIANT_ALREADY_PUBLISHED') {
-                return res.status(400).json({
+            if (error.error_code === 'VARIANT_ALREADY_PUBLISHED') {
+                return res.status(409).json({
                     errors: [{
                         error_code: 'VARIANT_ALREADY_PUBLISHED',
-                        error_description: 'Cannot update a published variant',
+                        error_description: error.message,
                         error_severity: 'error'
                     }]
                 });
             }
-            if (error.message === 'VARIANT_CONTENT_REQUIRED') {
+            if (error.error_code === 'VARIANT_CONTENT_REQUIRED') {
                 return res.status(400).json({
                     errors: [{
                         error_code: 'VARIANT_CONTENT_REQUIRED',
@@ -294,7 +303,7 @@ function create_post_variant_routes(dependencies) {
                 }
             });
         } catch (error) {
-            if (error.message === 'VARIANT_NOT_FOUND') {
+            if (error.error_code === 'VARIANT_NOT_FOUND') {
                 return res.status(404).json({
                     errors: [{
                         error_code: 'VARIANT_NOT_FOUND',
@@ -303,7 +312,7 @@ function create_post_variant_routes(dependencies) {
                     }]
                 });
             }
-            if (error.message === 'VARIANT_ACCESS_DENIED') {
+            if (error.error_code === 'VARIANT_ACCESS_DENIED') {
                 return res.status(403).json({
                     errors: [{
                         error_code: 'VARIANT_ACCESS_DENIED',
@@ -312,7 +321,7 @@ function create_post_variant_routes(dependencies) {
                     }]
                 });
             }
-            if (error.message === 'VARIANT_NOT_DRAFT') {
+            if (error.error_code === 'VARIANT_NOT_DRAFT') {
                 return res.status(400).json({
                     errors: [{
                         error_code: 'VARIANT_NOT_DRAFT',
@@ -335,7 +344,7 @@ function create_post_variant_routes(dependencies) {
 
             res.status(204).send();
         } catch (error) {
-            if (error.message === 'VARIANT_NOT_FOUND') {
+            if (error.error_code === 'VARIANT_NOT_FOUND') {
                 return res.status(404).json({
                     errors: [{
                         error_code: 'VARIANT_NOT_FOUND',
@@ -344,7 +353,7 @@ function create_post_variant_routes(dependencies) {
                     }]
                 });
             }
-            if (error.message === 'VARIANT_ACCESS_DENIED') {
+            if (error.error_code === 'VARIANT_ACCESS_DENIED') {
                 return res.status(403).json({
                     errors: [{
                         error_code: 'VARIANT_ACCESS_DENIED',
@@ -353,11 +362,11 @@ function create_post_variant_routes(dependencies) {
                     }]
                 });
             }
-            if (error.message === 'VARIANT_ALREADY_PUBLISHED') {
-                return res.status(400).json({
+            if (error.error_code === 'VARIANT_ALREADY_PUBLISHED') {
+                return res.status(409).json({
                     errors: [{
                         error_code: 'VARIANT_ALREADY_PUBLISHED',
-                        error_description: 'Cannot delete a published variant',
+                        error_description: error.message,
                         error_severity: 'error'
                     }]
                 });

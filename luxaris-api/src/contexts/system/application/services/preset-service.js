@@ -66,7 +66,11 @@ class PresetService {
         // Get existing preset
         const existing = await this.preset_repository.find_by_id(preset_id);
         if (!existing) {
-            throw new Error('Preset not found');
+            const error = new Error('Preset not found');
+            error.status_code = 404;
+            error.error_code = 'PRESET_NOT_FOUND';
+            error.severity = 'error';
+            throw error;
         }
 
         // Deep merge settings
@@ -80,7 +84,11 @@ class PresetService {
                 'Preset size exceeds limit',
                 { preset_id, size: settings_size, limit: 102400 }
             );
-            throw new Error('Preset settings exceed maximum size (100KB)');
+            const error = new Error('Preset settings exceed maximum size (100KB)');
+            error.status_code = 400;
+            error.error_code = 'PRESET_SIZE_EXCEEDED';
+            error.severity = 'error';
+            throw error;
         }
 
         // Update preset
@@ -114,18 +122,30 @@ class PresetService {
         // Check if user already has custom preset
         const exists = await this.preset_repository.user_preset_exists(user_id);
         if (exists) {
-            throw new Error('User already has custom preset. Use update instead.');
+            const error = new Error('User already has custom preset. Use update instead.');
+            error.status_code = 409;
+            error.error_code = 'USER_PRESET_EXISTS';
+            error.severity = 'error';
+            throw error;
         }
 
         // Get source preset
         const source = await this.preset_repository.find_by_id(source_preset_id);
         if (!source) {
-            throw new Error('Source preset not found');
+            const error = new Error('Source preset not found');
+            error.status_code = 404;
+            error.error_code = 'SOURCE_PRESET_NOT_FOUND';
+            error.severity = 'error';
+            throw error;
         }
 
         // Validate source is not a user preset
         if (source.user_id !== null) {
-            throw new Error('Cannot clone user preset');
+            const error = new Error('Cannot clone user preset');
+            error.status_code = 400;
+            error.error_code = 'CANNOT_CLONE_USER_PRESET';
+            error.severity = 'error';
+            throw error;
         }
 
         // Clone preset - ensure settings is parsed if it's a string
@@ -310,11 +330,19 @@ class PresetService {
         // Get preset to validate it's a user preset
         const preset = await this.preset_repository.find_by_id(preset_id);
         if (!preset) {
-            throw new Error('Preset not found');
+            const error = new Error('Preset not found');
+            error.status_code = 404;
+            error.error_code = 'PRESET_NOT_FOUND';
+            error.severity = 'error';
+            throw error;
         }
 
         if (preset.user_id === null && !is_admin) {
-            throw new Error('Cannot delete role or global preset');
+            const error = new Error('Cannot delete role or global preset');
+            error.status_code = 403;
+            error.error_code = 'CANNOT_DELETE_SYSTEM_PRESET';
+            error.severity = 'error';
+            throw error;
         }
 
         // Delete preset

@@ -2,7 +2,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Luxaris - Run API",
+            "name": "Luxaris - API - Run",
             "type": "node",
             "request": "launch",
             "runtimeExecutable": "npm",
@@ -12,7 +12,7 @@
             "skipFiles": ["<node_internals>/**"]
         },
         {
-            "name": "Luxaris - Run API (Watch Mode)",
+            "name": "Luxaris - API - Run (Watch Mode)",
             "type": "node",
             "request": "launch",
             "runtimeExecutable": "npm",
@@ -22,7 +22,7 @@
             "skipFiles": ["<node_internals>/**"]
         },
         {
-            "name": "Luxaris - Run Tests",
+            "name": "Luxaris - API - Run Tests",
             "type": "node",
             "request": "launch",
             "runtimeExecutable": "npm",
@@ -33,7 +33,7 @@
             "skipFiles": ["<node_internals>/**"]
         },
         {
-            "name": "Luxaris - Run Tests (Watch Mode)",
+            "name": "Luxaris - API - Run Tests    (Watch Mode)",
             "type": "node",
             "request": "launch",
             "runtimeExecutable": "npm",
@@ -44,7 +44,7 @@
             "skipFiles": ["<node_internals>/**"]
         },
         {
-            "name": "Luxaris - Run Tests (Coverage presented inside CLI)",
+            "name": "Luxaris - API - Run Tests (Coverage presented inside CLI)",
             "type": "node",
             "request": "launch",
             "runtimeExecutable": "npm",
@@ -55,7 +55,7 @@
             "skipFiles": ["<node_internals>/**"]
         },
         {
-            "name": "Luxaris - Run Tests (Coverage + Open HTML)",
+            "name": "Luxaris - API - Run Tests (Coverage + Open HTML)",
             "type": "node",
             "request": "launch",
             "runtimeExecutable": "npm",
@@ -66,7 +66,7 @@
             "skipFiles": ["<node_internals>/**"]
         },
         {
-            "name": "Luxaris - Lint API",
+            "name": "Luxaris - API - Lint API",
             "type": "node",
             "request": "launch",
             "runtimeExecutable": "npm",
@@ -76,7 +76,7 @@
             "skipFiles": ["<node_internals>/**"]
         },
         {
-            "name": "Luxaris - Lint API (create report file)",
+            "name": "Luxaris - API - Lint API (create report file)",
             "type": "node",
             "request": "launch",
             "runtimeExecutable": "npm",
@@ -86,7 +86,7 @@
             "skipFiles": ["<node_internals>/**"]
         },     
         {
-            "name": "Luxaris - Lint API (Fix)",
+            "name": "Luxaris - API - Lint API (Fix)",
             "type": "node",
             "request": "launch",
             "runtimeExecutable": "npm",
@@ -96,7 +96,7 @@
             "skipFiles": ["<node_internals>/**"]
         },   
         {
-            "name": "Luxaris - DB Migrate Up",
+            "name": "Luxaris - API - DB Migrate Up",
             "type": "node",
             "request": "launch",
             "runtimeExecutable": "npm",
@@ -106,7 +106,7 @@
             "skipFiles": ["<node_internals>/**"]
         },
         {
-            "name": "Luxaris - DB Migrate Down",
+            "name": "Luxaris - API- DB Migrate Down",
             "type": "node",
             "request": "launch",
             "runtimeExecutable": "npm",
@@ -116,12 +116,42 @@
             "skipFiles": ["<node_internals>/**"]
         },
         {
-            "name": "Luxaris - DB Migrate Reset",
+            "name": "Luxaris - API - DB Migrate Reset",
             "type": "node",
             "request": "launch",
             "runtimeExecutable": "npm",
             "runtimeArgs": ["run", "migrate:reset"],
             "cwd": "${workspaceFolder}/luxaris-api",
+            "console": "integratedTerminal",
+            "skipFiles": ["<node_internals>/**"]
+        },
+        {
+            "name": "Luxaris - Dashboard - Run Dev Server",
+            "type": "node",
+            "request": "launch",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": ["run", "dev"],
+            "cwd": "${workspaceFolder}/luxaris-dashboard",
+            "console": "integratedTerminal",
+            "skipFiles": ["<node_internals>/**"]
+        },
+        {
+            "name": "Luxaris - Dashboard - Build",
+            "type": "node",
+            "request": "launch",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": ["run", "build"],
+            "cwd": "${workspaceFolder}/luxaris-dashboard",
+            "console": "integratedTerminal",
+            "skipFiles": ["<node_internals>/**"]
+        },
+        {
+            "name": "Luxaris - Dashboard - Preview Build",
+            "type": "node",
+            "request": "launch",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": ["run", "preview"],
+            "cwd": "${workspaceFolder}/luxaris-dashboard",
             "console": "integratedTerminal",
             "skipFiles": ["<node_internals>/**"]
         }

@@ -390,7 +390,7 @@ describe('Generation Integration Tests', () => {
                     title: 'Second Accept'
                 });
 
-            expect(response.status).toBe(400);
+            expect(response.status).toBe(409);
             expect(response.body.errors[0].error_code).toBe('SUGGESTION_ALREADY_ACCEPTED');
         });
     });

@@ -77,7 +77,11 @@ class AuthService {
                 'Token verification failed',
                 { error: error.message }
             );
-            throw new Error('Invalid or expired token');
+            const err = new Error('Invalid or expired token');
+            err.status_code = 401;
+            err.error_code = 'INVALID_TOKEN';
+            err.severity = 'warning';
+            throw err;
         }
     }
 
@@ -85,7 +89,11 @@ class AuthService {
         // Check if email already exists
         const email_exists = await this.user_repository.email_exists(registration_data.email);
         if (email_exists) {
-            throw new Error('Email already registered');
+            const error = new Error('Email already registered');
+            error.status_code = 409;
+            error.error_code = 'EMAIL_ALREADY_REGISTERED';
+            error.severity = 'warning';
+            throw error;
         }
 
         // Check if this is the first user
@@ -140,35 +148,54 @@ class AuthService {
             metadata: { auth_method: 'password', is_root: user.is_root }
         });
 
-        return user;
+        return { user, is_first };
     }
 
     async login_user(email, password) {
         // Find user by email
         const user = await this.user_repository.find_by_email(email);
         if (!user) {
-            throw new Error('Invalid credentials');
+            const error = new Error('Invalid credentials');
+            error.status_code = 401;
+            error.error_code = 'INVALID_CREDENTIALS';
+            error.severity = 'warning';
+            throw error;
         }
 
         // Check if user can login
         if (!user.can_login()) {
+            let message = 'Account not active';
+            let status_code = 401;
             if (user.is_disabled()) {
-                throw new Error('Account is disabled');
+                message = 'Account is disabled';
+                status_code = 403;
+            } else if (user.needs_approval()) {
+                message = 'Account pending approval';
+                status_code = 403;
             }
-            if (user.needs_approval()) {
-                throw new Error('Account pending approval');
-            }
-            throw new Error('Account not active');
+            const error = new Error(message);
+            error.status_code = status_code;
+            error.error_code = 'ACCOUNT_NOT_ACTIVE';
+            error.severity = 'warning';
+            throw error;
         }
 
         // Verify password
         if (!user.has_password_auth()) {
-            throw new Error('Password authentication not enabled for this account');
+            const error = new Error('Password authentication not enabled for this account');
+            error.status_code = 401;
+            error.error_code = 'AUTH_METHOD_NOT_ENABLED';
+            error.severity = 'warning';
+            throw error;
         }
 
         const is_valid = await this.verify_password(user.password_hash, password);
         if (!is_valid) {
-            throw new Error('Invalid credentials');
+            const error = new Error('Invalid credentials');
+            error.status_code = 401;
+            error.error_code = 'INVALID_CREDENTIALS';
+            error.severity = 'warning';
+            throw error;
         }
 
         // Update last login
@@ -199,16 +226,28 @@ class AuthService {
         const payload = this.verify_token(refresh_token);
 
         if (payload.typ !== 'refresh') {
-            throw new Error('Invalid token type');
+            const error = new Error('Invalid token type');
+            error.status_code = 400;
+            error.error_code = 'INVALID_TOKEN_TYPE';
+            error.severity = 'warning';
+            throw error;
         }
 
         const user = await this.user_repository.find_by_id(payload.sub);
         if (!user) {
-            throw new Error('User not found');
+            const error = new Error('User not found');
+            error.status_code = 404;
+            error.error_code = 'USER_NOT_FOUND';
+            error.severity = 'warning';
+            throw error;
         }
 
         if (!user.can_login()) {
-            throw new Error('User cannot login');
+            const error = new Error('User cannot login');
+            error.status_code = 403;
+            error.error_code = 'USER_CANNOT_LOGIN';
+            error.severity = 'warning';
+            throw error;
         }
 
         return this.generate_jwt(user);
@@ -225,11 +264,19 @@ class AuthService {
         // Get OAuth provider
         const provider = await this.oauth_provider_repository.find_by_key(provider_key);
         if (!provider) {
-            throw new Error(`OAuth provider '${provider_key}' not found`);
+            const error = new Error(`OAuth provider '${provider_key}' not found`);
+            error.status_code = 404;
+            error.error_code = 'OAUTH_PROVIDER_NOT_FOUND';
+            error.severity = 'error';
+            throw error;
         }
 
         if (provider.status !== 'active') {
-            throw new Error(`OAuth provider '${provider_key}' is not active`);
+            const error = new Error(`OAuth provider '${provider_key}' is not active`);
+            error.status_code = 400;
+            error.error_code = 'OAUTH_PROVIDER_NOT_ACTIVE';
+            error.severity = 'warning';
+            throw error;
         }
 
         // Check if OAuth account already exists
@@ -243,7 +290,11 @@ class AuthService {
             const user = await this.user_repository.find_by_id(existing_oauth_account.user_id);
             
             if (!user) {
-                throw new Error('User not found');
+                const error = new Error('User not found');
+                error.status_code = 404;
+                error.error_code = 'USER_NOT_FOUND';
+                error.severity = 'error';
+                throw error;
             }
 
             // Update last login

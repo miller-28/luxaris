@@ -13,7 +13,11 @@ class UserService {
         const updated_user = await this.user_repository.update(user_id, validated_updates);
 
         if (!updated_user) {
-            throw new Error('User not found');
+            const error = new Error('User not found');
+            error.status_code = 404;
+            error.error_code = 'USER_NOT_FOUND';
+            error.severity = 'warning';
+            throw error;
         }
 
         return updated_user;

@@ -124,7 +124,11 @@ class GoogleOAuthService {
                 error,
                 { error_message: error.message }
             );
-            throw new Error('Failed to exchange authorization code');
+            const err = new Error('Failed to exchange authorization code');
+            err.status_code = 502;
+            err.error_code = 'OAUTH_TOKEN_EXCHANGE_FAILED';
+            err.severity = 'error';
+            throw err;
         }
     }
 
@@ -163,7 +167,11 @@ class GoogleOAuthService {
                 error,
                 { error_message: error.message }
             );
-            throw new Error('Failed to fetch user information from Google');
+            const err = new Error('Failed to fetch user information from Google');
+            err.status_code = 502;
+            err.error_code = 'OAUTH_USER_INFO_FETCH_FAILED';
+            err.severity = 'error';
+            throw err;
         }
     }
 
@@ -177,7 +185,11 @@ class GoogleOAuthService {
         // Validate state
         const is_valid_state = await this.validate_state(state);
         if (!is_valid_state) {
-            throw new Error('Invalid OAuth state parameter');
+            const error = new Error('Invalid OAuth state parameter');
+            error.status_code = 400;
+            error.error_code = 'INVALID_OAUTH_STATE';
+            error.severity = 'warning';
+            throw error;
         }
 
         // Exchange code for token
@@ -227,7 +239,11 @@ class GoogleOAuthService {
                 error,
                 { error_message: error.message }
             );
-            throw new Error('Failed to refresh access token');
+            const err = new Error('Failed to refresh access token');
+            err.status_code = 502;
+            err.error_code = 'OAUTH_TOKEN_REFRESH_FAILED';
+            err.severity = 'error';
+            throw err;
         }
     }
 }

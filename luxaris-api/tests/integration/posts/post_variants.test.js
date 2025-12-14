@@ -129,7 +129,7 @@ describe('Post Variants Integration Tests', () => {
                     content: 'Content for non-existent channel'
                 });
 
-            expect(response.status).toBe(400);
+            expect(response.status).toBe(404);
             expect(response.body.errors[0].error_code).toBe('CHANNEL_NOT_FOUND');
         });
 
@@ -321,7 +321,7 @@ describe('Post Variants Integration Tests', () => {
                     content: 'Trying to update published variant'
                 });
 
-            expect(response.status).toBe(400);
+            expect(response.status).toBe(409);
             expect(response.body.errors[0].error_code).toBe('VARIANT_ALREADY_PUBLISHED');
         });
 
@@ -455,7 +455,7 @@ describe('Post Variants Integration Tests', () => {
                 .delete(`/api/v1/variants/${test_variant_id}`)
                 .set('Authorization', `Bearer ${root_token}`);
 
-            expect(response.status).toBe(400);
+            expect(response.status).toBe(409);
             expect(response.body.errors[0].error_code).toBe('VARIANT_ALREADY_PUBLISHED');
         });
 

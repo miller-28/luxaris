@@ -110,7 +110,11 @@ class UserRepository {
         }
 
         if (fields.length === 0) {
-            throw new Error('No fields to update');
+            const error = new Error('No fields to update');
+            error.status_code = 400;
+            error.error_code = 'NO_FIELDS_TO_UPDATE';
+            error.severity = 'error';
+            throw error;
         }
 
         fields.push('updated_at = NOW()');

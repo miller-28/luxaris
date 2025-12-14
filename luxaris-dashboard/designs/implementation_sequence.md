@@ -2,7 +2,7 @@
 
 **Framework:** Vue 3.5.25 (Composition API)  
 **Architecture:** Modular MVC + DDD + SPA  
-**Component Library:** PrimeVue  
+**Component Library:** Vuetify 3  
 **State Management:** Pinia  
 **HTTP Client:** Luminara 1.2.2
 
@@ -32,17 +32,13 @@
    npm install luminara@1.2.2
    
    # UI component library
-   npm install primevue primeicons
+   npm install vuetify@^3.11.3 @mdi/font vite-plugin-vuetify
    
    # Utilities
    npm install @vueuse/core date-fns
    
    # Internationalization
    npm install vue-i18n@9
-   
-   # CSS framework
-   npm install -D tailwindcss@3 postcss autoprefixer
-   npx tailwindcss init -p
    ```
 
 3. **Install Development Dependencies**
@@ -140,18 +136,13 @@ src/
    - `rtl.js` - RTL setup function
    - `locales/en.json` - English translations
 
-6. **PrimeVue Integration**
-   - Configure PrimeVue
-   - Import required components globally
-   - Setup theme
+6. **Vuetify Integration**
+   - Configure Vuetify 3
+   - Setup Material Design Icons
+   - Configure theme with custom colors
    
    **Files to create:**
-   - `src/core/primevue/index.js` - PrimeVue configuration
-
-7. **Tailwind CSS Configuration**
-   - Configure Tailwind with design system colors
-   - Setup custom utilities
-   - PrimeVue + Tailwind integration
+   - `src/core/vuetify/index.js` - Vuetify configuration
    
    **Files to modify:**
    - `tailwind.config.js` - Tailwind configuration
@@ -198,7 +189,7 @@ Create three foundational layouts:
 
 ---
 
-## Phase 2: Authentication & User Management (System Context) ⏳ PENDING
+## Phase 2: Authentication & User Management (System Context) ✅ COMPLETE
 
 **Purpose:** Implement authentication, user registration, login, and session management.
 
@@ -214,7 +205,7 @@ src/contexts/system/
 │   ├── models/
 │   │   └── User.js              # User domain model
 │   └── rules/
-│       └── userValidation.js    # Validation rules
+│       └── userSchemas.js       # Zod validation schemas (matches API)
 ├── application/
 │   ├── services/
 │   │   └── AuthService.js       # Authentication service
@@ -241,7 +232,7 @@ src/contexts/system/
 
 **Step 1: Domain Layer**
 1. Create `User.js` model with properties (id, email, name, roles, permissions, is_root_admin)
-2. Create `userValidation.js` with email/password validation rules
+2. Create `userSchemas.js` with Zod validation schemas matching API validation
 
 **Step 2: Infrastructure Layer - API**
 1. Implement `authRepository.js`:
@@ -254,9 +245,11 @@ src/contexts/system/
 
 **Step 3: Infrastructure Layer - Store**
 1. Implement `authStore.js` (Pinia store):
-   - State: `user`, `token`, `isAuthenticated`, `loading`
+   - State: `user`, `token`, `isAuthenticated`, `loading`, `error`
    - Actions: `login`, `register`, `logout`, `refreshToken`, `loadUser`, `loginWithGoogle`
    - Getters: `isAuthenticated`, `currentUser`, `hasPermission`, `isRootAdmin`
+   - Error handling: Use `formatServerErrors()` to display API error descriptions to users
+   - Server errors array format: `{ errors: [{ error_code, error_description, error_severity }] }`
 
 **Step 4: Application Layer**
 1. Implement `AuthService.js`:
@@ -276,16 +269,19 @@ src/contexts/system/
 
 **Step 5: Presentation Layer - Components**
 1. **LoginForm.vue**
-   - Email/password inputs (PrimeVue InputText, Password)
-   - Validation messages
+   - Email/password inputs (Vuetify v-text-field)
+   - Zod validation using `UserLoginSchema`
+   - Display server error descriptions from API
    - "Login with Google" button
    - "Forgot password?" link
    - "Register" link
 
 2. **RegisterForm.vue**
    - Name, email, password, confirm password inputs
-   - Real-time validation
-   - Password strength indicator
+   - Zod validation using `UserRegistrationSchema` and `PasswordConfirmationSchema`
+   - Real-time validation with Zod schemas
+   - Password strength indicator (using `getPasswordStrength()`)
+   - Display server error descriptions from API
    - "Register with Google" button
    - "Login" link
 
@@ -368,7 +364,7 @@ Create tests for authentication flow:
 
 ---
 
-## Phase 3: UI Stateful Presets System ⏳ PENDING
+## Phase 3: UI Stateful Presets System ✅ COMPLETE
 
 **Purpose:** Implement user interface personalization with hierarchical presets.
 
@@ -454,7 +450,7 @@ src/contexts/system/infrastructure/api/
 
 ---
 
-## Phase 4: Dashboard Layout & Navigation ⏳ PENDING
+## Phase 4: Dashboard Layout & Navigation ✅ COMPLETE
 
 **Purpose:** Implement main dashboard layout with sidebar, top bar, and navigation.
 
@@ -564,7 +560,7 @@ src/contexts/posts/
 │   │   ├── Post.js
 │   │   └── PostVariant.js
 │   └── rules/
-│       └── postValidation.js
+│       └── postSchemas.js       # Zod validation schemas (matches API)
 ├── application/
 │   ├── services/
 │   │   └── PostService.js
@@ -597,7 +593,8 @@ src/contexts/posts/
 **Step 1: Domain Layer**
 1. Create `Post.js` model
 2. Create `PostVariant.js` model
-3. Create `postValidation.js` rules
+3. Create `postSchemas.js` in `domain/rules/` with Zod validation schemas matching API validation exactly
+   - Location: `src/contexts/posts/domain/rules/postSchemas.js`
 
 **Step 2: Infrastructure - API**
 1. Implement `postsRepository.js`:
@@ -622,7 +619,7 @@ src/contexts/posts/
 **Step 4: Application Layer**
 1. Implement `PostService.js`:
    - Business logic for post operations
-   - Validation coordination
+   - Zod validation using schemas from `postSchemas.js`
 
 2. Implement `usePosts.js` composable:
    - Expose post operations to components
@@ -643,10 +640,11 @@ src/contexts/posts/
 2. **PostEditPanel.vue** (Slide-in panel):
    - Title input (required)
    - Content textarea (optional)
-   - Tags input (PrimeVue Chips)
+   - Tags input (Vuetify v-combobox)
    - Status dropdown (draft/published)
    - Save/Cancel buttons
-   - Validation messages
+   - Zod validation messages matching API
+   - Display server error descriptions from API
 
 3. **PostCard.vue**:
    - Display post info

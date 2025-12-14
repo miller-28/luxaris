@@ -34,12 +34,20 @@ class GenerationService {
 
         // Validate prompt
         if (!prompt || prompt.trim().length === 0) {
-            throw new Error('PROMPT_REQUIRED');
+            const error = new Error('Prompt is required');
+            error.status_code = 400;
+            error.error_code = 'PROMPT_REQUIRED';
+            error.severity = 'error';
+            throw error;
         }
 
         // Validate channel IDs
         if (!channel_ids || channel_ids.length === 0) {
-            throw new Error('CHANNEL_IDS_REQUIRED');
+            const error = new Error('Channel IDs are required');
+            error.status_code = 400;
+            error.error_code = 'CHANNEL_IDS_REQUIRED';
+            error.severity = 'error';
+            throw error;
         }
 
         // Validate template if provided
@@ -47,10 +55,18 @@ class GenerationService {
         if (template_id) {
             const template_record = await this.template_repository.find_by_id(template_id);
             if (!template_record) {
-                throw new Error('TEMPLATE_NOT_FOUND');
+                const error = new Error('Template not found');
+                error.status_code = 404;
+                error.error_code = 'TEMPLATE_NOT_FOUND';
+                error.severity = 'error';
+                throw error;
             }
             if (template_record.owner_principal_id !== principal_id) {
-                throw new Error('TEMPLATE_ACCESS_DENIED');
+                const error = new Error('Access denied to this template');
+                error.status_code = 403;
+                error.error_code = 'TEMPLATE_ACCESS_DENIED';
+                error.severity = 'error';
+                throw error;
             }
             const PostTemplate = require('../infrastructure/models/post_template');
             template = new PostTemplate(template_record);
@@ -60,7 +76,11 @@ class GenerationService {
         if (post_id) {
             const post = await this.post_service.get_post(principal_id, post_id);
             if (!post) {
-                throw new Error('POST_NOT_FOUND');
+                const error = new Error('Post not found');
+                error.status_code = 404;
+                error.error_code = 'POST_NOT_FOUND';
+                error.severity = 'error';
+                throw error;
             }
         }
 
@@ -153,7 +173,11 @@ class GenerationService {
 
             this.logger.error({ logger: 'Generation session aborted', error: error.message });
 
-            throw new Error('GENERATION_FAILED: ' + error.message);
+            const err = new Error('Generation failed: ' + error.message);
+            err.status_code = 502;
+            err.error_code = 'GENERATION_FAILED';
+            err.severity = 'error';
+            throw err;
         }
     }
 
@@ -164,12 +188,20 @@ class GenerationService {
         const session_record = await this.session_repository.find_by_id(session_id);
 
         if (!session_record) {
-            throw new Error('SESSION_NOT_FOUND');
+            const error = new Error('Session not found');
+            error.status_code = 404;
+            error.error_code = 'SESSION_NOT_FOUND';
+            error.severity = 'error';
+            throw error;
         }
 
         // Validate ownership
         if (session_record.owner_principal_id !== principal_id) {
-            throw new Error('SESSION_ACCESS_DENIED');
+            const error = new Error('Access denied to this session');
+            error.status_code = 403;
+            error.error_code = 'SESSION_ACCESS_DENIED';
+            error.severity = 'error';
+            throw error;
         }
 
         const session = new GenerationSession(session_record);
@@ -208,18 +240,30 @@ class GenerationService {
         // Get suggestion
         const suggestion_record = await this.suggestion_repository.find_by_id(suggestion_id);
         if (!suggestion_record) {
-            throw new Error('SUGGESTION_NOT_FOUND');
+            const error = new Error('Suggestion not found');
+            error.status_code = 404;
+            error.error_code = 'SUGGESTION_NOT_FOUND';
+            error.severity = 'error';
+            throw error;
         }
 
         // Get session to verify ownership
         const session_record = await this.session_repository.find_by_id(suggestion_record.generation_session_id);
         if (!session_record || session_record.owner_principal_id !== principal_id) {
-            throw new Error('SUGGESTION_ACCESS_DENIED');
+            const error = new Error('Access denied to this suggestion');
+            error.status_code = 403;
+            error.error_code = 'SUGGESTION_ACCESS_DENIED';
+            error.severity = 'error';
+            throw error;
         }
 
         // Check if already accepted
         if (suggestion_record.accepted) {
-            throw new Error('SUGGESTION_ALREADY_ACCEPTED');
+            const error = new Error('Suggestion already accepted');
+            error.status_code = 409;
+            error.error_code = 'SUGGESTION_ALREADY_ACCEPTED';
+            error.severity = 'error';
+            throw error;
         }
 
         // Mark suggestion as accepted
@@ -291,10 +335,18 @@ class GenerationService {
         // Verify ownership
         const owner_id = await this.session_repository.get_owner_principal_id(session_id);
         if (!owner_id) {
-            throw new Error('SESSION_NOT_FOUND');
+            const error = new Error('Session not found');
+            error.status_code = 404;
+            error.error_code = 'SESSION_NOT_FOUND';
+            error.severity = 'error';
+            throw error;
         }
         if (owner_id !== principal_id) {
-            throw new Error('SESSION_ACCESS_DENIED');
+            const error = new Error('Access denied to this session');
+            error.status_code = 403;
+            error.error_code = 'SESSION_ACCESS_DENIED';
+            error.severity = 'error';
+            throw error;
         }
 
         await this.session_repository.delete(session_id);

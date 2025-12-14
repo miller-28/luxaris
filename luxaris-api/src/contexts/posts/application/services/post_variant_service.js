@@ -25,11 +25,19 @@ class PostVariantService {
         // Verify post exists and ownership
         const post = await this.post_repository.find_by_id(variant_data.post_id);
         if (!post) {
-            throw new Error('POST_NOT_FOUND');
+            const error = new Error('Post not found');
+            error.status_code = 404;
+            error.error_code = 'POST_NOT_FOUND';
+            error.severity = 'error';
+            throw error;
         }
 
         if (post.owner_principal_id !== principal.id) {
-            throw new Error('POST_ACCESS_DENIED');
+            const error = new Error('Access denied to this post');
+            error.status_code = 403;
+            error.error_code = 'POST_ACCESS_DENIED';
+            error.severity = 'error';
+            throw error;
         }
 
         // Validate channel is active
@@ -37,7 +45,11 @@ class PostVariantService {
 
         // Validate content
         if (!variant_data.content || variant_data.content.trim().length === 0) {
-            throw new Error('VARIANT_CONTENT_REQUIRED');
+            const error = new Error('Variant content is required');
+            error.status_code = 400;
+            error.error_code = 'VARIANT_CONTENT_REQUIRED';
+            error.severity = 'error';
+            throw error;
         }
 
         // Create variant
@@ -73,13 +85,21 @@ class PostVariantService {
         const variant = await this.post_variant_repository.find_by_id(variant_id);
 
         if (!variant) {
-            throw new Error('VARIANT_NOT_FOUND');
+            const error = new Error('Variant not found');
+            error.status_code = 404;
+            error.error_code = 'VARIANT_NOT_FOUND';
+            error.severity = 'error';
+            throw error;
         }
 
         // Verify ownership via post
         const post = await this.post_repository.find_by_id(variant.post_id);
         if (post.owner_principal_id !== principal.id) {
-            throw new Error('VARIANT_ACCESS_DENIED');
+            const error = new Error('Access denied to this variant');
+            error.status_code = 403;
+            error.error_code = 'VARIANT_ACCESS_DENIED';
+            error.severity = 'error';
+            throw error;
         }
 
         return variant;
@@ -92,11 +112,19 @@ class PostVariantService {
         // Verify post exists and ownership
         const post = await this.post_repository.find_by_id(post_id);
         if (!post) {
-            throw new Error('POST_NOT_FOUND');
+            const error = new Error('Post not found');
+            error.status_code = 404;
+            error.error_code = 'POST_NOT_FOUND';
+            error.severity = 'error';
+            throw error;
         }
 
         if (post.owner_principal_id !== principal.id) {
-            throw new Error('POST_ACCESS_DENIED');
+            const error = new Error('Access denied to this post');
+            error.status_code = 403;
+            error.error_code = 'POST_ACCESS_DENIED';
+            error.severity = 'error';
+            throw error;
         }
 
         this.logger.info('Listing variants by post', { 
@@ -155,12 +183,20 @@ class PostVariantService {
 
         // Prevent updating published variants
         if (variant.status === 'published') {
-            throw new Error('VARIANT_ALREADY_PUBLISHED');
+            const error = new Error('Variant already published');
+            error.status_code = 409;
+            error.error_code = 'VARIANT_ALREADY_PUBLISHED';
+            error.severity = 'error';
+            throw error;
         }
 
         // Validate content if being updated
         if (updates.content !== undefined && updates.content.trim().length === 0) {
-            throw new Error('VARIANT_CONTENT_REQUIRED');
+            const error = new Error('Variant content is required');
+            error.status_code = 400;
+            error.error_code = 'VARIANT_CONTENT_REQUIRED';
+            error.severity = 'error';
+            throw error;
         }
 
         // Prevent direct status updates (use dedicated methods)
@@ -205,7 +241,11 @@ class PostVariantService {
 
         // Can only mark draft variants as ready
         if (variant.status !== 'draft') {
-            throw new Error('VARIANT_NOT_DRAFT');
+            const error = new Error('Only draft variants can be marked as ready');
+            error.status_code = 400;
+            error.error_code = 'VARIANT_NOT_DRAFT';
+            error.severity = 'error';
+            throw error;
         }
 
         // Update status to ready
@@ -245,7 +285,11 @@ class PostVariantService {
 
         // Cannot delete published variants
         if (variant.status === 'published') {
-            throw new Error('VARIANT_ALREADY_PUBLISHED');
+            const error = new Error('Cannot delete published variant');
+            error.status_code = 409;
+            error.error_code = 'VARIANT_ALREADY_PUBLISHED';
+            error.severity = 'error';
+            throw error;
         }
 
         // Delete variant

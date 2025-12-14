@@ -32,7 +32,11 @@ class ChannelService {
         const channel = await this.channel_repo.find_by_id(channel_id);
 
         if (!channel) {
-            throw new Error('CHANNEL_NOT_FOUND');
+            const error = new Error('Channel not found');
+            error.status_code = 404;
+            error.error_code = 'CHANNEL_NOT_FOUND';
+            error.severity = 'error';
+            throw error;
         }
 
         return channel;
@@ -45,12 +49,20 @@ class ChannelService {
         // First check if channel exists
         const channel = await this.channel_repo.find_by_id(channel_id);
         if (!channel) {
-            throw new Error('CHANNEL_NOT_FOUND');
+            const error = new Error('Channel not found');
+            error.status_code = 404;
+            error.error_code = 'CHANNEL_NOT_FOUND';
+            error.severity = 'error';
+            throw error;
         }
 
         // Then check if it's active
         if (channel.status !== 'active') {
-            throw new Error('CHANNEL_NOT_ACTIVE');
+            const error = new Error('Channel is not active');
+            error.status_code = 400;
+            error.error_code = 'CHANNEL_NOT_ACTIVE';
+            error.severity = 'error';
+            throw error;
         }
 
         return true;

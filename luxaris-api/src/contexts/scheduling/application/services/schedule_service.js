@@ -31,7 +31,11 @@ class ScheduleService {
 
         // Validate required fields
         if (!schedule_data.post_variant_id || !schedule_data.channel_connection_id || !schedule_data.run_at) {
-            throw new Error('SCHEDULE_REQUIRED_FIELDS_MISSING');
+            const error = new Error('Required fields missing: post_variant_id, channel_connection_id, run_at');
+            error.status_code = 400;
+            error.error_code = 'SCHEDULE_REQUIRED_FIELDS_MISSING';
+            error.severity = 'error';
+            throw error;
         }
 
         // Use principal's timezone if not explicitly provided
@@ -40,13 +44,21 @@ class ScheduleService {
         // Verify ownership of post_variant
         const variant = await this.variant_service.get_variant(principal, schedule_data.post_variant_id);
         if (!variant) {
-            throw new Error('VARIANT_NOT_FOUND');
+            const error = new Error('Variant not found');
+            error.status_code = 404;
+            error.error_code = 'VARIANT_NOT_FOUND';
+            error.severity = 'error';
+            throw error;
         }
 
         // Validate timezone is valid IANA timezone string
         // TODO: Add proper timezone validation using moment-timezone or similar
         if (!timezone) {
-            throw new Error('SCHEDULE_TIMEZONE_REQUIRED');
+            const error = new Error('Timezone is required');
+            error.status_code = 400;
+            error.error_code = 'SCHEDULE_TIMEZONE_REQUIRED';
+            error.severity = 'error';
+            throw error;
         }
 
         // Parse run_at as local time in specified timezone
@@ -56,13 +68,21 @@ class ScheduleService {
     
         // Validate run_at is in the future
         if (run_at_date <= now) {
-            throw new Error('SCHEDULE_TIME_MUST_BE_FUTURE');
+            const error = new Error('Schedule time must be in the future');
+            error.status_code = 400;
+            error.error_code = 'SCHEDULE_TIME_MUST_BE_FUTURE';
+            error.severity = 'error';
+            throw error;
         }
 
         // Validate not too far in the future (90 days max)
         const max_future = new Date(now.getTime() + (90 * 24 * 60 * 60 * 1000));
         if (run_at_date > max_future) {
-            throw new Error('SCHEDULE_TIME_TOO_FAR');
+            const error = new Error('Schedule time too far in the future (90 days max)');
+            error.status_code = 400;
+            error.error_code = 'SCHEDULE_TIME_TOO_FAR';
+            error.severity = 'error';
+            throw error;
         }
 
         // Create schedule with timezone from principal or explicit selection
@@ -110,13 +130,21 @@ class ScheduleService {
 
         const schedule = await this.schedule_repository.find_by_id(schedule_id);
         if (!schedule) {
-            throw new Error('SCHEDULE_NOT_FOUND');
+            const error = new Error('Schedule not found');
+            error.status_code = 404;
+            error.error_code = 'SCHEDULE_NOT_FOUND';
+            error.severity = 'error';
+            throw error;
         }
 
         // Verify ownership through post_variant
         const variant = await this.variant_service.get_variant(principal, schedule.post_variant_id);
         if (!variant) {
-            throw new Error('SCHEDULE_ACCESS_DENIED');
+            const error = new Error('Access denied to this schedule');
+            error.status_code = 403;
+            error.error_code = 'SCHEDULE_ACCESS_DENIED';
+            error.severity = 'error';
+            throw error;
         }
 
         // Get publish events
@@ -151,18 +179,30 @@ class ScheduleService {
 
         const schedule = await this.schedule_repository.find_by_id(schedule_id);
         if (!schedule) {
-            throw new Error('SCHEDULE_NOT_FOUND');
+            const error = new Error('Schedule not found');
+            error.status_code = 404;
+            error.error_code = 'SCHEDULE_NOT_FOUND';
+            error.severity = 'error';
+            throw error;
         }
 
         // Verify ownership
         const variant = await this.variant_service.get_variant(principal, schedule.post_variant_id);
         if (!variant) {
-            throw new Error('SCHEDULE_ACCESS_DENIED');
+            const error = new Error('Access denied to this schedule');
+            error.status_code = 403;
+            error.error_code = 'SCHEDULE_ACCESS_DENIED';
+            error.severity = 'error';
+            throw error;
         }
 
         // Check if schedule can be modified
         if (!schedule.can_reschedule()) {
-            throw new Error('SCHEDULE_CANNOT_BE_MODIFIED');
+            const error = new Error('Schedule cannot be modified');
+            error.status_code = 409;
+            error.error_code = 'SCHEDULE_CANNOT_BE_MODIFIED';
+            error.severity = 'error';
+            throw error;
         }
 
         // Validate new run_at if provided
@@ -170,11 +210,19 @@ class ScheduleService {
             const run_at_date = new Date(updates.run_at);
             const now = new Date();
             if (run_at_date <= now) {
-                throw new Error('SCHEDULE_TIME_MUST_BE_FUTURE');
+                const error = new Error('Schedule time must be in the future');
+                error.status_code = 400;
+                error.error_code = 'SCHEDULE_TIME_MUST_BE_FUTURE';
+                error.severity = 'error';
+                throw error;
             }
             const max_future = new Date(now.getTime() + (90 * 24 * 60 * 60 * 1000));
             if (run_at_date > max_future) {
-                throw new Error('SCHEDULE_TIME_TOO_FAR');
+                const error = new Error('Schedule time too far in the future (90 days max)');
+                error.status_code = 400;
+                error.error_code = 'SCHEDULE_TIME_TOO_FAR';
+                error.severity = 'error';
+                throw error;
             }
         }
 
@@ -205,18 +253,30 @@ class ScheduleService {
 
         const schedule = await this.schedule_repository.find_by_id(schedule_id);
         if (!schedule) {
-            throw new Error('SCHEDULE_NOT_FOUND');
+            const error = new Error('Schedule not found');
+            error.status_code = 404;
+            error.error_code = 'SCHEDULE_NOT_FOUND';
+            error.severity = 'error';
+            throw error;
         }
 
         // Verify ownership
         const variant = await this.variant_service.get_variant(principal, schedule.post_variant_id);
         if (!variant) {
-            throw new Error('SCHEDULE_ACCESS_DENIED');
+            const error = new Error('Access denied to this schedule');
+            error.status_code = 403;
+            error.error_code = 'SCHEDULE_ACCESS_DENIED';
+            error.severity = 'error';
+            throw error;
         }
 
         // Check if schedule can be cancelled
         if (!schedule.can_cancel()) {
-            throw new Error('SCHEDULE_CANNOT_BE_CANCELLED');
+            const error = new Error('Schedule cannot be cancelled');
+            error.status_code = 409;
+            error.error_code = 'SCHEDULE_CANNOT_BE_CANCELLED';
+            error.severity = 'error';
+            throw error;
         }
 
         // Update status to cancelled
@@ -246,13 +306,21 @@ class ScheduleService {
 
         const schedule = await this.schedule_repository.find_by_id(schedule_id);
         if (!schedule) {
-            throw new Error('SCHEDULE_NOT_FOUND');
+            const error = new Error('Schedule not found');
+            error.status_code = 404;
+            error.error_code = 'SCHEDULE_NOT_FOUND';
+            error.severity = 'error';
+            throw error;
         }
 
         // Verify ownership
         const variant = await this.variant_service.get_variant(principal, schedule.post_variant_id);
         if (!variant) {
-            throw new Error('SCHEDULE_ACCESS_DENIED');
+            const error = new Error('Access denied to this schedule');
+            error.status_code = 403;
+            error.error_code = 'SCHEDULE_ACCESS_DENIED';
+            error.severity = 'error';
+            throw error;
         }
 
         // Delete schedule (will cascade to publish_events)

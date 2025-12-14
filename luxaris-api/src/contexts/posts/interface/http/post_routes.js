@@ -41,7 +41,7 @@ function create_post_routes(dependencies) {
                 }
             });
         } catch (error) {
-            if (error.message === 'BASE_CONTENT_REQUIRED') {
+            if (error.error_code === 'BASE_CONTENT_REQUIRED') {
                 return res.status(400).json({
                     errors: [{
                         error_code: 'BASE_CONTENT_REQUIRED',
@@ -114,7 +114,7 @@ function create_post_routes(dependencies) {
                 }
             });
         } catch (error) {
-            if (error.message === 'POST_NOT_FOUND') {
+            if (error.error_code === 'POST_NOT_FOUND') {
                 return res.status(404).json({
                     errors: [{
                         error_code: 'POST_NOT_FOUND',
@@ -123,7 +123,7 @@ function create_post_routes(dependencies) {
                     }]
                 });
             }
-            if (error.message === 'POST_ACCESS_DENIED') {
+            if (error.error_code === 'POST_ACCESS_DENIED') {
                 return res.status(403).json({
                     errors: [{
                         error_code: 'POST_ACCESS_DENIED',
@@ -173,7 +173,7 @@ function create_post_routes(dependencies) {
                 }
             });
         } catch (error) {
-            if (error.message === 'POST_NOT_FOUND') {
+            if (error.error_code === 'POST_NOT_FOUND') {
                 return res.status(404).json({
                     errors: [{
                         error_code: 'POST_NOT_FOUND',
@@ -182,7 +182,7 @@ function create_post_routes(dependencies) {
                     }]
                 });
             }
-            if (error.message === 'POST_ACCESS_DENIED') {
+            if (error.error_code === 'POST_ACCESS_DENIED') {
                 return res.status(403).json({
                     errors: [{
                         error_code: 'POST_ACCESS_DENIED',
@@ -191,7 +191,7 @@ function create_post_routes(dependencies) {
                     }]
                 });
             }
-            if (error.message === 'BASE_CONTENT_REQUIRED') {
+            if (error.error_code === 'BASE_CONTENT_REQUIRED') {
                 return res.status(400).json({
                     errors: [{
                         error_code: 'BASE_CONTENT_REQUIRED',
@@ -214,7 +214,7 @@ function create_post_routes(dependencies) {
 
             res.status(204).send();
         } catch (error) {
-            if (error.message === 'POST_NOT_FOUND') {
+            if (error.error_code === 'POST_NOT_FOUND') {
                 return res.status(404).json({
                     errors: [{
                         error_code: 'POST_NOT_FOUND',
@@ -223,7 +223,7 @@ function create_post_routes(dependencies) {
                     }]
                 });
             }
-            if (error.message === 'POST_ACCESS_DENIED') {
+            if (error.error_code === 'POST_ACCESS_DENIED') {
                 return res.status(403).json({
                     errors: [{
                         error_code: 'POST_ACCESS_DENIED',

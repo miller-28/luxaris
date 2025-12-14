@@ -8,15 +8,15 @@
                 type="email"
                 variant="outlined"
                 prepend-inner-icon="mdi-email"
-                :error-messages="errors.email"
+                :error="!!errors.email"
                 :disabled="loading"
                 autofocus
                 required
-                @input="validateEmail"
+                @input="handleEmailInput"
                 @blur="validateEmail"
             />
-            <div class="text-caption mb-4" style="color: #71717A; margin-top: -16px;">
-                {{ $t('auth.login.emailHint') }}
+            <div class="text-caption mb-4" :style="{ color: errors.email ? '#EF4444' : '#71717A', marginTop: '-16px' }">
+                {{ errors.email || $t('auth.login.emailHint') }}
             </div>
 
             <!-- Password Field -->
@@ -27,15 +27,15 @@
                 variant="outlined"
                 prepend-inner-icon="mdi-lock"
                 :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
-                :error-messages="errors.password"
+                :error="!!errors.password"
                 :disabled="loading"
                 required
                 @click:append-inner="showPassword = !showPassword"
-                @input="validatePassword"
+                @input="handlePasswordInput"
                 @blur="validatePassword"
             />
-            <div class="text-caption mb-4" style="color: #71717A; margin-top: -16px;">
-                {{ $t('auth.login.passwordHint') }}
+            <div class="text-caption mb-4" :style="{ color: errors.password ? '#EF4444' : '#71717A', marginTop: '-16px' }">
+                {{ errors.password || $t('auth.login.passwordHint') }}
             </div>
 
             <!-- Submit Button -->
@@ -102,8 +102,17 @@
 </template>
 
 <script setup>
+
 import { ref, computed } from 'vue';
-import { UserLoginSchema, getZodErrorMessages } from '../../domain/rules/userSchemas';
+import { useI18n } from 'vue-i18n';
+import { 
+    UserLoginSchema, 
+    EmailSchema,
+    PasswordSchema,
+    validateField
+} from '../../domain/validations/userSchemas';
+
+const { t } = useI18n();
 
 const emit = defineEmits(['submit', 'googleLogin']);
 
@@ -119,58 +128,70 @@ const errors = ref({
 const showPassword = ref(false);
 const loading = ref(false);
 const errorMessage = ref('');
+const touched = ref({
+    email: false,
+    password: false,
+});
 
 const isFormValid = computed(() => {
     // Check all fields have values
     if (!form.value.email || !form.value.password) {
         return false;
     }
-  
-    // Check no validation errors from Zod
-    if (errors.value.email || errors.value.password) {
-        return false;
-    }
-  
-    // Validate with Zod schema to ensure data is valid
-    try {
-        UserLoginSchema.parse(form.value);
-        return true;
-    } catch {
-        return false;
-    }
+    // Check no validation errors
+    return !errors.value.email && !errors.value.password;
 });
 
+// Email validation ->
+
+const handleEmailInput = () => {
+    touched.value.email = true;
+    validateEmail();
+};
+
 const validateEmail = () => {
-    if (!form.value.email) {
-        errors.value.email = '';
+    if (!touched.value.email) {
         return;
     }
   
-    try {
-        UserLoginSchema.pick({ email: true }).parse({ email: form.value.email });
-        errors.value.email = '';
-    } catch (error) {
-        const fieldErrors = getZodErrorMessages(error);
-        errors.value.email = fieldErrors.email || '';
-    }
+    errors.value.email = validateField(
+        EmailSchema,
+        form.value.email,
+        t,
+        'auth.validation.emailRequired',
+        'auth.validation.invalidEmail'
+    );
+};
+
+// Password validation ->
+
+const handlePasswordInput = () => {
+    touched.value.password = true;
+    validatePassword();
 };
 
 const validatePassword = () => {
-    if (!form.value.password) {
-        errors.value.password = '';
+    if (!touched.value.password) {
         return;
     }
   
-    try {
-        UserLoginSchema.pick({ password: true }).parse({ password: form.value.password });
-        errors.value.password = '';
-    } catch (error) {
-        const fieldErrors = getZodErrorMessages(error);
-        errors.value.password = fieldErrors.password || '';
-    }
+    errors.value.password = validateField(
+        PasswordSchema,
+        form.value.password,
+        t,
+        'auth.validation.passwordRequired',
+        'auth.validation.invalidPassword'
+    );
 };
 
+// Form submission -> 
+
 const handleSubmit = async () => {
+
+    // Mark all fields as touched on submit
+    touched.value.email = true;
+    touched.value.password = true;
+  
     validateEmail();
     validatePassword();
 
@@ -196,4 +217,5 @@ defineExpose({
         errorMessage.value = message; 
     },
 });
+
 </script>

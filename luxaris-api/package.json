@@ -21,6 +21,7 @@
     "migrate:up": "db-migrate up",
     "migrate:down": "db-migrate down",
     "migrate:reset": "db-migrate reset",
+    "migrate:reset:up": "npm run migrate:reset && npm run migrate:up",
     "migrate:create": "db-migrate create"
   },
   "keywords": [

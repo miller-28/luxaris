@@ -7,7 +7,7 @@ import { authRepository } from '../api/authRepository';
 import { User } from '../../domain/models/User';
 import { TokenManager } from '@/core/auth/tokenManager';
 import { usePresetStore } from '@/core/presets';
-import { formatServerErrors } from '../../domain/rules/userSchemas';
+import { formatServerErrors } from '../../domain/validations/userSchemas';
 import { baseURL } from '@/core/http/client';
 
 export const useAuthStore = defineStore('auth', {

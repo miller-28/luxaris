@@ -137,22 +137,21 @@
 </template>
 
 <script setup>
+
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { 
-    UserRegistrationSchema, 
     PasswordConfirmationSchema,
     NameSchema,
     EmailSchema,
     PasswordSchema,
-    getZodErrorMessages 
-} from '../../domain/rules/userSchemas';
+    validateField
+} from '../../domain/validations/userSchemas';
 
 const { t } = useI18n();
 
 const emit = defineEmits(['submit', 'googleRegister']);
 
-const formRef = ref(null);
 const form = ref({
     name: '',
     email: '',
@@ -181,32 +180,11 @@ const isFormValid = computed(() => {
     if (!form.value.name || !form.value.email || !form.value.password || !form.value.passwordConfirm) {
         return false;
     }
-  
     // Check no validation errors
-    if (errors.value.name || errors.value.email || errors.value.password || errors.value.passwordConfirm) {
-        return false;
-    }
-  
-    // Validate with Zod schemas
-    try {
-        // Validate registration data
-        UserRegistrationSchema.parse({
-            name: form.value.name,
-            email: form.value.email,
-            password: form.value.password
-        });
-    
-        // Validate password confirmation
-        PasswordConfirmationSchema.parse({
-            password: form.value.password,
-            passwordConfirm: form.value.passwordConfirm
-        });
-    
-        return true;
-    } catch {
-        return false;
-    }
+    return !errors.value.name && !errors.value.email && !errors.value.password && !errors.value.passwordConfirm;
 });
+
+// Name validation ->
 
 const handleNameInput = () => {
     touched.value.name = true;
@@ -218,21 +196,16 @@ const validateName = () => {
         return;
     }
   
-    if (!form.value.name) {
-        errors.value.name = t('auth.validation.nameRequired');
-        return;
-    }
-  
-    const result = NameSchema.safeParse(form.value.name);
-
-    if (!result.success && result.error.issues && result.error.issues.length > 0) {
-        errors.value.name = result.error.issues[0].message;
-    } else if (!result.success) {
-        errors.value.name = t('auth.validation.invalidName');
-    } else {
-        errors.value.name = '';
-    }
+    errors.value.name = validateField(
+        NameSchema,
+        form.value.name,
+        t,
+        'auth.validation.nameRequired',
+        'auth.validation.invalidName'
+    );
 };
+
+// Email validation -> 
 
 const handleEmailInput = () => {
     touched.value.email = true;
@@ -244,20 +217,20 @@ const validateEmail = () => {
         return;
     }
   
-    if (!form.value.email) {
-        errors.value.email = t('auth.validation.emailRequired');
-        return;
-    }
-  
-    const result = EmailSchema.safeParse(form.value.email);
-  
-    if (!result.success && result.error.issues && result.error.issues.length > 0) {
-        errors.value.email = result.error.issues[0].message;
-    } else if (!result.success) {
-        errors.value.email = t('auth.validation.invalidEmail');
-    } else {
-        errors.value.email = '';
-    }
+    errors.value.email = validateField(
+        EmailSchema,
+        form.value.email,
+        t,
+        'auth.validation.emailRequired',
+        'auth.validation.invalidEmail'
+    );
+};
+
+// Password validation -> 
+
+const handlePasswordInput = () => {
+    touched.value.password = true;
+    validatePassword();
 };
 
 const validatePassword = () => {
@@ -265,21 +238,16 @@ const validatePassword = () => {
         return;
     }
   
-    if (!form.value.password) {
-        errors.value.password = t('auth.validation.passwordRequired');
-        return;
-    }
-  
-    const result = PasswordSchema.safeParse(form.value.password);
-
-    if (!result.success && result.error.issues && result.error.issues.length > 0) {
-        errors.value.password = result.error.issues[0].message;
-    } else if (!result.success) {
-        errors.value.password = t('auth.validation.invalidPassword');
-    } else {
-        errors.value.password = '';
-    }
+    errors.value.password = validateField(
+        PasswordSchema,
+        form.value.password,
+        t,
+        'auth.validation.passwordRequired',
+        'auth.validation.invalidPassword'
+    );
 };
+
+// Password confirmation validation -> 
 
 const handlePasswordConfirmInput = () => {
     touched.value.passwordConfirm = true;
@@ -291,28 +259,19 @@ const validatePasswordConfirm = () => {
         return;
     }
   
-    if (!form.value.passwordConfirm) {
-        errors.value.passwordConfirm = t('auth.validation.passwordConfirmRequired');
-        return;
-    }
-  
-    const result = PasswordConfirmationSchema.safeParse({
-        password: form.value.password,
-        passwordConfirm: form.value.passwordConfirm
-    });
-  
-    if (!result.success) {
-        const fieldErrors = getZodErrorMessages(result.error);
-        errors.value.passwordConfirm = fieldErrors.passwordConfirm || t('auth.validation.passwordsDoNotMatch');
-    } else {
-        errors.value.passwordConfirm = '';
-    }
+    errors.value.passwordConfirm = validateField(
+        PasswordConfirmationSchema,
+        {
+            password: form.value.password,
+            passwordConfirm: form.value.passwordConfirm
+        },
+        t,
+        'auth.validation.passwordConfirmRequired',
+        'auth.validation.passwordsDoNotMatch'
+    );
 };
 
-const handlePasswordInput = () => {
-    touched.value.password = true;
-    validatePassword();
-};
+// Form submission -> 
 
 const handleSubmit = async () => {
     // Mark all fields as touched on submit
@@ -358,4 +317,5 @@ defineExpose({
         errorMessage.value = message; 
     },
 });
+
 </script>

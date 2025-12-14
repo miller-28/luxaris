@@ -116,11 +116,11 @@
             "skipFiles": ["<node_internals>/**"]
         },
         {
-            "name": "Luxaris - API - DB Migrate Reset",
+            "name": "Luxaris - API - DB Migrate Reset + Up",
             "type": "node",
             "request": "launch",
             "runtimeExecutable": "npm",
-            "runtimeArgs": ["run", "migrate:reset"],
+            "runtimeArgs": ["run", "migrate:reset:up"],
             "cwd": "${workspaceFolder}/luxaris-api",
             "console": "integratedTerminal",
             "skipFiles": ["<node_internals>/**"]

@@ -3,6 +3,7 @@
  * Zod schemas matching server-side validation
  */
 import { z } from 'zod';
+import { validateField } from '../../../../shared/utils/validation';
 
 /**
  * User Registration Schema
@@ -75,24 +76,6 @@ export const PasswordSchema = z.string()
     .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character');
 
 /**
- * Helper to extract Zod error messages
- */
-export function getZodErrorMessages(error) {
-    const messages = {};
-  
-    if (error.errors) {
-        error.errors.forEach((err) => {
-            const field = err.path[0];
-            if (field && !messages[field]) {
-                messages[field] = err.message;
-            }
-        });
-    }
-  
-    return messages;
-}
-
-/**
  * Helper to format server error response
  */
 export function formatServerErrors(serverErrors) {
@@ -104,3 +87,6 @@ export function formatServerErrors(serverErrors) {
         .map(err => err.error_description || err.message)
         .join('. ');
 }
+
+// Re-export validation helpers from shared utils
+export { validateField };

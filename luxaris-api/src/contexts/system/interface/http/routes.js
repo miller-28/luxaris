@@ -1,12 +1,15 @@
 const express = require('express');
 
-function create_auth_routes(auth_handler) {
+function create_auth_routes(auth_handler, auth_middleware) {
+
     const router = express.Router();
 
     // Standard email/password auth
     router.post('/register', (req, res, next) => auth_handler.register(req, res, next));
     router.post('/login', (req, res, next) => auth_handler.login(req, res, next));
     router.post('/refresh', (req, res, next) => auth_handler.refresh(req, res, next));
+    router.post('/logout', auth_middleware, (req, res, next) => auth_handler.logout(req, res, next));
+    router.get('/me', auth_middleware, (req, res, next) => auth_handler.get_current_user(req, res, next));
 
     // OAuth routes
     router.get('/google', (req, res, next) => auth_handler.google_authorize(req, res, next));
@@ -16,6 +19,7 @@ function create_auth_routes(auth_handler) {
 }
 
 function create_preset_routes(preset_handler, auth_middleware) {
+
     const router = express.Router();
 
     // User preset routes (authenticated users)
@@ -51,6 +55,7 @@ function create_preset_routes(preset_handler, auth_middleware) {
 }
 
 function create_user_routes(user_handler, auth_middleware) {
+    
     const router = express.Router();
 
     // User profile update (authenticated users)

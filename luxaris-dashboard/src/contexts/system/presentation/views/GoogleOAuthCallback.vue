@@ -49,35 +49,65 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
-import { useAuth } from '../../application/composables/useAuth';
+import { TokenManager } from '@/contexts/system/application/tokenManager';
+import { useAuthStore } from '@/contexts/system/infrastructure/store/authStore';
 import AuthLayout from '@/layouts/AuthLayout.vue';
 
 const route = useRoute();
+const router = useRouter();
 const { t } = useI18n();
-const { handleGoogleCallback } = useAuth();
+const authStore = useAuthStore();
 
 const loading = ref(true);
 const error = ref(null);
 const isPending = ref(false);
 
 onMounted(async () => {
-    const code = route.query.code;
-    const state = route.query.state;
+    // Check if we have direct tokens from the API (OAuth already processed server-side)
+    const token = route.query.token;
+    const refreshToken = route.query.refresh_token;
+    const success = route.query.success;
+    const errorParam = route.query.error;
 
-    if (!code || !state) {
+    console.log('[OAuth Callback] Parameters received:', {
+        hasToken: !!token,
+        hasRefreshToken: !!refreshToken,
+        success,
+        error: errorParam
+    });
+
+    // Handle error from API
+    if (success === 'false' || errorParam) {
+        error.value = errorParam || t('auth.oauth.authenticationFailedGeneric');
+        loading.value = false;
+        return;
+    }
+
+    // Validate we have the required tokens
+    if (!token || !refreshToken) {
         error.value = t('auth.oauth.invalidOAuthParameters');
         loading.value = false;
         return;
     }
 
-    const result = await handleGoogleCallback(code, state);
-
-    if (!result.success) {
-        error.value = result.error || t('auth.oauth.authenticationFailedGeneric');
-    } else if (result.isPending) {
-        isPending.value = true;
+    // Store tokens and load user
+    try {
+        TokenManager.setToken(token);
+        TokenManager.setRefreshToken(refreshToken);
+        
+        console.log('[OAuth Callback] Tokens stored, loading user...');
+        await authStore.loadUser();
+        
+        console.log('[OAuth Callback] User loaded, redirecting to dashboard');
+        // Redirect to dashboard
+        setTimeout(() => {
+            router.push('/dashboard');
+        }, 1000);
+    } catch (err) {
+        console.error('[OAuth Callback] Error:', err);
+        error.value = err.message || t('auth.oauth.authenticationFailedGeneric');
     }
 
     loading.value = false;

@@ -5,7 +5,7 @@
 import client from '@/core/http/client';
 
 export const authRepository = {
-    
+
     /**
      * Login with email and password
      */
@@ -33,7 +33,7 @@ export const authRepository = {
      * Logout current user
      */
     async logout() {
-        const response = await client.post('/auth/logout');
+        const response = await client.post('/auth/logout', {});
         return response.data;
     },
 

@@ -69,8 +69,29 @@ class Server {
             }
         });
 
-        // Body parsing
-        this.app.use(express.json({ limit: '10mb' }));
+        // Body parsing with custom verify to handle null/empty bodies
+        this.app.use(express.json({ 
+            limit: '20mb',
+            verify: (req, res, buf, encoding) => {
+                // If body is literally "null", replace with empty object
+                const body = buf.toString(encoding || 'utf8');
+                if (body === 'null' || body === '' || body === 'undefined') {
+                    req.body = {};
+                    // Set a flag to skip JSON parsing
+                    req._nullBodyNormalized = true;
+                }
+            }
+        }));
+        
+        // Middleware to handle normalized bodies
+        this.app.use((req, res, next) => {
+            if (req._nullBodyNormalized) {
+                // Body was already set to {} by verify function
+                delete req._nullBodyNormalized;
+            }
+            next();
+        });
+        
         this.app.use(express.urlencoded({ extended: true, limit: '10mb' }));
     }
 

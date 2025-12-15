@@ -42,6 +42,52 @@ class AuthHandler {
         }
     }
 
+    async logout(req, res, next) {
+        try {
+            console.log('[AuthHandler] Logout request received', {
+                userId: req.user?.id,
+                hasUser: !!req.user
+            });
+            // In a stateless JWT system, logout is client-side (clear tokens)
+            // But we can track logout events or invalidate refresh tokens if needed
+            return res.status(200).json({
+                message: 'Logged out successfully'
+            });
+        } catch (error) {
+            console.error('[AuthHandler] Logout error:', error);
+            next(error);
+        }
+    }
+
+    async get_current_user(req, res, next) {
+        try {
+            // req.user is populated by auth middleware
+            const user = req.user;
+            
+            if (!user) {
+                return res.status(401).json({
+                    errors: [{
+                        error_code: 'UNAUTHORIZED',
+                        error_description: 'User not authenticated',
+                        error_severity: 'error'
+                    }]
+                });
+            }
+
+            res.status(200).json({
+                user: {
+                    id: user.id,
+                    email: user.email,
+                    name: user.name,
+                    timezone: user.timezone,
+                    roles: user.roles || []
+                }
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
     /**
      * Initiate Google OAuth flow
      * GET /auth/google
@@ -113,14 +159,14 @@ class AuthHandler {
             }
 
             // Redirect to callback with tokens
-            const redirect_url = `${frontend_url}/auth/callback?success=true&token=${result.tokens.access_token}&refresh_token=${result.tokens.refresh_token}`;
+            const redirect_url = `${frontend_url}/auth/google/callback?success=true&token=${result.tokens.access_token}&refresh_token=${result.tokens.refresh_token}`;
             res.redirect(redirect_url);
 
         } catch (error) {
             // Redirect to error page
             const frontend_url = process.env.FRONTEND_URL || 'http://localhost:5173';
             const error_message = encodeURIComponent(error.message || 'OAuth authentication failed');
-            const redirect_url = `${frontend_url}/auth/callback?success=false&error=${error_message}`;
+            const redirect_url = `${frontend_url}/auth/google/callback?success=false&error=${error_message}`;
             res.redirect(redirect_url);
         }
     }

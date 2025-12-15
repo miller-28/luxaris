@@ -20,10 +20,10 @@ export class User {
     }
 
     /**
-   * Check if user has a specific permission
-   */
+     * Check if user has a specific permission
+     */
     hasPermission(resource, action) {
-    // Root admin has all permissions
+        // Root admin has all permissions
         if (this.is_root_admin) {
             return true;
         }
@@ -34,50 +34,50 @@ export class User {
     }
 
     /**
-   * Check if user has a specific role
-   */
+     * Check if user has a specific role
+     */
     hasRole(roleName) {
         return this.roles.some(role => role.name === roleName);
     }
 
     /**
-   * Check if user is admin
-   */
+     * Check if user is admin
+     */
     isAdmin() {
         return this.is_root_admin || this.hasRole('admin');
     }
 
     /**
-   * Check if user is pending approval
-   */
+     * Check if user is pending approval
+     */
     isPending() {
         return this.status === 'pending';
     }
 
     /**
-   * Check if user is active
-   */
+     * Check if user is active
+     */
     isActive() {
         return this.status === 'active';
     }
 
     /**
-   * Get full name or email as fallback
-   */
+     * Get full name or email as fallback
+     */
     getDisplayName() {
         return this.name || this.email;
     }
 
     /**
-   * Create User instance from API response
-   */
+     * Create User instance from API response
+     */
     static fromApiResponse(data) {
         return new User(data);
     }
 
     /**
-   * Convert to plain object for API submission
-   */
+     * Convert to plain object for API submission
+     */
     toApiPayload() {
         return {
             email: this.email,

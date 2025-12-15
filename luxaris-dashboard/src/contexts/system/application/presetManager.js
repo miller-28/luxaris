@@ -27,6 +27,7 @@ function setByPath(obj, path, value) {
 }
 
 export class PresetManager {
+
     constructor() {
         this.settings = {};
         this.presetId = null;
@@ -37,9 +38,9 @@ export class PresetManager {
     }
 
     /**
-   * Load preset with hierarchical resolution
-   * Priority: User > Role > Global > Empty
-   */
+     * Load preset with hierarchical resolution
+     * Priority: User > Role > Global > Empty
+     */
     loadPreset(presetData) {
         if (!presetData) {
             this.settings = this.getDefaultSettings();
@@ -58,8 +59,8 @@ export class PresetManager {
     }
 
     /**
-   * Get default settings structure
-   */
+     * Get default settings structure
+     */
     getDefaultSettings() {
         return {
             theme: {
@@ -89,16 +90,16 @@ export class PresetManager {
     }
 
     /**
-   * Get setting value by path
-   */
+     * Get setting value by path
+     */
     getSetting(path, defaultValue = null) {
         const value = getByPath(this.settings, path);
         return value !== undefined ? value : defaultValue;
     }
 
     /**
-   * Update setting value by path
-   */
+     * Update setting value by path
+     */
     updateSetting(path, value) {
         setByPath(this.settings, path, value);
         this.isModified = true;
@@ -106,8 +107,8 @@ export class PresetManager {
     }
 
     /**
-   * Update multiple settings at once
-   */
+     * Update multiple settings at once
+     */
     updateSettings(updates) {
         for (const [path, value] of Object.entries(updates)) {
             setByPath(this.settings, path, value);
@@ -117,22 +118,22 @@ export class PresetManager {
     }
 
     /**
-   * Get grid settings for a specific context
-   */
+     * Get grid settings for a specific context
+     */
     getGridSettings(contextName) {
         return this.getSetting(`grids.${contextName}`, {});
     }
 
     /**
-   * Update grid settings for a specific context
-   */
+     * Update grid settings for a specific context
+     */
     updateGridSettings(contextName, settings) {
         this.updateSetting(`grids.${contextName}`, settings);
     }
 
     /**
-   * Get sidebar state
-   */
+     * Get sidebar state
+     */
     getSidebarState() {
         return {
             collapsed: this.getSetting('layout.sidebarCollapsed', false),
@@ -142,8 +143,8 @@ export class PresetManager {
     }
 
     /**
-   * Update sidebar state
-   */
+     * Update sidebar state
+     */
     updateSidebarState(state) {
         if (state.collapsed !== undefined) {
             this.updateSetting('layout.sidebarCollapsed', state.collapsed);
@@ -157,8 +158,8 @@ export class PresetManager {
     }
 
     /**
-   * Get theme settings
-   */
+     * Get theme settings
+     */
     getTheme() {
         return {
             mode: this.getSetting('theme.mode', 'light'),
@@ -167,8 +168,8 @@ export class PresetManager {
     }
 
     /**
-   * Update theme settings
-   */
+     * Update theme settings
+     */
     updateTheme(theme) {
         if (theme.mode) {
             this.updateSetting('theme.mode', theme.mode);
@@ -179,8 +180,8 @@ export class PresetManager {
     }
 
     /**
-   * Get locale settings
-   */
+     * Get locale settings
+     */
     getLocale() {
         return {
             language: this.getSetting('locale.language', 'en'),
@@ -191,8 +192,8 @@ export class PresetManager {
     }
 
     /**
-   * Update locale settings
-   */
+     * Update locale settings
+     */
     updateLocale(locale) {
         if (locale.language) {
             this.updateSetting('locale.language', locale.language);
@@ -209,8 +210,8 @@ export class PresetManager {
     }
 
     /**
-   * Debounced save - prevents excessive API calls
-   */
+     * Debounced save - prevents excessive API calls
+     */
     debouncedSave() {
         if (this.saveTimer) {
             clearTimeout(this.saveTimer);
@@ -222,8 +223,8 @@ export class PresetManager {
     }
 
     /**
-   * Trigger save callback (should be set by store)
-   */
+     * Trigger save callback (should be set by store)
+     */  
     triggerSave() {
         if (this.onSave && this.isModified) {
             this.onSave(this.settings, this.presetId, this.presetSource);
@@ -231,15 +232,15 @@ export class PresetManager {
     }
 
     /**
-   * Set save callback
-   */
+     * Set save callback
+     */
     setSaveCallback(callback) {
         this.onSave = callback;
     }
 
     /**
-   * Reset to default settings
-   */
+     * Reset to default settings
+     */
     reset() {
         this.settings = this.getDefaultSettings();
         this.isModified = true;
@@ -247,15 +248,15 @@ export class PresetManager {
     }
 
     /**
-   * Get all settings
-   */
+     * Get all settings
+     */
     getAllSettings() {
         return { ...this.settings };
     }
 
     /**
-   * Check if preset needs cloning (not a user preset)
-   */
+     * Check if preset needs cloning (not a user preset)
+     */
     needsCloning() {
         return this.presetSource !== 'user' && this.isModified;
     }

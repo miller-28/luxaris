@@ -3,9 +3,10 @@
  * Handles JWT token storage and retrieval
  */
 export const TokenManager = {
+    
     /**
-   * Get access token from localStorage
-   */
+     * Get access token from localStorage
+     */
     getToken() {
         const token = localStorage.getItem('auth_token');
 
@@ -20,15 +21,15 @@ export const TokenManager = {
     },
 
     /**
-   * Get refresh token from localStorage
-   */
+     * Get refresh token from localStorage
+     */
     getRefreshToken() {
         return localStorage.getItem('refresh_token');
     },
 
     /**
-   * Store access token
-   */
+     * Store access token
+     */
     setToken(token) {
         if (!token) {
             return;
@@ -43,8 +44,8 @@ export const TokenManager = {
     },
 
     /**
-   * Store refresh token
-   */
+     * Store refresh token
+     */   
     setRefreshToken(token) {
         if (!token) {
             return;
@@ -53,8 +54,8 @@ export const TokenManager = {
     },
 
     /**
-   * Store both tokens
-   */
+     * Store both tokens
+     */
     setTokens(accessToken, refreshToken) {
         this.setToken(accessToken);
         if (refreshToken) {
@@ -63,24 +64,24 @@ export const TokenManager = {
     },
 
     /**
-   * Clear all tokens
-   */
+     * Clear all tokens
+     */
     clearTokens() {
         localStorage.removeItem('auth_token');
         localStorage.removeItem('refresh_token');
     },
 
     /**
-   * Validate JWT token format (header.payload.signature)
-   */
+     * Validate JWT token format (header.payload.signature)
+     */
     isValidTokenFormat(token) {
         const parts = token.split('.');
         return parts.length === 3;
     },
 
     /**
-   * Check if token is expired
-   */
+     * Check if token is expired
+     */
     isTokenExpired(token) {
         try {
             const payload = JSON.parse(atob(token.split('.')[1]));
@@ -92,8 +93,8 @@ export const TokenManager = {
     },
 
     /**
-   * Decode token payload
-   */
+     * Decode token payload
+     */
     decodeToken(token) {
         try {
             return JSON.parse(atob(token.split('.')[1]));

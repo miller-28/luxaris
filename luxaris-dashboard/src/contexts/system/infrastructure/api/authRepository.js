@@ -5,9 +5,10 @@
 import client from '@/core/http/client';
 
 export const authRepository = {
+    
     /**
-   * Login with email and password
-   */
+     * Login with email and password
+     */
     async login(email, password) {
         const response = await client.post('/auth/login', {
             email,
@@ -17,8 +18,8 @@ export const authRepository = {
     },
 
     /**
-   * Register new user
-   */
+     * Register new user
+     */
     async register(userData) {
         const response = await client.post('/auth/register', {
             name: userData.name,
@@ -29,16 +30,16 @@ export const authRepository = {
     },
 
     /**
-   * Logout current user
-   */
+     * Logout current user
+     */
     async logout() {
         const response = await client.post('/auth/logout');
         return response.data;
     },
 
     /**
-   * Refresh access token
-   */
+     * Refresh access token
+     */
     async refreshToken(refreshToken) {
         const response = await client.post('/auth/refresh', {
             refresh_token: refreshToken,
@@ -47,24 +48,24 @@ export const authRepository = {
     },
 
     /**
-   * Get current user info
-   */
+     * Get current user info
+     */
     async getCurrentUser() {
         const response = await client.get('/auth/me');
         return response.data;
     },
 
     /**
-   * Get Google OAuth URL
-   */
+     * Get Google OAuth URL
+     */
     async getGoogleOAuthUrl() {
         const response = await client.get('/auth/google');
         return response.data;
     },
 
     /**
-   * Handle Google OAuth callback
-   */
+     * Handle Google OAuth callback
+     */
     async handleGoogleCallback(code, state) {
         const response = await client.post('/auth/google/callback', {
             code,

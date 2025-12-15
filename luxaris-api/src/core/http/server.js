@@ -5,6 +5,7 @@ const { RateLimiterMemory } = require('rate-limiter-flexible');
 const request_id_middleware = require('./middleware/request-id');
 
 class Server {
+    
     constructor(config) {
         this.config = config;
         this.app = express();

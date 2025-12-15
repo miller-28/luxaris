@@ -3,10 +3,11 @@
  * Pinia store for UI preset state management
  */
 import { defineStore } from 'pinia';
-import { presetsRepository } from '@/contexts/system/infrastructure/api/presetsRepository';
-import { PresetManager } from './presetManager';
+import { presetsRepository } from '../api/presetsRepository';
+import { PresetManager } from '../../application/presetManager';
 
 export const usePresetStore = defineStore('preset', {
+    
     state: () => ({
         manager: new PresetManager(),
         loaded: false,
@@ -19,40 +20,41 @@ export const usePresetStore = defineStore('preset', {
         isLoading: (state) => state.loading,
     
         /**
-     * Get all settings
-     */
+         * Get all settings
+         */
         settings: (state) => state.manager.getAllSettings(),
 
         /**
-     * Get theme settings
-     */
+         * Get theme settings
+         */
         theme: (state) => state.manager.getTheme(),
 
         /**
-     * Get locale settings
-     */
+         * Get locale settings
+         */
         locale: (state) => state.manager.getLocale(),
 
         /**
-     * Get sidebar state
-     */
+         * Get sidebar state
+         */
         sidebarState: (state) => state.manager.getSidebarState(),
 
         /**
-     * Get preset source (user/role/global)
-     */
+         * Get preset source (user/role/global)
+         */
         presetSource: (state) => state.manager.presetSource,
 
         /**
-     * Get preset ID
-     */
+         * Get preset ID
+         */
         presetId: (state) => state.manager.presetId,
     },
 
     actions: {
-    /**
-     * Load preset for user
-     */
+        
+        /**
+         * Load preset for user
+         */
         async loadPreset(userId) {
             if (!userId) {
                 console.warn('No userId provided to loadPreset');
@@ -63,8 +65,8 @@ export const usePresetStore = defineStore('preset', {
             this.error = null;
 
             try {
+
                 const data = await presetsRepository.getUserPreset(userId);
-        
                 this.manager.loadPreset(data);
                 this.loaded = true;
 
@@ -88,8 +90,8 @@ export const usePresetStore = defineStore('preset', {
         },
 
         /**
-     * Save preset changes
-     */
+         * Save preset changes
+         */
         async savePreset(userId) {
             if (!this.manager.isModified) {
                 return { success: true };
@@ -134,64 +136,64 @@ export const usePresetStore = defineStore('preset', {
         },
 
         /**
-     * Update single setting
-     */
+         * Update single setting
+         */
         updateSetting(path, value) {
             this.manager.updateSetting(path, value);
         },
 
         /**
-     * Update multiple settings
-     */
+         * Update multiple settings
+         */
         updateSettings(updates) {
             this.manager.updateSettings(updates);
         },
 
         /**
-     * Get setting value
-     */
+         * Get setting value
+         */
         getSetting(path, defaultValue) {
             return this.manager.getSetting(path, defaultValue);
         },
 
         /**
-     * Update theme
-     */
+         * Update theme
+         */
         updateTheme(theme) {
             this.manager.updateTheme(theme);
         },
 
         /**
-     * Update locale
-     */
+         * Update locale
+         */
         updateLocale(locale) {
             this.manager.updateLocale(locale);
         },
 
         /**
-     * Update sidebar state
-     */
+         * Update sidebar state
+         */
         updateSidebarState(state) {
             this.manager.updateSidebarState(state);
         },
 
         /**
-     * Get grid settings
-     */
+         * Get grid settings
+         */
         getGridSettings(contextName) {
             return this.manager.getGridSettings(contextName);
         },
 
         /**
-     * Update grid settings
-     */
+         * Update grid settings
+         */
         updateGridSettings(contextName, settings) {
             this.manager.updateGridSettings(contextName, settings);
         },
 
         /**
-     * Reset to default settings
-     */
+         * Reset to default settings
+         */
         async resetToDefault(userId) {
             try {
                 await presetsRepository.resetToDefault(userId);
@@ -204,8 +206,8 @@ export const usePresetStore = defineStore('preset', {
         },
 
         /**
-     * Clear error
-     */
+         * Clear error
+         */
         clearError() {
             this.error = null;
         },

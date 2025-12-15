@@ -238,6 +238,12 @@ async function bootstrap() {
                 };
                 next();
             } catch (error) {
+                console.error('[Auth Middleware] Token verification failed:', {
+                    error: error.message,
+                    tokenPreview: token.substring(0, 20) + '...',
+                    url: req.url,
+                    method: req.method
+                });
                 return res.status(401).json({
                     errors: [{
                         error_code: 'INVALID_TOKEN',

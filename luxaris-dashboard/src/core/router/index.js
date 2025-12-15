@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { systemRoutes } from '@/contexts/system/presentation/routes';
 import { useAuthStore } from '@/contexts/system/infrastructure/store/authStore';
-import { TokenManager } from '../auth/tokenManager';
+import { TokenManager } from '@/contexts/system/application/tokenManager';
 
 const routes = [
     {
@@ -12,7 +12,7 @@ const routes = [
     {
         path: '/dashboard',
         name: 'Dashboard',
-        component: () => import('@/contexts/system/views/DashboardHome.vue'),
+        component: () => import('@/contexts/system/presentation/views/DashboardHome.vue'),
         meta: { requiresAuth: true },
     },
 ];
@@ -24,16 +24,30 @@ export const router = createRouter({
 
 // Navigation guard - Authentication
 router.beforeEach(async (to, from, next) => {
-    
+
     const authStore = useAuthStore();
     const token = TokenManager.getToken();
     const isAuthenticated = !!token;
+
+    console.log('[Router Guard]', {
+        to: to.path,
+        from: from.path,
+        isAuthenticated,
+        token: token ? token.substring(0, 20) + '...' : 'null',
+        tokenInStorage: localStorage.getItem('auth_token') ? 'exists' : 'null',
+        hasUser: !!authStore.currentUser,
+        userName: authStore.currentUser?.name,
+        requiresAuth: to.meta.requiresAuth,
+        guestOnly: to.meta.guestOnly
+    });
 
     // Load user if authenticated but user data not loaded
     if (isAuthenticated && !authStore.currentUser) {
         try {
             await authStore.loadUser();
+            console.log('[Router Guard] User loaded successfully');
         } catch (error) {
+            console.error('[Router Guard] Failed to load user:', error);
             // Failed to load user, token might be invalid
             authStore.logout();
             if (to.meta.requiresAuth) {
@@ -45,12 +59,14 @@ router.beforeEach(async (to, from, next) => {
 
     // Check if route requires authentication
     if (to.meta.requiresAuth && !isAuthenticated) {
+        console.log('[Router Guard] Redirecting to login - not authenticated');
         next({ name: 'Login', query: { redirect: to.fullPath } });
         return;
     }
 
     // Redirect authenticated users away from guest-only pages
     if (to.meta.guestOnly && isAuthenticated) {
+        console.log('[Router Guard] Redirecting to dashboard - this is guest only page');
         next({ name: 'Dashboard' });
         return;
     }
@@ -59,11 +75,13 @@ router.beforeEach(async (to, from, next) => {
     if (to.meta.permission && isAuthenticated) {
         const [resource, action] = to.meta.permission.split(':');
         if (!authStore.hasPermission(resource, action)) {
+            console.log('[Router Guard] No permission - redirecting to dashboard');
             // User doesn't have permission
             next({ name: 'Dashboard' });
             return;
         }
     }
 
+    console.log('[Router Guard] Allowing navigation');
     next();
 });

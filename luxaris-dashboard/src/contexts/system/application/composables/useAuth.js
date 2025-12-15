@@ -7,6 +7,7 @@ import { useAuthStore } from '../../infrastructure/store/authStore';
 import { useRouter } from 'vue-router';
 
 export function useAuth() {
+
     const authStore = useAuthStore();
     const router = useRouter();
 
@@ -17,31 +18,28 @@ export function useAuth() {
     const isRootAdmin = computed(() => authStore.isRootAdmin);
 
     /**
-   * Login with email and password
-   */
+     * Login with email and password
+     */
     const login = async (email, password) => {
         const result = await authStore.login(email, password);
-    
         if (result.success) {
-            // Redirect to dashboard
             router.push('/dashboard');
         }
-    
         return result;
     };
 
     /**
-   * Register new user
-   * Note: Navigation is handled by the RegisterView component via modal dialogs
-   */
+     * Register new user
+     * Note: Navigation is handled by the RegisterView component via modal dialogs
+     */
     const register = async (userData) => {
         const result = await authStore.register(userData);
         return result;
     };
 
     /**
-   * Login with Google
-   */
+     * Login with Google
+     */
     const loginWithGoogle = async () => {
         try {
             await authStore.loginWithGoogle();
@@ -51,11 +49,10 @@ export function useAuth() {
     };
 
     /**
-   * Handle Google OAuth callback
-   */
+     * Handle Google OAuth callback
+     */
     const handleGoogleCallback = async (code, state) => {
         const result = await authStore.handleGoogleCallback(code, state);
-    
         if (result.success) {
             if (result.isPending) {
                 router.push('/login?message=pending');
@@ -65,34 +62,34 @@ export function useAuth() {
         } else {
             router.push('/login?error=oauth_failed');
         }
-    
         return result;
     };
 
     /**
-   * Logout user
-   */
+     * Logout user
+     */
     const logout = async () => {
         await authStore.logout();
         router.push('/login');
     };
 
     /**
-   * Complete registration for first user
-   */
+     * Complete registration for first user
+     */
     const completeRegistration = async (tokens) => {
         await authStore.completeRegistration(tokens);
     };
 
     /**
-   * Clear error message
-   */
+     * Clear error message
+     */
     const clearError = () => {
         authStore.clearError();
     };
 
     return {
-    // State
+
+        // State
         user,
         isAuthenticated,
         isLoading,

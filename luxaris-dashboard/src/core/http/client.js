@@ -1,5 +1,5 @@
 import { createLuminara } from 'luminara';
-import { TokenManager } from '../auth/tokenManager';
+import { TokenManager } from '@/contexts/system/application/tokenManager';
 
 const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1';
 
@@ -11,18 +11,40 @@ const baseClient = createLuminara({
 
 // Wrapper function to add token to requests
 const request = async (method, url, data = null, config = {}) => {
+    
     const token = TokenManager.getToken();
+
+    console.log(`[HTTP Client] ${method.toUpperCase()} ${baseURL}${url}`, {
+        hasToken: !!token,
+        tokenPreview: token ? token.substring(0, 20) + '...' : 'none',
+        baseURL,
+        url
+    });
+    
     const headers = {
         'Content-Type': 'application/json',
         ...config.headers,
     };
 
     if (token) {
-        headers.Authorization = `Bearer ${token}`;
+        headers['Authorization'] = `Bearer ${token}`;
     }
 
+    // Merge headers into config properly for Luminara
+    const requestConfig = {
+        ...config,
+        headers: headers,
+    };
+
     try {
-        const response = await baseClient[method](url, data, { ...config, headers });
+        // For GET, DELETE, HEAD, OPTIONS - pass config as second parameter
+        // For POST, PUT, PATCH - pass body as second parameter, config as third
+        let response;
+        if (method === 'get' || method === 'delete' || method === 'head' || method === 'options') {
+            response = await baseClient[method](url, requestConfig);
+        } else {
+            response = await baseClient[method](url, data, requestConfig);
+        }
         return response;
     } catch (error) {
     
@@ -53,11 +75,29 @@ const request = async (method, url, data = null, config = {}) => {
             };
         }
     
-        // Handle 401 - Token expired
-        if (status === 401 && !config._retry) {
+        // Attach response data to error for proper handling
+        const enhancedError = new Error(error.message);
+        enhancedError.response = {
+            status,
+            data: responseData,
+        };
+        enhancedError.status = status;
+
+        // Handle 401 - Token expired (but NOT on login/register endpoints)
+        const isAuthEndpoint = 
+            url.includes('/auth/login') || 
+            url.includes('/auth/register') || 
+            url.includes('/auth/refresh');
+        
+        if (
+            status === 401 &&
+            !config._retry &&
+            !isAuthEndpoint
+        ) {
             try {
                 const refreshToken = TokenManager.getRefreshToken();
                 if (refreshToken) {
+                    
                     // Attempt token refresh
                     const refreshResponse = await baseClient.post('/auth/refresh', {
                         refresh_token: refreshToken,
@@ -73,19 +113,12 @@ const request = async (method, url, data = null, config = {}) => {
             } catch (refreshError) {
                 // Refresh failed - clear tokens and redirect to login
                 TokenManager.clearTokens();
-                window.location.href = '/login';
+                //window.location.href = '/login';
                 throw refreshError;
             }
         }
-
-        // Attach response data to error for proper handling
-        const enhancedError = new Error(error.message);
-        enhancedError.response = {
-            status,
-            data: responseData,
-        };
-        enhancedError.status = status;
     
+        // For all other cases (403, auth endpoints with 401, or failed refresh), throw the error
         throw enhancedError;
     }
 };

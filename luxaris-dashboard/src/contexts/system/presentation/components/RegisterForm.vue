@@ -150,7 +150,7 @@ import {
 
 const { t } = useI18n();
 
-const emit = defineEmits(['submit', 'googleRegister']);
+const emit = defineEmits(['attemptRegister', 'googleRegister']);
 
 const form = ref({
     name: '',
@@ -292,17 +292,11 @@ const handleSubmit = async () => {
     loading.value = true;
     errorMessage.value = '';
 
-    try {
-        await emit('submit', {
-            name: form.value.name,
-            email: form.value.email,
-            password: form.value.password,
-        });
-    } catch (error) {
-        errorMessage.value = error.message || t('auth.register.registrationFailed');
-    } finally {
-        loading.value = false;
-    }
+    emit('attemptRegister', {
+        name: form.value.name,
+        email: form.value.email,
+        password: form.value.password,
+    });
 };
 
 const handleGoogleRegister = () => {

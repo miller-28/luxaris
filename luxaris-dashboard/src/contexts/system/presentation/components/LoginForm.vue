@@ -106,7 +106,6 @@
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { 
-    UserLoginSchema, 
     EmailSchema,
     PasswordSchema,
     validateField
@@ -114,9 +113,8 @@ import {
 
 const { t } = useI18n();
 
-const emit = defineEmits(['submit', 'googleLogin']);
+const emit = defineEmits(['attemptLogin', 'googleLogin']);
 
-const formRef = ref(null);
 const form = ref({
     email: '',
     password: '',
@@ -202,7 +200,7 @@ const handleSubmit = async () => {
     loading.value = true;
     errorMessage.value = '';
 
-    emit('submit', form.value);
+    emit('attemptLogin', form.value);
 };
 
 const handleGoogleLogin = () => {

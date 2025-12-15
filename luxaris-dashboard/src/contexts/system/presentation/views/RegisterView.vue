@@ -12,7 +12,7 @@
 
             <RegisterForm
                 ref="registerFormRef"
-                @submit="handleRegister"
+                @attempt-register="handleRegister"
                 @google-register="handleGoogleRegister"
             />
         </v-card>

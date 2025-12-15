@@ -3,9 +3,10 @@
  * Exposes preset functionality to components
  */
 import { computed } from 'vue';
-import { usePresetStore } from '@/core/presets';
+import { usePresetStore } from '../../infrastructure/store/presetStore';
 
 export function usePreset() {
+    
     const presetStore = usePresetStore();
 
     // Computed properties
@@ -16,64 +17,64 @@ export function usePreset() {
     const sidebarState = computed(() => presetStore.sidebarState);
 
     /**
-   * Get setting value
-   */
+     * Get setting value
+     */
     const getSetting = (path, defaultValue) => {
         return presetStore.getSetting(path, defaultValue);
     };
 
     /**
-   * Update setting value
-   */
+     * Update setting value
+     */
     const updateSetting = (path, value) => {
         presetStore.updateSetting(path, value);
     };
 
     /**
-   * Update multiple settings
-   */
+     * Update multiple settings
+     */
     const updateSettings = (updates) => {
         presetStore.updateSettings(updates);
     };
 
     /**
-   * Update theme
-   */
+     * Update theme
+     */
     const updateTheme = (themeSettings) => {
         presetStore.updateTheme(themeSettings);
     };
 
     /**
-   * Update locale
-   */
+     * Update locale
+     */
     const updateLocale = (localeSettings) => {
         presetStore.updateLocale(localeSettings);
     };
 
     /**
-   * Update sidebar state
-   */
+     * Update sidebar state
+     */
     const updateSidebarState = (state) => {
         presetStore.updateSidebarState(state);
     };
 
     /**
-   * Get grid settings for a context
-   */
+     * Get grid settings for a context
+     */
     const getGridSettings = (contextName) => {
         return presetStore.getGridSettings(contextName);
     };
 
     /**
-   * Update grid settings for a context
-   */
+     * Update grid settings for a context
+     */
     const updateGridSettings = (contextName, settings) => {
         presetStore.updateGridSettings(contextName, settings);
     };
 
     /**
-   * Reset to default settings
-   */
+     * Reset to default settings
+     */
     const resetToDefault = async (userId) => {
         return await presetStore.resetToDefault(userId);
     };

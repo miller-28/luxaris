@@ -5,12 +5,13 @@
 import { defineStore } from 'pinia';
 import { authRepository } from '../api/authRepository';
 import { User } from '../../domain/models/User';
-import { TokenManager } from '@/core/auth/tokenManager';
-import { usePresetStore } from '@/core/presets';
+import { TokenManager } from '../../application/tokenManager';
+import { usePresetStore } from './presetStore';
 import { formatServerErrors } from '../../domain/validations/userSchemas';
 import { baseURL } from '@/core/http/client';
 
 export const useAuthStore = defineStore('auth', {
+
     state: () => ({
         user: null,
         token: TokenManager.getToken(),
@@ -24,14 +25,12 @@ export const useAuthStore = defineStore('auth', {
         currentUser: (state) => state.user,
         isRootAdmin: (state) => state.user?.is_root_admin || false,
         isLoading: (state) => state.loading,
-    
         hasPermission: (state) => (resource, action) => {
             if (!state.user) {
                 return false;
             }
             return state.user.hasPermission(resource, action);
         },
-
         hasRole: (state) => (roleName) => {
             if (!state.user) {
                 return false;
@@ -41,31 +40,57 @@ export const useAuthStore = defineStore('auth', {
     },
 
     actions: {
-    /**
-     * Login with email and password
-     */
+
+        /**
+         * Login with email and password
+         */
         async login(email, password) {
             this.loading = true;
             this.error = null;
 
             try {
+                
                 const data = await authRepository.login(email, password);
         
-                // Store tokens
-                TokenManager.setToken(data.access_token);
-                TokenManager.setRefreshToken(data.refresh_token);
+                console.log('[Auth Store] Login response:', data);
         
-                this.token = data.access_token;
-                this.refreshToken = data.refresh_token;
+                // Store tokens - API returns 'token' not 'access_token'
+                const accessToken = data.token || data.access_token;
+                const refreshToken = data.refresh_token;
+        
+                try {
+                    TokenManager.setToken(accessToken);
+                    console.log('[Auth Store] Access token stored successfully');
+                } catch (error) {
+                    console.error('[Auth Store] Failed to store access token:', error);
+                    throw error;
+                }
+
+                try {
+                    TokenManager.setRefreshToken(refreshToken);
+                    console.log('[Auth Store] Refresh token stored successfully');
+                } catch (error) {
+                    console.error('[Auth Store] Failed to store refresh token:', error);
+                }
+
+                this.token = accessToken;
+                this.refreshToken = refreshToken;
+        
+                console.log('[Auth Store] Tokens stored. Checking localStorage:', {
+                    tokenInStorage: localStorage.getItem('auth_token') ? 'exists' : 'null'
+                });
         
                 // Store user data
                 this.user = User.fromApiResponse(data.user);
+                console.log('[Auth Store] User stored:', this.user);
 
                 // Load user preset
                 await this.loadUserPreset();
 
                 return { success: true };
+
             } catch (error) {
+
                 console.error('Login error:', error);
         
                 // Format error message from server response
@@ -87,9 +112,10 @@ export const useAuthStore = defineStore('auth', {
         },
 
         /**
-     * Register new user
-     */
+         * Register new user
+         */
         async register(userData) {
+
             this.loading = true;
             this.error = null;
 
@@ -100,7 +126,7 @@ export const useAuthStore = defineStore('auth', {
                 // Let the view component show modal first, then call completeRegistration()
                 if (
                     data.access_token &&
-          data.is_pending === false
+                    data.is_pending === false
                 ) {
                     return { 
                         success: true, 
@@ -138,10 +164,11 @@ export const useAuthStore = defineStore('auth', {
         },
 
         /**
-     * Complete registration for first user (auto-approved)
-     * Called after user dismisses success modal
-     */
+         * Complete registration for first user (auto-approved)
+         * Called after user dismisses success modal
+         */
         async completeRegistration(tokens) {
+
             TokenManager.setToken(tokens.access_token);
             TokenManager.setRefreshToken(tokens.refresh_token);
       
@@ -154,9 +181,9 @@ export const useAuthStore = defineStore('auth', {
         },
 
         /**
-     * Login with Google OAuth
-     * Redirect directly to backend OAuth endpoint
-     */
+         * Login with Google OAuth
+         * Redirect directly to backend OAuth endpoint
+         */
         async loginWithGoogle() {
             try {
                 // Redirect directly to backend OAuth endpoint
@@ -169,9 +196,10 @@ export const useAuthStore = defineStore('auth', {
         },
 
         /**
-     * Handle Google OAuth callback
-     */
+         * Handle Google OAuth callback
+         */
         async handleGoogleCallback(code, state) {
+
             this.loading = true;
             this.error = null;
 
@@ -204,8 +232,8 @@ export const useAuthStore = defineStore('auth', {
         },
 
         /**
-     * Logout current user
-     */
+         * Logout current user
+         */
         async logout() {
             try {
                 await authRepository.logout();
@@ -223,8 +251,8 @@ export const useAuthStore = defineStore('auth', {
         },
 
         /**
-     * Load current user data
-     */
+         * Load current user data
+         */
         async loadUser() {
             if (!this.token) {
                 return;
@@ -235,8 +263,6 @@ export const useAuthStore = defineStore('auth', {
             try {
                 const data = await authRepository.getCurrentUser();
                 this.user = User.fromApiResponse(data);
-        
-                // Load user preset
                 await this.loadUserPreset();
             } catch (error) {
                 // Token might be invalid, clear auth state
@@ -247,13 +273,12 @@ export const useAuthStore = defineStore('auth', {
         },
 
         /**
-     * Load user preset after authentication
-     */
+         * Load user preset after authentication
+         */
         async loadUserPreset() {
             if (!this.user?.id) {
                 return;
             }
-
             try {
                 const presetStore = usePresetStore();
                 await presetStore.loadPreset(this.user.id);
@@ -264,8 +289,8 @@ export const useAuthStore = defineStore('auth', {
         },
 
         /**
-     * Refresh access token
-     */
+         * Refresh access token
+         */
         async refresh() {
             if (!this.refreshToken) {
                 this.logout();
@@ -287,8 +312,8 @@ export const useAuthStore = defineStore('auth', {
         },
 
         /**
-     * Clear error message
-     */
+         * Clear error message
+         */
         clearError() {
             this.error = null;
         },

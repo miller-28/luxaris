@@ -13,18 +13,19 @@ class PostRepository {
     async create(post_data) {
         const query = `
 			INSERT INTO posts (
-				owner_principal_id, title, base_content, tags, status, metadata
-			) VALUES ($1, $2, $3, $4, $5, $6)
+				owner_principal_id, title, description, tags, status, metadata, created_by_user_id
+			) VALUES ($1, $2, $3, $4, $5, $6, $7)
 			RETURNING *
 		`;
 
         const values = [
             post_data.owner_principal_id,
             post_data.title || null,
-            post_data.base_content,
+            post_data.description,
             JSON.stringify(post_data.tags || []),
             post_data.status || 'draft',
-            JSON.stringify(post_data.metadata || {})
+            JSON.stringify(post_data.metadata || {}),
+            post_data.created_by_user_id || null
         ];
 
         const result = await connection_manager.get_db_pool().query(query, values);
@@ -67,6 +68,13 @@ class PostRepository {
             param_index++;
         }
 
+        // Search in title or description
+        if (filters.search) {
+            query += ` AND (title ILIKE $${param_index} OR description ILIKE $${param_index})`;
+            params.push(`%${filters.search}%`);
+            param_index++;
+        }
+
         // Order by created_at desc
         query += ' ORDER BY created_at DESC';
 
@@ -102,6 +110,13 @@ class PostRepository {
             param_index++;
         }
 
+        // Search in title or description
+        if (filters.search) {
+            query += ` AND (title ILIKE $${param_index} OR description ILIKE $${param_index})`;
+            params.push(`%${filters.search}%`);
+            param_index++;
+        }
+
         const result = await connection_manager.get_db_pool().query(query, params);
         return parseInt(result.rows[0].count);
     }
@@ -120,9 +135,9 @@ class PostRepository {
             param_index++;
         }
 
-        if (updates.base_content !== undefined) {
-            fields.push(`base_content = $${param_index}`);
-            params.push(updates.base_content);
+        if (updates.description !== undefined) {
+            fields.push(`description = $${param_index}`);
+            params.push(updates.description);
             param_index++;
         }
 
@@ -141,6 +156,12 @@ class PostRepository {
         if (updates.metadata !== undefined) {
             fields.push(`metadata = $${param_index}`);
             params.push(JSON.stringify(updates.metadata));
+            param_index++;
+        }
+
+        if (updates.updated_by_user_id !== undefined) {
+            fields.push(`updated_by_user_id = $${param_index}`);
+            params.push(updates.updated_by_user_id);
             param_index++;
         }
 
@@ -187,9 +208,9 @@ class PostRepository {
     /**
 	 * Delete post (soft delete)
 	 */
-    async delete(post_id) {
-        const query = 'UPDATE posts SET is_deleted = true, deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND is_deleted = false RETURNING *';
-        const result = await connection_manager.get_db_pool().query(query, [post_id]);
+    async delete(post_id, deleted_by_user_id = null) {
+        const query = 'UPDATE posts SET is_deleted = true, deleted_at = NOW(), updated_at = NOW(), deleted_by_user_id = $2 WHERE id = $1 AND is_deleted = false RETURNING *';
+        const result = await connection_manager.get_db_pool().query(query, [post_id, deleted_by_user_id]);
         return result.rowCount > 0;
     }
 
@@ -205,7 +226,7 @@ class PostRepository {
             id: row.id,
             owner_principal_id: row.owner_principal_id,
             title: row.title,
-            base_content: row.base_content,
+            description: row.description,
             tags: row.tags,
             status: row.status,
             metadata: row.metadata,

@@ -21,7 +21,7 @@ function create_post_routes(dependencies) {
         try {
             const post_data = {
                 title: req.body.title,
-                base_content: req.body.base_content,
+                description: req.body.description,
                 tags: req.body.tags || [],
                 metadata: req.body.metadata || {}
             };
@@ -32,7 +32,7 @@ function create_post_routes(dependencies) {
                 data: {
                     id: post.id,
                     title: post.title,
-                    base_content: post.base_content,
+                    description: post.description,
                     tags: post.tags,
                     status: post.status,
                     metadata: post.metadata,
@@ -41,11 +41,11 @@ function create_post_routes(dependencies) {
                 }
             });
         } catch (error) {
-            if (error.error_code === 'BASE_CONTENT_REQUIRED') {
+            if (error.error_code === 'DESCRIPTION_REQUIRED') {
                 return res.status(400).json({
                     errors: [{
-                        error_code: 'BASE_CONTENT_REQUIRED',
-                        error_description: 'Base content is required',
+                        error_code: 'DESCRIPTION_REQUIRED',
+                        error_description: 'Description is required',
                         error_severity: 'error'
                     }]
                 });
@@ -63,6 +63,7 @@ function create_post_routes(dependencies) {
             const filters = {
                 status: req.query.status,
                 tags: req.query.tags ? req.query.tags.split(',') : undefined,
+                search: req.query.search,
                 limit: Math.min(parseInt(req.query.limit) || 50, 100),
                 offset: parseInt(req.query.offset) || 0
             };
@@ -73,7 +74,7 @@ function create_post_routes(dependencies) {
                 data: result.posts.map(post => ({
                     id: post.id,
                     title: post.title,
-                    base_content: post.base_content,
+                    description: post.description,
                     tags: post.tags,
                     status: post.status,
                     metadata: post.metadata,
@@ -104,7 +105,7 @@ function create_post_routes(dependencies) {
                 data: {
                     id: post.id,
                     title: post.title,
-                    base_content: post.base_content,
+                    description: post.description,
                     tags: post.tags,
                     status: post.status,
                     metadata: post.metadata,
@@ -147,8 +148,8 @@ function create_post_routes(dependencies) {
             if (req.body.title !== undefined) {
                 updates.title = req.body.title;
             }
-            if (req.body.base_content !== undefined) {
-                updates.base_content = req.body.base_content;
+            if (req.body.description !== undefined) {
+                updates.description = req.body.description;
             }
             if (req.body.tags !== undefined) {
                 updates.tags = req.body.tags;
@@ -163,7 +164,7 @@ function create_post_routes(dependencies) {
                 data: {
                     id: post.id,
                     title: post.title,
-                    base_content: post.base_content,
+                    description: post.description,
                     tags: post.tags,
                     status: post.status,
                     metadata: post.metadata,
@@ -191,11 +192,11 @@ function create_post_routes(dependencies) {
                     }]
                 });
             }
-            if (error.error_code === 'BASE_CONTENT_REQUIRED') {
+            if (error.error_code === 'DESCRIPTION_REQUIRED') {
                 return res.status(400).json({
                     errors: [{
-                        error_code: 'BASE_CONTENT_REQUIRED',
-                        error_description: 'Base content cannot be empty',
+                        error_code: 'DESCRIPTION_REQUIRED',
+                        error_description: 'Description cannot be empty',
                         error_severity: 'error'
                     }]
                 });

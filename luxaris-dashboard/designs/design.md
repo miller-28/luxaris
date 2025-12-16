@@ -1007,7 +1007,7 @@ export const useAuthStore = defineStore('auth', {
     
     // Check if user is root admin (first registered user)
     isRootAdmin: (state) => {
-      return state.user?.is_root_admin === true || 
+      return state.user?.is_root === true || 
              state.roles.includes('root_admin');
     },
     

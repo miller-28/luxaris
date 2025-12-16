@@ -26,7 +26,7 @@ a conceptual message/idea independent of channel formatting.
 - `id` – UUID.
 - `owner_principal_id` – who owns it.
 - `title` – optional, for internal use / calendar.
-- `base_content` – base text (channel-agnostic).
+- `description` – base text (channel-agnostic).
 - `tags` – list of strings (for filtering, not social hashtags).
 - `status` – `draft | scheduled | published | cancelled | archived`.
 - `created_at`, `updated_at`, `published_at` (optional).
@@ -128,7 +128,7 @@ Flow:
 1. User selects existing post.
 2. Chooses target channel.
 3. Application:
-   - Copies `base_content` from Post as starting point.
+   - Copies `description` from Post as starting point.
    - Applies channel-specific formatting/truncation.
    - Creates `PostVariant` with `status = draft`.
 4. User edits variant content as needed.
@@ -137,7 +137,7 @@ Flow:
 ### 4.3 Edit Post or Variant
 
 **Edit Post:**
-- Updates `base_content`, `title`, `tags`, or `metadata`.
+- Updates `description`, `title`, `tags`, or `metadata`.
 - Does NOT affect existing variants (they remain independent).
 
 **Edit Variant:**

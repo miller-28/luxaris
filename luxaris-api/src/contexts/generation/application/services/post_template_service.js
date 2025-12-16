@@ -28,7 +28,8 @@ class PostTemplateService {
             description: template_data.description,
             template_body: template_data.template_body,
             default_channel_id: template_data.default_channel_id,
-            constraints: template_data.constraints || {}
+            constraints: template_data.constraints || {},
+            created_by_user_id: principal_id
         });
 
         const template = new PostTemplate(template_record);
@@ -114,6 +115,7 @@ class PostTemplateService {
             throw error;
         }
 
+        updates.updated_by_user_id = principal_id;
         const template_record = await this.template_repository.update(template_id, updates);
         const template = new PostTemplate(template_record);
 
@@ -156,7 +158,7 @@ class PostTemplateService {
             throw error;
         }
 
-        await this.template_repository.delete(template_id);
+        await this.template_repository.delete(template_id, principal_id);
 
         // Record event
         await this.event_registry.record_event({

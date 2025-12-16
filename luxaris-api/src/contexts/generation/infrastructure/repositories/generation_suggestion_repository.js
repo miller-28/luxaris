@@ -7,9 +7,9 @@ class GenerationSuggestionRepository {
     async create(suggestion_data) {
         const query = `
       INSERT INTO luxaris.generation_suggestions (
-        generation_session_id, channel_id, content, score, accepted
+        generation_session_id, channel_id, content, score, accepted, created_by_user_id
       )
-      VALUES ($1, $2, $3, $4, $5)
+      VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING *
     `;
     
@@ -18,7 +18,8 @@ class GenerationSuggestionRepository {
             suggestion_data.channel_id,
             suggestion_data.content,
             suggestion_data.score || null,
-            suggestion_data.accepted || false
+            suggestion_data.accepted || false,
+            suggestion_data.created_by_user_id || null
         ];
     
         const result = await connection_manager.get_db_pool().query(query, values);

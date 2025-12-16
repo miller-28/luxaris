@@ -231,7 +231,7 @@ src/contexts/system/
 ### 2.2 Implementation Steps
 
 **Step 1: Domain Layer**
-1. Create `User.js` model with properties (id, email, name, roles, permissions, is_root_admin)
+1. Create `User.js` model with properties (id, email, name, roles, permissions, is_root)
 2. Create `userSchemas.js` with Zod validation schemas matching API validation
 
 **Step 2: Infrastructure Layer - API**

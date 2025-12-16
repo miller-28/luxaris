@@ -17,7 +17,7 @@ PATCH /api/v1/posts/post-uuid-123
 ```json
 {
   "title": "Updated Product Launch Announcement",
-  "base_content": "Excited to announce our revolutionary new feature!",
+  "description": "Excited to announce our revolutionary new feature!",
   "tags": ["product", "launch", "feature", "innovation"],
   "metadata": {
     "campaign_id": "spring-2025",
@@ -57,7 +57,7 @@ PATCH /api/v1/posts/post-uuid-123
    - Return 409 if status doesn't allow updates
 
 6. **Validate Input**
-   - If `base_content` provided: validate length
+   - If `description` provided: validate length
    - If `tags` provided: validate format
    - If `metadata` provided: validate JSON
 
@@ -67,7 +67,7 @@ PATCH /api/v1/posts/post-uuid-123
    - Keep audit trail of changes
 
 8. **Check Variant Impact**
-   - If `base_content` changed:
+   - If `description` changed:
      - Warn user that variants are not auto-updated
      - Variants remain independent
 
@@ -87,7 +87,7 @@ PATCH /api/v1/posts/post-uuid-123
   "id": "post-uuid",
   "owner_principal_id": "user-uuid",
   "title": "Updated Product Launch Announcement",
-  "base_content": "Excited to announce our revolutionary new feature!",
+  "description": "Excited to announce our revolutionary new feature!",
   "tags": ["product", "launch", "feature", "innovation"],
   "status": "draft",
   "metadata": {
@@ -131,7 +131,7 @@ PATCH /api/v1/posts/post-uuid-123
 ## Important Notes
 
 **Variant Independence:**
-- Updating post `base_content` does NOT update existing variants
+- Updating post `description` does NOT update existing variants
 - Variants remain independent once created
 - User must manually update variants if needed
 

@@ -54,7 +54,7 @@ describe('Schedules API', () => {
             .set('Authorization', `Bearer ${root_token}`)
             .send({
                 title: 'Test Post for Scheduling',
-                base_content: 'Testing schedule creation'
+                description: 'Testing schedule creation'
             });
         post_id = post_response.body.data.id;
 
@@ -539,6 +539,116 @@ describe('Schedules API', () => {
             const response = await request(app).delete(`/api/v1/schedules/${schedule_id}`);
 
             expect(response.status).toBe(401);
+        });
+    });
+
+    describe('Audit User Columns - Schedules', () => {
+        let schedule_id;
+
+        afterEach(async () => {
+            if (schedule_id) {
+                await db_cleaner.clean_table_where('schedules', 'id = $1', [schedule_id]);
+                schedule_id = null;
+            }
+        });
+
+        it('should set created_by_user_id when creating a schedule', async () => {
+            const future_date = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+            const response = await request(app)
+                .post('/api/v1/schedules')
+                .set('Authorization', `Bearer ${root_token}`)
+                .send({
+                    post_variant_id: variant_id,
+                    channel_connection_id: channel_connection_id,
+                    run_at: future_date.toISOString(),
+                    timezone: 'America/New_York'
+                });
+
+            expect(response.status).toBe(201);
+            schedule_id = response.body.data.id;
+
+            // Query database to check audit columns
+            const result = await db_pool.query(
+                'SELECT created_by_user_id, updated_by_user_id, deleted_by_user_id FROM schedules WHERE id = $1',
+                [schedule_id]
+            );
+
+            expect(result.rows[0].created_by_user_id).toBeTruthy();
+            expect(result.rows[0].created_by_user_id).toBe(root_user_id);
+            expect(result.rows[0].updated_by_user_id).toBeNull();
+            expect(result.rows[0].deleted_by_user_id).toBeNull();
+        });
+
+        it('should set updated_by_user_id when updating a schedule', async () => {
+            const future_date = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+            // Create schedule
+            const createResponse = await request(app)
+                .post('/api/v1/schedules')
+                .set('Authorization', `Bearer ${root_token}`)
+                .send({
+                    post_variant_id: variant_id,
+                    channel_connection_id: channel_connection_id,
+                    run_at: future_date.toISOString(),
+                    timezone: 'America/New_York'
+                });
+
+            schedule_id = createResponse.body.data.id;
+
+            // Update schedule
+            const new_date = new Date(Date.now() + 48 * 60 * 60 * 1000);
+            await request(app)
+                .patch(`/api/v1/schedules/${schedule_id}`)
+                .set('Authorization', `Bearer ${root_token}`)
+                .send({
+                    run_at: new_date.toISOString()
+                });
+
+            // Check audit columns
+            const result = await db_pool.query(
+                'SELECT created_by_user_id, updated_by_user_id, deleted_by_user_id FROM schedules WHERE id = $1',
+                [schedule_id]
+            );
+
+            expect(result.rows[0].created_by_user_id).toBeTruthy();
+            expect(result.rows[0].updated_by_user_id).toBeTruthy();
+            expect(result.rows[0].created_by_user_id).toBe(result.rows[0].updated_by_user_id);
+            expect(result.rows[0].deleted_by_user_id).toBeNull();
+        });
+
+        it('should set deleted_by_user_id when deleting a schedule', async () => {
+            const future_date = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+            // Create schedule
+            const createResponse = await request(app)
+                .post('/api/v1/schedules')
+                .set('Authorization', `Bearer ${root_token}`)
+                .send({
+                    post_variant_id: variant_id,
+                    channel_connection_id: channel_connection_id,
+                    run_at: future_date.toISOString(),
+                    timezone: 'America/New_York'
+                });
+
+            expect(createResponse.status).toBe(201);
+            schedule_id = createResponse.body.data.id;
+
+            // Delete schedule (permanent delete to set is_deleted=true)
+            await request(app)
+                .delete(`/api/v1/schedules/${schedule_id}?permanent=true`)
+                .set('Authorization', `Bearer ${root_token}`);
+
+            // Check audit columns
+            const result = await db_pool.query(
+                'SELECT created_by_user_id, updated_by_user_id, deleted_by_user_id, is_deleted FROM schedules WHERE id = $1',
+                [schedule_id]
+            );
+
+            expect(result.rows[0].is_deleted).toBe(true);
+            expect(result.rows[0].created_by_user_id).toBeTruthy();
+            expect(result.rows[0].deleted_by_user_id).toBeTruthy();
+            expect(result.rows[0].created_by_user_id).toBe(result.rows[0].deleted_by_user_id);
         });
     });
 });

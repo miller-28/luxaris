@@ -21,7 +21,7 @@ Authorization: Bearer <jwt_token>
 ```json
 {
   "title": "My First Post",
-  "base_content": "This is the main content of my post",
+  "description": "This is the main content of my post",
   "tags": ["announcement", "feature"],
   "metadata": {
     "campaign": "product_launch_2025"
@@ -44,7 +44,7 @@ Authorization: Bearer <jwt_token>
 ### 4. Validate Input
 
 - Validate required fields (Zod schema)
-- Validate `base_content` length (basic constraints)
+- Validate `description` length (basic constraints)
 - Validate `tags` format (array of strings)
 - Validate `metadata` structure (JSON)
 
@@ -91,7 +91,7 @@ Authorization: Bearer <jwt_token>
     "id": "uuid",
     "owner_principal_id": "user_uuid",
     "title": "My First Post",
-    "base_content": "This is the main content of my post",
+    "description": "This is the main content of my post",
     "tags": ["announcement", "feature"],
     "status": "draft",
     "created_at": "2025-11-25T10:00:00Z",
@@ -144,7 +144,7 @@ Authorization: Bearer <jwt_token>
 {
   "errors": [{
     "error_code": "VALIDATION_ERROR",
-    "error_description": "base_content is required",
+    "error_description": "description is required",
     "error_severity": "error"
   }]
 }
@@ -159,13 +159,13 @@ If user provides `default_channel_id`:
 ```json
 {
   "title": "My First Post",
-  "base_content": "This is the main content",
+  "description": "This is the main content",
   "default_channel_id": "channel_uuid"
 }
 ```
 
 API will also create a `PostVariant`:
-- Copy `base_content` to variant `content`
+- Copy `description` to variant `content`
 - Set `channel_id` to provided channel
 - Set variant `status` to `draft`
 - Apply channel-specific formatting if needed

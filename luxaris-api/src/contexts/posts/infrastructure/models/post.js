@@ -9,7 +9,7 @@ class Post {
         this.id = data.id;
         this.owner_principal_id = data.owner_principal_id;
         this.title = data.title;
-        this.base_content = data.base_content;
+        this.description = data.description;
         this.tags = data.tags || [];
         this.status = data.status;
         this.metadata = data.metadata || {};

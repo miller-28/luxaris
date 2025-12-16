@@ -25,7 +25,7 @@ exports.up = async function(db) {
 			id INTEGER PRIMARY KEY DEFAULT nextval('${schema}.posts_id_seq'),
 			owner_principal_id INTEGER NOT NULL,
 			title VARCHAR(200),
-			base_content TEXT NOT NULL,
+			description TEXT NOT NULL,
 			tags JSONB NOT NULL DEFAULT '[]',
 			status VARCHAR(20) NOT NULL DEFAULT 'draft',
 			metadata JSONB NOT NULL DEFAULT '{}',

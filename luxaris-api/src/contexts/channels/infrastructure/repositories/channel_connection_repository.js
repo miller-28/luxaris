@@ -15,8 +15,8 @@ class ChannelConnectionRepository {
         const query = `
       INSERT INTO channel_connections (
         owner_principal_id, channel_id, display_name,
-        status, auth_state, created_at, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+        status, auth_state, created_at, updated_at, created_by_user_id
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       RETURNING *
     `;
 
@@ -27,7 +27,8 @@ class ChannelConnectionRepository {
             data.status || 'connected',
             JSON.stringify(data.auth_state || {}),
             now,
-            now
+            now,
+            data.created_by_user_id || null
         ];
 
         const result = await connection_manager.get_db_pool().query(query, values);
@@ -144,35 +145,37 @@ class ChannelConnectionRepository {
     /**
    * Update connection status
    */
-    async update_status(connection_id, status) {
+    async update_status(connection_id, status, updated_by_user_id = null) {
         const query = `
       UPDATE channel_connections
       SET 
         status = $1,
         updated_at = CURRENT_TIMESTAMP,
+        updated_by_user_id = $3,
         disconnected_at = CASE WHEN $1 = 'disconnected' THEN CURRENT_TIMESTAMP ELSE disconnected_at END
       WHERE id = $2
       RETURNING *
     `;
 
-        const result = await connection_manager.get_db_pool().query(query, [status, connection_id]);
+        const result = await connection_manager.get_db_pool().query(query, [status, connection_id, updated_by_user_id]);
         return result.rows[0] || null;
     }
 
     /**
    * Update auth state
    */
-    async update_auth_state(connection_id, auth_state) {
+    async update_auth_state(connection_id, auth_state, updated_by_user_id = null) {
         const query = `
       UPDATE channel_connections
       SET 
         auth_state = $1,
-        updated_at = CURRENT_TIMESTAMP
+        updated_at = CURRENT_TIMESTAMP,
+        updated_by_user_id = $3
       WHERE id = $2
       RETURNING *
     `;
 
-        const result = await connection_manager.get_db_pool().query(query, [JSON.stringify(auth_state), connection_id]);
+        const result = await connection_manager.get_db_pool().query(query, [JSON.stringify(auth_state), connection_id, updated_by_user_id]);
         return result.rows[0] || null;
     }
 
@@ -192,19 +195,20 @@ class ChannelConnectionRepository {
     /**
    * Disconnect connection (soft delete approach)
    */
-    async disconnect(connection_id) {
+    async disconnect(connection_id, updated_by_user_id = null) {
         const query = `
       UPDATE channel_connections
       SET 
         status = 'disconnected',
         auth_state = '{}',
         disconnected_at = CURRENT_TIMESTAMP,
-        updated_at = CURRENT_TIMESTAMP
+        updated_at = CURRENT_TIMESTAMP,
+        updated_by_user_id = $2
       WHERE id = $1
       RETURNING *
     `;
 
-        const result = await connection_manager.get_db_pool().query(query, [connection_id]);
+        const result = await connection_manager.get_db_pool().query(query, [connection_id, updated_by_user_id]);
         return result.rows[0] || null;
     }
 

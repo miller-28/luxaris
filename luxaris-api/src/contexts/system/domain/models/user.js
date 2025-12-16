@@ -141,6 +141,8 @@ class User {
             is_root: this.is_root,
             timezone: this.timezone,
             locale: this.locale,
+            roles: this.roles || [],
+            permissions: this.permissions || [],
             created_at: this.created_at,
             last_login_at: this.last_login_at
         };

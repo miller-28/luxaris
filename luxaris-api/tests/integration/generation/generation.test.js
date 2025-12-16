@@ -435,4 +435,101 @@ describe('Generation Integration Tests', () => {
             }
         });
     });
+
+    describe('Audit User Columns - Templates', () => {
+        let template_id;
+
+        afterEach(async () => {
+            if (template_id) {
+                await db_cleaner.clean_table_where('post_templates', 'id = $1', [template_id]);
+                template_id = null;
+            }
+        });
+
+        it('should set created_by_user_id when creating a template', async () => {
+            const response = await request(app)
+                .post('/api/v1/templates')
+                .set('Authorization', `Bearer ${root_token}`)
+                .send({
+                    name: 'Audit Test Template',
+                    description: 'Template for audit testing',
+                    template_body: 'Hello {{name}}!'
+                });
+
+            expect(response.status).toBe(201);
+            template_id = response.body.data.id;
+
+            // Query database to check audit columns
+            const result = await db_pool.query(
+                'SELECT created_by_user_id, updated_by_user_id, deleted_by_user_id FROM post_templates WHERE id = $1',
+                [template_id]
+            );
+
+            expect(result.rows[0].created_by_user_id).toBeTruthy();
+            expect(result.rows[0].created_by_user_id).toBe(root_user_id);
+            expect(result.rows[0].updated_by_user_id).toBeNull();
+            expect(result.rows[0].deleted_by_user_id).toBeNull();
+        });
+
+        it('should set updated_by_user_id when updating a template', async () => {
+            // Create template
+            const createResponse = await request(app)
+                .post('/api/v1/templates')
+                .set('Authorization', `Bearer ${root_token}`)
+                .send({
+                    name: 'Original Template',
+                    template_body: 'Original {{content}}'
+                });
+
+            template_id = createResponse.body.data.id;
+
+            // Update template
+            await request(app)
+                .patch(`/api/v1/templates/${template_id}`)
+                .set('Authorization', `Bearer ${root_token}`)
+                .send({
+                    name: 'Updated Template'
+                });
+
+            // Check audit columns
+            const result = await db_pool.query(
+                'SELECT created_by_user_id, updated_by_user_id, deleted_by_user_id FROM post_templates WHERE id = $1',
+                [template_id]
+            );
+
+            expect(result.rows[0].created_by_user_id).toBeTruthy();
+            expect(result.rows[0].updated_by_user_id).toBeTruthy();
+            expect(result.rows[0].created_by_user_id).toBe(result.rows[0].updated_by_user_id);
+            expect(result.rows[0].deleted_by_user_id).toBeNull();
+        });
+
+        it('should set deleted_by_user_id when deleting a template', async () => {
+            // Create template
+            const createResponse = await request(app)
+                .post('/api/v1/templates')
+                .set('Authorization', `Bearer ${root_token}`)
+                .send({
+                    name: 'To Delete Template',
+                    template_body: 'Delete {{me}}'
+                });
+
+            template_id = createResponse.body.data.id;
+
+            // Delete template
+            await request(app)
+                .delete(`/api/v1/templates/${template_id}`)
+                .set('Authorization', `Bearer ${root_token}`);
+
+            // Check audit columns
+            const result = await db_pool.query(
+                'SELECT created_by_user_id, updated_by_user_id, deleted_by_user_id, is_deleted FROM post_templates WHERE id = $1',
+                [template_id]
+            );
+
+            expect(result.rows[0].is_deleted).toBe(true);
+            expect(result.rows[0].created_by_user_id).toBeTruthy();
+            expect(result.rows[0].deleted_by_user_id).toBeTruthy();
+            expect(result.rows[0].created_by_user_id).toBe(result.rows[0].deleted_by_user_id);
+        });
+    });
 });

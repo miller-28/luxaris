@@ -109,7 +109,7 @@ Google OAuth flows follow OAuth 2.0 standard with state validation for CSRF prot
       ```sql
       INSERT INTO users (
         id, google_id, email, name, avatar_url,
-        is_root_admin, status, locale, timezone
+        is_root, status, locale, timezone
       ) VALUES (
         uuid_generate_v4(), 'google_user_id_12345', 'user@gmail.com', 'John Doe',
         'https://...', TRUE, 'approved', 'en', 'UTC'
@@ -125,7 +125,7 @@ Google OAuth flows follow OAuth 2.0 standard with state validation for CSRF prot
       ```sql
       INSERT INTO users (
         id, google_id, email, name, avatar_url,
-        is_root_admin, status, locale, timezone
+        is_root, status, locale, timezone
       ) VALUES (
         uuid_generate_v4(), 'google_user_id_12345', 'user@gmail.com', 'John Doe',
         'https://...', FALSE, 'pending', 'en', 'UTC'
@@ -323,7 +323,7 @@ Same as Google OAuth Login (see section 1).
    ```sql
    INSERT INTO users (
      id, email, name, password_hash,
-     is_root_admin, status, locale, timezone
+     is_root, status, locale, timezone
    ) VALUES (
      uuid_generate_v4(), 'admin@example.com', 'Admin User', '$2b$10$...',
      TRUE, 'approved', 'en', 'UTC'
@@ -356,7 +356,7 @@ Same as Google OAuth Login (see section 1).
      "sub": "user_uuid",
      "email": "admin@example.com",
      "name": "Admin User",
-     "is_root_admin": true,
+     "is_root": true,
      "status": "approved",
      "roles": ["root_admin"],
      "permissions": ["*"],
@@ -379,7 +379,7 @@ Same as Google OAuth Login (see section 1).
 
 ### Root Admin Privileges
 
-- **Permanent Status:** `is_root_admin` flag cannot be changed
+- **Permanent Status:** `is_root` flag cannot be changed
 - **Full Access:** All permissions granted automatically
 - **Permission Bypass:** Permission checks always return true for root admin
 - **Cannot be Suspended:** Root admin account cannot be suspended

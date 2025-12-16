@@ -37,7 +37,7 @@ describe('Security - XSS Protection', () => {
             const response = await request(app)
                 .post('/api/v1/posts')
                 .set('Authorization', 'Bearer ' + auth_token)
-                .send({ title: malicious_title, base_content: 'Content' })
+                .send({ title: malicious_title, description: 'Content' })
                 .expect(201);
             
             const stored = await db_pool.query('SELECT title FROM posts WHERE id = $1', [response.body.data.id]);
@@ -50,10 +50,10 @@ describe('Security - XSS Protection', () => {
             const response = await request(app)
                 .post('/api/v1/posts')
                 .set('Authorization', 'Bearer ' + auth_token)
-                .send({ title: 'Test', base_content: malicious_content })
+                .send({ title: 'Test', description: malicious_content })
                 .expect(201);
             
-            expect(response.body.data.base_content).not.toContain('<script>');
+            expect(response.body.data.description).not.toContain('<script>');
         });
 
         test('Script tag in user name is sanitized', async () => {
@@ -77,11 +77,11 @@ describe('Security - XSS Protection', () => {
             const response = await request(app)
                 .post('/api/v1/posts')
                 .set('Authorization', 'Bearer ' + auth_token)
-                .send({ title: 'Test', base_content: malicious_content });
+                .send({ title: 'Test', description: malicious_content });
             
             // If post creation succeeds, verify XSS is stripped
             if (response.status === 201 && response.body.data) {
-                expect(response.body.data.base_content).not.toContain('onerror');
+                expect(response.body.data.description).not.toContain('onerror');
             } else {
                 // Endpoint may not exist or require more fields - skip test
                 expect(response.status).toBeGreaterThanOrEqual(400);
@@ -93,10 +93,10 @@ describe('Security - XSS Protection', () => {
             const response = await request(app)
                 .post('/api/v1/posts')
                 .set('Authorization', 'Bearer ' + auth_token)
-                .send({ title: 'Test', base_content: malicious_content })
+                .send({ title: 'Test', description: malicious_content })
                 .expect(201);
             
-            expect(response.body.data.base_content).not.toContain('onclick');
+            expect(response.body.data.description).not.toContain('onclick');
         });
 
         test('onload event handler is stripped', async () => {
@@ -104,10 +104,10 @@ describe('Security - XSS Protection', () => {
             const response = await request(app)
                 .post('/api/v1/posts')
                 .set('Authorization', 'Bearer ' + auth_token)
-                .send({ title: 'Test', base_content: malicious_content })
+                .send({ title: 'Test', description: malicious_content })
                 .expect(201);
             
-            expect(response.body.data.base_content).not.toContain('onload');
+            expect(response.body.data.description).not.toContain('onload');
         });
     });
 
@@ -117,10 +117,10 @@ describe('Security - XSS Protection', () => {
             const response = await request(app)
                 .post('/api/v1/posts')
                 .set('Authorization', 'Bearer ' + auth_token)
-                .send({ title: 'Test', base_content: malicious_content })
+                .send({ title: 'Test', description: malicious_content })
                 .expect(201);
             
-            expect(response.body.data.base_content).not.toContain('javascript:');
+            expect(response.body.data.description).not.toContain('javascript:');
         });
 
         test('data: URI with base64 encoded script is blocked', async () => {
@@ -128,11 +128,11 @@ describe('Security - XSS Protection', () => {
             const response = await request(app)
                 .post('/api/v1/posts')
                 .set('Authorization', 'Bearer ' + auth_token)
-                .send({ title: 'Test', base_content: malicious_content });
+                .send({ title: 'Test', description: malicious_content });
             
             // If post creation succeeds, verify XSS is stripped
             if (response.status === 201 && response.body.data) {
-                expect(response.body.data.base_content).not.toContain('data:text/html');
+                expect(response.body.data.description).not.toContain('data:text/html');
             } else {
                 // Endpoint may not exist or require more fields - skip test
                 expect(response.status).toBeGreaterThanOrEqual(400);
@@ -144,11 +144,11 @@ describe('Security - XSS Protection', () => {
             const response = await request(app)
                 .post('/api/v1/posts')
                 .set('Authorization', 'Bearer ' + auth_token)
-                .send({ title: 'Test', base_content: malicious_content });
+                .send({ title: 'Test', description: malicious_content });
             
             // If post creation succeeds, verify XSS is stripped
             if (response.status === 201 && response.body.data) {
-                expect(response.body.data.base_content).not.toContain('<script>');
+                expect(response.body.data.description).not.toContain('<script>');
             } else {
                 // Endpoint may not exist or require more fields - skip test
                 expect(response.status).toBeGreaterThanOrEqual(400);
@@ -182,11 +182,11 @@ describe('Security - XSS Protection', () => {
             const response = await request(app)
                 .post('/api/v1/posts')
                 .set('Authorization', 'Bearer ' + auth_token)
-                .send({ title: 'Test', base_content: safe_content })
+                .send({ title: 'Test', description: safe_content })
                 .expect(201);
             
-            expect(response.body.data.base_content).toContain('<p>');
-            expect(response.body.data.base_content).toContain('<strong>');
+            expect(response.body.data.description).toContain('<p>');
+            expect(response.body.data.description).toContain('<strong>');
         });
     });
 });

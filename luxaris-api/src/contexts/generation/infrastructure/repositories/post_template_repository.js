@@ -8,9 +8,9 @@ class PostTemplateRepository {
         const query = `
       INSERT INTO luxaris.post_templates (
         owner_principal_id, name, description, template_body, 
-        default_channel_id, constraints
+        default_channel_id, constraints, created_by_user_id
       )
-      VALUES ($1, $2, $3, $4, $5, $6)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING *
     `;
     
@@ -20,7 +20,8 @@ class PostTemplateRepository {
             template_data.description || null,
             template_data.template_body,
             template_data.default_channel_id || null,
-            JSON.stringify(template_data.constraints || {})
+            JSON.stringify(template_data.constraints || {}),
+            template_data.created_by_user_id || null
         ];
     
         const result = await connection_manager.get_db_pool().query(query, values);
@@ -140,6 +141,12 @@ class PostTemplateRepository {
             values.push(JSON.stringify(updates.constraints));
         }
 
+        if (updates.updated_by_user_id !== undefined) {
+            param_count++;
+            fields.push(`updated_by_user_id = $${param_count}`);
+            values.push(updates.updated_by_user_id);
+        }
+
         if (fields.length === 0) {
             return await this.find_by_id(template_id);
         }
@@ -165,9 +172,9 @@ class PostTemplateRepository {
     /**
    * Delete template (soft delete)
    */
-    async delete(template_id) {
-        const query = 'UPDATE luxaris.post_templates SET is_deleted = true, deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND is_deleted = false RETURNING id';
-        const result = await connection_manager.get_db_pool().query(query, [template_id]);
+    async delete(template_id, deleted_by_user_id = null) {
+        const query = 'UPDATE luxaris.post_templates SET is_deleted = true, deleted_at = NOW(), updated_at = NOW(), deleted_by_user_id = $2 WHERE id = $1 AND is_deleted = false RETURNING id';
+        const result = await connection_manager.get_db_pool().query(query, [template_id, deleted_by_user_id]);
         return result.rowCount > 0;
     }
 

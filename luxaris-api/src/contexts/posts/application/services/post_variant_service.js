@@ -52,6 +52,9 @@ class PostVariantService {
             throw error;
         }
 
+        // Set creator
+        variant_data.created_by_user_id = principal.id;
+
         // Create variant
         const variant = await this.post_variant_repository.create(variant_data);
 
@@ -204,6 +207,9 @@ class PostVariantService {
             delete updates.status;
         }
 
+        // Set updater
+        updates.updated_by_user_id = principal.id;
+
         // Update variant
         const updated_variant = await this.post_variant_repository.update(variant_id, updates);
 
@@ -293,7 +299,7 @@ class PostVariantService {
         }
 
         // Delete variant
-        await this.post_variant_repository.delete(variant_id);
+        await this.post_variant_repository.delete(variant_id, principal.id);
 
         // Record event
         await this.event_registry.record('post', 'VARIANT_DELETED', {

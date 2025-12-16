@@ -40,10 +40,21 @@ const request = async (method, url, data = null, config = {}) => {
         // For GET, DELETE, HEAD, OPTIONS - pass config as second parameter
         // For POST, PUT, PATCH - pass body as second parameter, config as third
         let response;
+        
+        // Luminara uses 'del' instead of 'delete' (reserved keyword in some contexts)
+        const methodName = method === 'delete' ? 'del' : method;
+        
+        // Luminara uses 'query' for query parameters, not 'params'
+        // Rename params to query if present
+        if (requestConfig.params) {
+            requestConfig.query = requestConfig.params;
+            delete requestConfig.params;
+        }
+        
         if (method === 'get' || method === 'delete' || method === 'head' || method === 'options') {
-            response = await baseClient[method](url, requestConfig);
+            response = await baseClient[methodName](url, requestConfig);
         } else {
-            response = await baseClient[method](url, data, requestConfig);
+            response = await baseClient[methodName](url, data, requestConfig);
         }
         return response;
     } catch (error) {

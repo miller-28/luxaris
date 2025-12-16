@@ -16,14 +16,15 @@ class PostService {
     async create_post(principal, post_data) {
         this.logger.info('Creating post', { principal_id: principal.id });
 
-        // Set owner
+        // Set owner and creator
         post_data.owner_principal_id = principal.id;
+        post_data.created_by_user_id = principal.id;
 
-        // Validate base content
-        if (!post_data.base_content || post_data.base_content.trim().length === 0) {
-            const error = new Error('Base content is required');
+        // Validate description
+        if (!post_data.description || post_data.description.trim().length === 0) {
+            const error = new Error('Description is required');
             error.status_code = 400;
-            error.error_code = 'BASE_CONTENT_REQUIRED';
+            error.error_code = 'DESCRIPTION_REQUIRED';
             error.severity = 'error';
             throw error;
         }
@@ -117,13 +118,16 @@ class PostService {
         });
 
         // Validate updates
-        if (updates.base_content !== undefined && updates.base_content.trim().length === 0) {
-            const error = new Error('Base content is required');
+        if (updates.description !== undefined && updates.description.trim().length === 0) {
+            const error = new Error('Description is required');
             error.status_code = 400;
-            error.error_code = 'BASE_CONTENT_REQUIRED';
+            error.error_code = 'DESCRIPTION_REQUIRED';
             error.severity = 'error';
             throw error;
         }
+
+        // Set updater
+        updates.updated_by_user_id = principal.id;
 
         // Prevent direct status updates (use dedicated methods)
         if (updates.status !== undefined) {
@@ -165,7 +169,7 @@ class PostService {
         });
 
         // Delete post (will cascade to variants)
-        await this.post_repository.delete(post_id);
+        await this.post_repository.delete(post_id, principal.id);
 
         // Record event
         await this.event_registry.record('post', 'POST_DELETED', {

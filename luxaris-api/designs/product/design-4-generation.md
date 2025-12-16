@@ -161,7 +161,7 @@ Flow:
    - Marks `GenerationSuggestion.accepted = true`.
    - Creates `PostVariant` with suggestion content:
      - If `post_id` exists in session, links to that Post.
-     - Otherwise, creates new `Post` and sets `base_content` from suggestion.
+     - Otherwise, creates new `Post` and sets `description` from suggestion.
    - Returns created variant/post to user.
 
 3. Rejected suggestions remain for reference but not used.

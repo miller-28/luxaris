@@ -80,7 +80,7 @@ describe('Post Variants Integration Tests', () => {
                 .set('Authorization', `Bearer ${root_token}`)
                 .send({
                     title: 'Post for Variants',
-                    base_content: 'Base content for creating variants'
+                    description: 'Base content for creating variants'
                 });
             test_post_id = response.body.data.id;
         });
@@ -158,7 +158,7 @@ describe('Post Variants Integration Tests', () => {
                 .set('Authorization', `Bearer ${root_token}`)
                 .send({
                     title: 'Post with Multiple Variants',
-                    base_content: 'Base content for listing variants'
+                    description: 'Base content for listing variants'
                 });
             test_post_id = post_response.body.data.id;
 
@@ -220,7 +220,7 @@ describe('Post Variants Integration Tests', () => {
                 .set('Authorization', `Bearer ${root_token}`)
                 .send({
                     title: 'Post for Get Variant',
-                    base_content: 'Base content'
+                    description: 'Base content'
                 });
             test_post_id = post_response.body.data.id;
 
@@ -275,7 +275,7 @@ describe('Post Variants Integration Tests', () => {
                 .set('Authorization', `Bearer ${root_token}`)
                 .send({
                     title: 'Post for Update Variant',
-                    base_content: 'Base content'
+                    description: 'Base content'
                 });
             test_post_id = post_response.body.data.id;
 
@@ -348,7 +348,7 @@ describe('Post Variants Integration Tests', () => {
                 .set('Authorization', `Bearer ${root_token}`)
                 .send({
                     title: 'Post for Mark Ready',
-                    base_content: 'Base content'
+                    description: 'Base content'
                 });
             test_post_id = post_response.body.data.id;
 
@@ -411,7 +411,7 @@ describe('Post Variants Integration Tests', () => {
                 .set('Authorization', `Bearer ${root_token}`)
                 .send({
                     title: 'Post for Delete Variant',
-                    base_content: 'Base content'
+                    description: 'Base content'
                 });
             test_post_id = post_response.body.data.id;
 
@@ -466,6 +466,109 @@ describe('Post Variants Integration Tests', () => {
 
             expect(response.status).toBe(403);
             expect(response.body.errors[0].error_code).toBe('VARIANT_ACCESS_DENIED');
+        });
+    });
+
+    describe('Audit User Columns - Variants', () => {
+        let test_post_id;
+
+        beforeEach(async () => {
+            // Create a test post
+            const response = await request(app)
+                .post('/api/v1/posts')
+                .set('Authorization', `Bearer ${root_token}`)
+                .send({
+                    title: 'Variant Audit Test Post',
+                    description: 'Testing audit columns for variants'
+                });
+            test_post_id = response.body.data.id;
+        });
+
+        it('should set created_by_user_id when creating a variant', async () => {
+            const response = await request(app)
+                .post(`/api/v1/posts/${test_post_id}/variants`)
+                .set('Authorization', `Bearer ${root_token}`)
+                .send({
+                    channel_id: x_channel_id,
+                    content: 'Audit test variant content',
+                    tone: 'casual'
+                });
+
+            expect(response.status).toBe(201);
+            const variant_id = response.body.data.id;
+
+            // Query database to check audit columns
+            const result = await db_pool.query(
+                'SELECT created_by_user_id, updated_by_user_id, deleted_by_user_id FROM post_variants WHERE id = $1',
+                [variant_id]
+            );
+
+            expect(result.rows[0].created_by_user_id).toBeTruthy();
+            expect(result.rows[0].updated_by_user_id).toBeNull();
+            expect(result.rows[0].deleted_by_user_id).toBeNull();
+        });
+
+        it('should set updated_by_user_id when updating a variant', async () => {
+            // Create variant
+            const createResponse = await request(app)
+                .post(`/api/v1/posts/${test_post_id}/variants`)
+                .set('Authorization', `Bearer ${root_token}`)
+                .send({
+                    channel_id: x_channel_id,
+                    content: 'Original variant content',
+                    tone: 'professional'
+                });
+
+            const variant_id = createResponse.body.data.id;
+
+            // Update variant
+            await request(app)
+                .patch(`/api/v1/variants/${variant_id}`)
+                .set('Authorization', `Bearer ${root_token}`)
+                .send({
+                    content: 'Updated variant content'
+                });
+
+            // Check audit columns
+            const result = await db_pool.query(
+                'SELECT created_by_user_id, updated_by_user_id, deleted_by_user_id FROM post_variants WHERE id = $1',
+                [variant_id]
+            );
+
+            expect(result.rows[0].created_by_user_id).toBeTruthy();
+            expect(result.rows[0].updated_by_user_id).toBeTruthy();
+            expect(result.rows[0].created_by_user_id).toBe(result.rows[0].updated_by_user_id);
+            expect(result.rows[0].deleted_by_user_id).toBeNull();
+        });
+
+        it('should set deleted_by_user_id when deleting a variant', async () => {
+            // Create variant
+            const createResponse = await request(app)
+                .post(`/api/v1/posts/${test_post_id}/variants`)
+                .set('Authorization', `Bearer ${root_token}`)
+                .send({
+                    channel_id: x_channel_id,
+                    content: 'Variant to be deleted',
+                    tone: 'casual'
+                });
+
+            const variant_id = createResponse.body.data.id;
+
+            // Delete variant
+            await request(app)
+                .delete(`/api/v1/variants/${variant_id}`)
+                .set('Authorization', `Bearer ${root_token}`);
+
+            // Check audit columns
+            const result = await db_pool.query(
+                'SELECT created_by_user_id, updated_by_user_id, deleted_by_user_id, is_deleted FROM post_variants WHERE id = $1',
+                [variant_id]
+            );
+
+            expect(result.rows[0].is_deleted).toBe(true);
+            expect(result.rows[0].created_by_user_id).toBeTruthy();
+            expect(result.rows[0].deleted_by_user_id).toBeTruthy();
+            expect(result.rows[0].created_by_user_id).toBe(result.rows[0].deleted_by_user_id);
         });
     });
 });

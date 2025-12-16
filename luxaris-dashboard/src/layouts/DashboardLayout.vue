@@ -1,7 +1,9 @@
 <template>
     <v-layout>
+        
         <!-- App Bar -->
         <v-app-bar color="surface" elevation="0" border="b">
+
             <!-- Mobile Menu Toggle -->
             <v-app-bar-nav-icon
                 class="d-md-none"
@@ -16,7 +18,6 @@
 
             <!-- Logo / Title -->
             <v-toolbar-title class="d-flex align-center">
-                <v-icon size="28" color="primary" class="mr-2">mdi-infinity</v-icon>
                 <span class="font-weight-bold">Luxaris</span>
             </v-toolbar-title>
 
@@ -43,15 +44,6 @@
             permanent
             class="d-none d-md-flex"
         >
-            <template v-slot:prepend>
-                <v-list-item
-                    v-if="!rail"
-                    class="px-2"
-                    prepend-icon="mdi-infinity"
-                    title="Luxaris"
-                    subtitle="Dashboard"
-                />
-            </template>
 
             <SidebarNav />
 

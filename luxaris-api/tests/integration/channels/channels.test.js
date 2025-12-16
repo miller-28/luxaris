@@ -285,4 +285,76 @@ describe('Channels Integration Tests', () => {
             expect(response.body.errors[0].error_code).toBe('CONNECTION_NOT_FOUND');
         });
     });
+
+    describe('Audit User Columns - Channel Connections', () => {
+        let connection_id;
+
+        afterEach(async () => {
+            if (connection_id) {
+                await db_cleaner.clean_table_where('channel_connections', 'id = $1', [connection_id]);
+                connection_id = null;
+            }
+        });
+
+        it('should set created_by_user_id when creating a connection', async () => {
+            // First, clean up any existing connections to avoid conflicts
+            await db_cleaner.clean_table_where('channel_connections', 'owner_principal_id = $1 AND channel_id = $2', [root_user_id, x_channel_id]);
+
+            const response = await request(app)
+                .post('/api/v1/channels/connect')
+                .set('Authorization', `Bearer ${root_token}`)
+                .send({
+                    channel_id: x_channel_id,
+                    display_name: '@audit_test_connection',
+                    mock_connection: true
+                });
+
+            expect(response.status).toBe(201);
+            connection_id = response.body.id;
+
+            // Query database to check audit columns
+            const result = await db_pool.query(
+                'SELECT created_by_user_id, updated_by_user_id, deleted_by_user_id FROM channel_connections WHERE id = $1',
+                [connection_id]
+            );
+
+            expect(result.rows[0].created_by_user_id).toBeTruthy();
+            expect(result.rows[0].created_by_user_id).toBe(root_user_id);
+            expect(result.rows[0].updated_by_user_id).toBeNull();
+            expect(result.rows[0].deleted_by_user_id).toBeNull();
+        });
+
+        it('should set updated_by_user_id when disconnecting a connection', async () => {
+            // First, clean up any existing connections to avoid conflicts
+            await db_cleaner.clean_table_where('channel_connections', 'owner_principal_id = $1 AND channel_id = $2', [root_user_id, linkedin_channel_id]);
+
+            // Create connection
+            const createResponse = await request(app)
+                .post('/api/v1/channels/connect')
+                .set('Authorization', `Bearer ${root_token}`)
+                .send({
+                    channel_id: linkedin_channel_id,
+                    display_name: '@audit_disconnect_test',
+                    mock_connection: true
+                });
+
+            connection_id = createResponse.body.id;
+
+            // Disconnect connection
+            await request(app)
+                .delete(`/api/v1/channels/connections/${connection_id}`)
+                .set('Authorization', `Bearer ${root_token}`);
+
+            // Check audit columns
+            const result = await db_pool.query(
+                'SELECT created_by_user_id, updated_by_user_id, deleted_by_user_id, status FROM channel_connections WHERE id = $1',
+                [connection_id]
+            );
+
+            expect(result.rows[0].status).toBe('disconnected');
+            expect(result.rows[0].created_by_user_id).toBeTruthy();
+            expect(result.rows[0].updated_by_user_id).toBeTruthy();
+            expect(result.rows[0].created_by_user_id).toBe(result.rows[0].updated_by_user_id);
+        });
+    });
 });

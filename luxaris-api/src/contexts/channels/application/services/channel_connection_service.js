@@ -46,7 +46,8 @@ class ChannelConnectionService {
             channel_id: connection_data.channel_id,
             display_name: connection_data.display_name,
             status: 'connected',
-            auth_state: connection_data.auth_state
+            auth_state: connection_data.auth_state,
+            created_by_user_id: principal.id
         });
 
         await this.logger.info(this.logger_name, 'Channel connection created', {
@@ -131,7 +132,7 @@ class ChannelConnectionService {
         // For now, just disconnect
 
         // Disconnect (soft delete approach)
-        const disconnected = await this.connection_repo.disconnect(connection_id);
+        const disconnected = await this.connection_repo.disconnect(connection_id, principal.id);
 
         await this.logger.info(this.logger_name, 'Channel connection disconnected', {
             connection_id,

@@ -7,9 +7,9 @@ class GenerationSessionRepository {
     async create(session_data) {
         const query = `
       INSERT INTO luxaris.generation_sessions (
-        owner_principal_id, post_id, template_id, prompt, status
+        owner_principal_id, post_id, template_id, prompt, status, created_by_user_id
       )
-      VALUES ($1, $2, $3, $4, $5)
+      VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING *
     `;
     
@@ -18,7 +18,8 @@ class GenerationSessionRepository {
             session_data.post_id || null,
             session_data.template_id || null,
             session_data.prompt,
-            session_data.status || 'in_progress'
+            session_data.status || 'in_progress',
+            session_data.created_by_user_id || null
         ];
     
         const result = await connection_manager.get_db_pool().query(query, values);

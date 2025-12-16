@@ -92,7 +92,8 @@ class ScheduleService {
             run_at: run_at_date.toISOString(), // Store as UTC
             timezone: timezone, // Store original timezone for display/audit
             status: 'pending',
-            attempt_count: 0
+            attempt_count: 0,
+            created_by_user_id: principal.id
         });
 
         // Update post status to 'scheduled' if not already published
@@ -226,6 +227,9 @@ class ScheduleService {
             }
         }
 
+        // Set updater
+        updates.updated_by_user_id = principal.id;
+
         // Update schedule
         const updated_schedule = await this.schedule_repository.update(schedule_id, updates);
 
@@ -324,7 +328,7 @@ class ScheduleService {
         }
 
         // Delete schedule (will cascade to publish_events)
-        await this.schedule_repository.delete(schedule_id);
+        await this.schedule_repository.delete(schedule_id, principal.id);
 
         // Record event
         await this.event_registry.record_event({

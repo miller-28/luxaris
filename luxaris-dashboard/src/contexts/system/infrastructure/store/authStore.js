@@ -23,7 +23,7 @@ export const useAuthStore = defineStore('auth', {
     getters: {
         isAuthenticated: (state) => !!state.token && !!state.user,
         currentUser: (state) => state.user,
-        isRootAdmin: (state) => state.user?.is_root_admin || false,
+        isRootAdmin: (state) => state.user?.is_root || false,
         isLoading: (state) => state.loading,
         hasPermission: (state) => (resource, action) => {
             if (!state.user) {

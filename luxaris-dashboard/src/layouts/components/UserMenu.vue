@@ -1,5 +1,6 @@
 <template>
     <v-menu offset-y>
+        
         <template v-slot:activator="{ props }">
             <v-btn icon v-bind="props">
                 <v-avatar size="36" color="primary">

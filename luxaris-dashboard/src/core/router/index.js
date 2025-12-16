@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { systemRoutes } from '@/contexts/system/presentation/routes';
+import { postsRoutes } from '@/contexts/posts/presentation/routes';
 import { useAuthStore } from '@/contexts/system/infrastructure/store/authStore';
 import { TokenManager } from '@/contexts/system/application/tokenManager';
 
@@ -8,13 +9,14 @@ const routes = [
         path: '/',
         redirect: '/dashboard',
     },
-    ...systemRoutes,
     {
         path: '/dashboard',
         name: 'Dashboard',
         component: () => import('@/contexts/system/presentation/views/DashboardHome.vue'),
         meta: { requiresAuth: true },
     },
+    ...systemRoutes,
+    ...postsRoutes,
 ];
 
 export const router = createRouter({

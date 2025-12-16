@@ -146,7 +146,7 @@ class TestServer {
         };
 
         // Register system context routes
-        const auth_routes = create_auth_routes(auth_handler);
+        const auth_routes = create_auth_routes(auth_handler, auth_middleware);
         const ops_routes = create_ops_routes(ops_handler);
         const preset_routes = create_preset_routes(preset_handler, auth_middleware);
         const user_routes = create_user_routes(user_handler, auth_middleware);

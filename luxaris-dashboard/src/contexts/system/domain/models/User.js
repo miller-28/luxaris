@@ -11,7 +11,7 @@ export class User {
         this.avatar = data.avatar || null;
         this.timezone = data.timezone || 'UTC';
         this.locale = data.locale || 'en';
-        this.is_root_admin = data.is_root_admin || false;
+        this.is_root = data.is_root || false;
         this.status = data.status || 'active'; // active, pending, suspended
         this.roles = data.roles || [];
         this.permissions = data.permissions || [];
@@ -24,10 +24,9 @@ export class User {
      */
     hasPermission(resource, action) {
         // Root admin has all permissions
-        if (this.is_root_admin) {
+        if (this.isAdmin()) {
             return true;
         }
-
         // Check direct permissions
         const permission = `${resource}:${action}`;
         return this.permissions.includes(permission);
@@ -44,7 +43,7 @@ export class User {
      * Check if user is admin
      */
     isAdmin() {
-        return this.is_root_admin || this.hasRole('admin');
+        return this.is_root || this.hasRole('admin');
     }
 
     /**

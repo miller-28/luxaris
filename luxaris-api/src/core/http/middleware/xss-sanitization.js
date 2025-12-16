@@ -11,10 +11,9 @@ const InputSanitizer = require('../../utils/input-sanitizer');
  * Fields that allow rich text (sanitized HTML)
  */
 const RICH_TEXT_FIELDS = [
-    'content', // Post content
-    'base_content', // Post base content
-    'template_content', // Template content
-    'description' // Rich descriptions
+    'content', // Post variant content
+    'description', // Post description
+    'template_content' // Template content
 ];
 
 /**

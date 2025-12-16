@@ -108,7 +108,7 @@ FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 ```sql
 ALTER TABLE users
-ADD COLUMN is_root_admin BOOLEAN DEFAULT FALSE,         -- First user, permanent admin
+ADD COLUMN is_root BOOLEAN DEFAULT FALSE,         -- First user, permanent admin
 ADD COLUMN status VARCHAR(50) DEFAULT 'pending',       -- pending, approved, suspended
 ADD COLUMN google_id VARCHAR(255) UNIQUE,              -- Google OAuth user ID
 ADD COLUMN avatar_url TEXT,                            -- Profile picture URL
@@ -197,14 +197,14 @@ FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 2. Check if user with email exists
 3. Check if this is the **first user** in the system:
    - **First user:**
-     - Set `is_root_admin = true`
+     - Set `is_root = true`
      - Set `status = 'approved'`
      - Assign `root_admin` role
      - Generate JWT tokens
      - Create default UI preset
      - Return tokens + user data
    - **Subsequent users:**
-     - Set `is_root_admin = false`
+     - Set `is_root = false`
      - Set `status = 'pending'`
      - Assign `user` role
      - Create default UI preset (but inactive)
@@ -220,7 +220,7 @@ FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
     "id": "uuid",
     "name": "John Doe",
     "email": "john@example.com",
-    "is_root_admin": true,
+    "is_root": true,
     "status": "approved",
     "roles": ["root_admin"],
     "permissions": ["*"],
@@ -240,7 +240,7 @@ FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
     "id": "uuid",
     "name": "Jane Doe",
     "email": "jane@example.com",
-    "is_root_admin": false,
+    "is_root": false,
     "status": "pending",
     "roles": ["user"],
     "permissions": []
@@ -323,7 +323,7 @@ Location: https://accounts.google.com/o/oauth2/v2/auth?client_id=xxx&redirect_ur
        - `email = google_email`
        - `name = google_name`
        - `avatar_url = google_picture`
-       - `is_root_admin = true`
+       - `is_root = true`
        - `status = 'approved'`
      - Assign `root_admin` role
      - Create default UI preset
@@ -335,7 +335,7 @@ Location: https://accounts.google.com/o/oauth2/v2/auth?client_id=xxx&redirect_ur
        - `email = google_email`
        - `name = google_name`
        - `avatar_url = google_picture`
-       - `is_root_admin = false`
+       - `is_root = false`
        - `status = 'pending'`
      - Assign `user` role
      - Create default UI preset
@@ -380,7 +380,7 @@ Location: https://dashboard.luxaris.com/auth/callback?pending=true
    - If `status = 'suspended'`: Return 403 with suspended message
    - If `status = 'approved'`: Proceed
 4. Update `last_login_at`
-5. Generate JWT tokens (include permissions, roles, is_root_admin in payload)
+5. Generate JWT tokens (include permissions, roles, is_root in payload)
 6. Return tokens + user data
 
 **Response:**
@@ -390,7 +390,7 @@ Location: https://dashboard.luxaris.com/auth/callback?pending=true
     "id": "uuid",
     "name": "John Doe",
     "email": "john@example.com",
-    "is_root_admin": true,
+    "is_root": true,
     "status": "approved",
     "roles": ["root_admin"],
     "permissions": ["*"],
@@ -665,7 +665,7 @@ Location: https://dashboard.luxaris.com/auth/callback?pending=true
       "id": "uuid",
       "name": "Jane Doe",
       "email": "jane@example.com",
-      "is_root_admin": false,
+      "is_root": false,
       "status": "pending",
       "roles": ["user"],
       "permissions": [],
@@ -856,7 +856,7 @@ Location: https://dashboard.luxaris.com/auth/callback?pending=true
   "sub": "user_uuid",
   "email": "john@example.com",
   "name": "John Doe",
-  "is_root_admin": true,
+  "is_root": true,
   "status": "approved",
   "roles": ["root_admin"],
   "permissions": ["*"],
@@ -867,7 +867,7 @@ Location: https://dashboard.luxaris.com/auth/callback?pending=true
 }
 ```
 
-**Note:** Root admin has `permissions: ["*"]` or permission checks should skip for `is_root_admin = true`
+**Note:** Root admin has `permissions: ["*"]` or permission checks should skip for `is_root = true`
 
 ---
 
@@ -875,7 +875,7 @@ Location: https://dashboard.luxaris.com/auth/callback?pending=true
 
 ### 5.1 Root Admin Bypass
 
-**Rule:** If `user.is_root_admin = true`, skip ALL permission checks. Root admin always has access.
+**Rule:** If `user.is_root = true`, skip ALL permission checks. Root admin always has access.
 
 **Implementation in Permission Middleware:**
 
@@ -885,7 +885,7 @@ function checkPermission(requiredPermission) {
     const user = req.user; // From JWT
     
     // Root admin bypasses all permission checks
-    if (user.is_root_admin) {
+    if (user.is_root) {
       return next();
     }
     
@@ -930,14 +930,14 @@ system:admin        - Full system administration
 ### 6.1 User Registration & Approval
 
 1. **First User:**
-   - Automatically `is_root_admin = true`
+   - Automatically `is_root = true`
    - Status = `approved`
    - Role = `root_admin`
    - Full access immediately
    - Cannot be suspended or have permissions revoked
 
 2. **Subsequent Users:**
-   - `is_root_admin = false`
+   - `is_root = false`
    - Status = `pending`
    - Role = `user` (default)
    - No permissions until approved
@@ -988,7 +988,7 @@ system:admin        - Full system administration
 ```sql
 -- Add new columns to users table
 ALTER TABLE users
-ADD COLUMN IF NOT EXISTS is_root_admin BOOLEAN DEFAULT FALSE,
+ADD COLUMN IF NOT EXISTS is_root BOOLEAN DEFAULT FALSE,
 ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'pending',
 ADD COLUMN IF NOT EXISTS google_id VARCHAR(255) UNIQUE,
 ADD COLUMN IF NOT EXISTS avatar_url TEXT,

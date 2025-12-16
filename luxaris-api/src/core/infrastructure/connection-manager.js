@@ -11,6 +11,7 @@ const { create_queue_connection, declare_queues } = require('../../connections/q
  * Multi-tenancy ready: Supports schema-aware database queries for future tenant isolation.
  */
 class ConnectionManager {
+    
     constructor() {
         this._db_pool = null;
         this._cache_client = null;
@@ -51,12 +52,37 @@ class ConnectionManager {
      * Get database pool
      * For multi-tenancy: Use query_with_schema() instead of direct pool access
      * 
-     * @returns {Pool} PostgreSQL connection pool
+     * @returns {Pool} PostgreSQL connection pool with query logging
      */
     get_db_pool() {
         if (!this._db_pool) {
             throw new Error('Database pool not initialized. Call ConnectionManager.initialize() first.');
         }
+        
+        // Wrap pool to log queries
+        if (!this._db_pool._query_logged) {
+            const original_query = this._db_pool.query.bind(this._db_pool);
+            this._db_pool.query = async (text, params) => {
+                const start_time = Date.now();
+                const result = await original_query(text, params);
+                const duration = Date.now() - start_time;
+                
+                // Replace placeholders with actual values for logging
+                let query_with_values = text;
+                if (params && params.length > 0) {
+                    params.forEach((param, index) => {
+                        const placeholder = `$${index + 1}`;
+                        const value = typeof param === 'string' ? `'${param}'` : (param === null ? 'NULL' : param);
+                        query_with_values = query_with_values.replace(placeholder, value);
+                    });
+                }
+                
+                console.log(`[DB] ${duration}ms | ${query_with_values}`);
+                return result;
+            };
+            this._db_pool._query_logged = true;
+        }
+        
         return this._db_pool;
     }
 
@@ -90,10 +116,24 @@ class ConnectionManager {
 
         // Set search_path for this query (tenant isolation)
         // This ensures all queries run in the correct schema without modifying SQL
+        const start_time = Date.now();
         const client = await db_pool.connect();
         try {
             await client.query(`SET search_path TO ${schema}`);
             const result = await client.query(sql, params);
+            const duration = Date.now() - start_time;
+            
+            // Replace placeholders with actual values for logging
+            let query_with_values = sql;
+            if (params && params.length > 0) {
+                params.forEach((param, index) => {
+                    const placeholder = `$${index + 1}`;
+                    const value = typeof param === 'string' ? `'${param}'` : (param === null ? 'NULL' : param);
+                    query_with_values = query_with_values.replace(placeholder, value);
+                });
+            }
+            
+            console.log(`[DB] ${duration}ms | ${query_with_values}`);
             return result;
         } finally {
             client.release();
@@ -118,7 +158,32 @@ class ConnectionManager {
         const db_pool = this.get_db_pool();
         const schema = options.schema || this._default_schema;
 
+        // Generate short transaction ID (8 chars)
+        const tx_id = Math.random().toString(36).substring(2, 10);
+
         const client = await db_pool.connect();
+        
+        // Wrap client query to log transaction queries
+        const original_client_query = client.query.bind(client);
+        client.query = async (text, params) => {
+            const start_time = Date.now();
+            const result = await original_client_query(text, params);
+            const duration = Date.now() - start_time;
+            
+            // Replace placeholders with actual values for logging
+            let query_with_values = text;
+            if (params && params.length > 0) {
+                params.forEach((param, index) => {
+                    const placeholder = `$${index + 1}`;
+                    const value = typeof param === 'string' ? `'${param}'` : (param === null ? 'NULL' : param);
+                    query_with_values = query_with_values.replace(placeholder, value);
+                });
+            }
+            
+            console.log(`[DB TX:${tx_id}] ${duration}ms | ${query_with_values}`);
+            return result;
+        };
+        
         try {
             await client.query('BEGIN');
             await client.query(`SET search_path TO ${schema}`);

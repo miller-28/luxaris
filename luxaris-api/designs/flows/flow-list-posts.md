@@ -63,7 +63,7 @@ Authorization: Bearer <jwt_token>
       "id": "uuid",
       "owner_principal_id": "user_uuid",
       "title": "My First Post",
-      "base_content": "This is the main content",
+      "description": "This is the main content",
       "tags": ["announcement", "feature"],
       "status": "draft",
       "created_at": "2025-11-25T10:00:00Z",

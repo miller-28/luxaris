@@ -1,5 +1,6 @@
 <template>
     <v-list density="compact" nav>
+
         <!-- Dashboard -->
         <v-list-item
             prepend-icon="mdi-view-dashboard"
@@ -7,16 +8,6 @@
             value="dashboard"
             to="/dashboard"
             :active="isActive('/dashboard')"
-        />
-
-        <!-- Posts -->
-        <v-list-item
-            v-if="can('read', 'posts')"
-            prepend-icon="mdi-file-document-multiple"
-            :title="$t('nav.posts')"
-            value="posts"
-            to="/dashboard/posts"
-            :active="isActive('/dashboard/posts')"
         />
 
         <!-- Channels -->
@@ -29,14 +20,14 @@
             :active="isActive('/dashboard/channels')"
         />
 
-        <!-- Schedules -->
+        <!-- Posts -->
         <v-list-item
-            v-if="can('read', 'schedules')"
-            prepend-icon="mdi-calendar-clock"
-            :title="$t('nav.schedules')"
-            value="schedules"
-            to="/dashboard/schedules"
-            :active="isActive('/dashboard/schedules')"
+            v-if="can('read', 'posts')"
+            prepend-icon="mdi-file-document-multiple"
+            :title="$t('nav.posts')"
+            value="posts"
+            to="/dashboard/posts"
+            :active="isActive('/dashboard/posts')"
         />
 
         <!-- Templates -->
@@ -47,6 +38,16 @@
             value="templates"
             to="/dashboard/templates"
             :active="isActive('/dashboard/templates')"
+        />
+
+        <!-- Schedules -->
+        <v-list-item
+            v-if="can('read', 'schedules')"
+            prepend-icon="mdi-calendar-clock"
+            :title="$t('nav.schedules')"
+            value="schedules"
+            to="/dashboard/schedules"
+            :active="isActive('/dashboard/schedules')"
         />
 
         <v-divider class="my-2" />
@@ -89,6 +90,11 @@ const route = useRoute();
 const { can, isAdmin } = usePermissions();
 
 const isActive = (path) => {
+    // Exact match for dashboard home only
+    if (path === '/dashboard') {
+        return route.path === '/dashboard';
+    }
+    // For other routes, check if current path starts with it
     return route.path === path || route.path.startsWith(path + '/');
 };
 </script>

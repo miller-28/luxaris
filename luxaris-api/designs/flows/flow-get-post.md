@@ -57,7 +57,7 @@ GET /api/v1/posts/post-uuid-123
   "id": "post-uuid",
   "owner_principal_id": "user-uuid",
   "title": "Product Launch Announcement",
-  "base_content": "Excited to announce our new feature!",
+  "description": "Excited to announce our new feature!",
   "tags": ["product", "launch", "feature"],
   "status": "scheduled",
   "metadata": {
@@ -74,7 +74,7 @@ GET /api/v1/posts/post-uuid-123
 {
   "id": "post-uuid",
   "title": "Product Launch Announcement",
-  "base_content": "Excited to announce our new feature!",
+  "description": "Excited to announce our new feature!",
   "status": "scheduled",
   "variants": [
     {

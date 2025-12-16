@@ -90,7 +90,8 @@ class GenerationService {
             post_id: post_id || null,
             template_id: template_id || null,
             prompt,
-            status: 'in_progress'
+            status: 'in_progress',
+            created_by_user_id: principal_id
         });
 
         const session = new GenerationSession(session_record);
@@ -135,7 +136,8 @@ class GenerationService {
                         channel_id,
                         content: item.content,
                         score: item.score || null,
-                        accepted: false
+                        accepted: false,
+                        created_by_user_id: principal_id
                     };
 
                     const suggestion_record = await this.suggestion_repository.create(suggestion_data);
@@ -279,7 +281,7 @@ class GenerationService {
         if (!post_id) {
             const post_data = {
                 title: options.title || 'Generated Post',
-                base_content: suggestion.content,
+                description: suggestion.content,
                 tags: options.tags || []
             };
             // Create a principal object for post_service (which expects principal.id, not just principal_id)

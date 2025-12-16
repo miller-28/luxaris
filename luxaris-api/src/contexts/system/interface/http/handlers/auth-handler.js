@@ -74,14 +74,21 @@ class AuthHandler {
                 });
             }
 
+            // Return explicit user properties (never include password_hash)
             res.status(200).json({
-                user: {
-                    id: user.id,
-                    email: user.email,
-                    name: user.name,
-                    timezone: user.timezone,
-                    roles: user.roles || []
-                }
+                id: user.id,
+                email: user.email,
+                name: user.name,
+                avatar_url: user.avatar_url,
+                auth_method: user.auth_method,
+                status: user.status,
+                is_root: user.is_root,
+                timezone: user.timezone,
+                locale: user.locale,
+                roles: user.roles || [],
+                permissions: user.permissions || [],
+                created_at: user.created_at,
+                last_login_at: user.last_login_at
             });
         } catch (error) {
             next(error);

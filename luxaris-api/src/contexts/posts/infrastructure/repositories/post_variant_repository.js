@@ -14,8 +14,8 @@ class PostVariantRepository {
         const query = `
 			INSERT INTO post_variants (
 				post_id, channel_id, channel_connection_id, content, media, 
-				tone, source, status, metadata
-			) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+				tone, source, status, metadata, created_by_user_id
+			) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 			RETURNING *
 		`;
 
@@ -28,7 +28,8 @@ class PostVariantRepository {
             variant_data.tone || null,
             variant_data.source || 'manual',
             variant_data.status || 'draft',
-            JSON.stringify(variant_data.metadata || {})
+            JSON.stringify(variant_data.metadata || {}),
+            variant_data.created_by_user_id || null
         ];
 
         const result = await connection_manager.get_db_pool().query(query, values);
@@ -182,6 +183,12 @@ class PostVariantRepository {
             param_index++;
         }
 
+        if (updates.updated_by_user_id !== undefined) {
+            fields.push(`updated_by_user_id = $${param_index}`);
+            params.push(updates.updated_by_user_id);
+            param_index++;
+        }
+
         fields.push('updated_at = CURRENT_TIMESTAMP');
 
         if (fields.length === 1) {
@@ -219,9 +226,9 @@ class PostVariantRepository {
     /**
 	 * Delete variant (soft delete)
 	 */
-    async delete(variant_id) {
-        const query = 'UPDATE post_variants SET is_deleted = true, deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND is_deleted = false RETURNING *';
-        const result = await connection_manager.get_db_pool().query(query, [variant_id]);
+    async delete(variant_id, deleted_by_user_id = null) {
+        const query = 'UPDATE post_variants SET is_deleted = true, deleted_at = NOW(), updated_at = NOW(), deleted_by_user_id = $2 WHERE id = $1 AND is_deleted = false RETURNING *';
+        const result = await connection_manager.get_db_pool().query(query, [variant_id, deleted_by_user_id]);
         return result.rowCount > 0;
     }
 

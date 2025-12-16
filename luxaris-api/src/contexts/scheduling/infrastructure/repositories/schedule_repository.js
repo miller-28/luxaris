@@ -9,8 +9,8 @@ class ScheduleRepository {
         const result = await connection_manager.get_db_pool().query(
             `INSERT INTO schedules (
         post_variant_id, channel_connection_id, run_at, timezone, 
-        status, attempt_count
-      ) VALUES ($1, $2, $3, $4, $5, $6)
+        status, attempt_count, created_by_user_id
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING *`,
             [
                 schedule_data.post_variant_id,
@@ -18,7 +18,8 @@ class ScheduleRepository {
                 schedule_data.run_at,
                 schedule_data.timezone,
                 schedule_data.status || 'pending',
-                schedule_data.attempt_count || 0
+                schedule_data.attempt_count || 0,
+                schedule_data.created_by_user_id || null
             ]
         );
         return new Schedule(result.rows[0]);
@@ -165,7 +166,7 @@ class ScheduleRepository {
 
         const allowed_fields = [
             'run_at', 'timezone', 'status', 'attempt_count', 
-            'last_attempt_at', 'error_code', 'error_message'
+            'last_attempt_at', 'error_code', 'error_message', 'updated_by_user_id'
         ];
 
         for (const field of allowed_fields) {
@@ -236,10 +237,10 @@ class ScheduleRepository {
     /**
    * Delete schedule (soft delete)
    */
-    async delete(schedule_id) {
+    async delete(schedule_id, deleted_by_user_id = null) {
         const result = await connection_manager.get_db_pool().query(
-            'UPDATE schedules SET is_deleted = true, deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND is_deleted = false RETURNING id',
-            [schedule_id]
+            'UPDATE schedules SET is_deleted = true, deleted_at = NOW(), updated_at = NOW(), deleted_by_user_id = $2 WHERE id = $1 AND is_deleted = false RETURNING id',
+            [schedule_id, deleted_by_user_id]
         );
         return result.rowCount > 0;
     }

@@ -4,6 +4,7 @@ const DbCleaner = require('../../helpers/db-cleaner');
 const request = require('supertest');
 
 describe('Posts Integration Tests', () => {
+    
     let test_server;
     let app;
     let db_pool;
@@ -11,6 +12,8 @@ describe('Posts Integration Tests', () => {
     let test_users;
     let root_token;
     let normal_token;
+    let root_user_id;
+    let normal_user_id;
 
     beforeAll(async () => {
         // Start test server
@@ -23,8 +26,8 @@ describe('Posts Integration Tests', () => {
         test_users = new TestUsers(app, db_pool);
 
         // Register users
-        ({ token: root_token } = await test_users.create_quick_root_user('root-posts'));
-        ({ token: normal_token } = await test_users.create_quick_normal_user('normal-posts'));
+        ({ user_id: root_user_id, token: root_token } = await test_users.create_quick_root_user('root-posts'));
+        ({ user_id: normal_user_id, token: normal_token } = await test_users.create_quick_normal_user('normal-posts'));
     });
 
     afterAll(async () => {
@@ -48,19 +51,19 @@ describe('Posts Integration Tests', () => {
                 .set('Authorization', `Bearer ${root_token}`)
                 .send({
                     title: 'My First Post',
-                    base_content: 'This is the base content for my post',
+                    description: 'This is the base content for my post',
                     tags: ['tech', 'product-launch']
                 });
 
             expect(response.status).toBe(201);
             expect(response.body.data).toHaveProperty('id');
             expect(response.body.data.title).toBe('My First Post');
-            expect(response.body.data.base_content).toBe('This is the base content for my post');
+            expect(response.body.data.description).toBe('This is the base content for my post');
             expect(response.body.data.tags).toEqual(['tech', 'product-launch']);
             expect(response.body.data.status).toBe('draft');
         });
 
-        it('should require base_content', async () => {
+        it('should require description', async () => {
             const response = await request(app)
                 .post('/api/v1/posts')
                 .set('Authorization', `Bearer ${root_token}`)
@@ -69,14 +72,14 @@ describe('Posts Integration Tests', () => {
                 });
 
             expect(response.status).toBe(400);
-            expect(response.body.errors[0].error_code).toBe('BASE_CONTENT_REQUIRED');
+            expect(response.body.errors[0].error_code).toBe('DESCRIPTION_REQUIRED');
         });
 
         it('should require authentication', async () => {
             const response = await request(app)
                 .post('/api/v1/posts')
                 .send({
-                    base_content: 'Content without auth'
+                    description: 'Content without auth'
                 });
 
             expect(response.status).toBe(401);
@@ -93,7 +96,7 @@ describe('Posts Integration Tests', () => {
                 .set('Authorization', `Bearer ${root_token}`)
                 .send({
                     title: 'List Test Post',
-                    base_content: 'Content for listing test',
+                    description: 'Content for listing test',
                     tags: ['list-test']
                 });
             test_post_id = response.body.data.id;
@@ -155,7 +158,7 @@ describe('Posts Integration Tests', () => {
                 .set('Authorization', `Bearer ${root_token}`)
                 .send({
                     title: 'Get Single Post',
-                    base_content: 'Content for get test'
+                    description: 'Content for get test'
                 });
             test_post_id = response.body.data.id;
         });
@@ -168,7 +171,7 @@ describe('Posts Integration Tests', () => {
             expect(response.status).toBe(200);
             expect(response.body.data.id).toBe(test_post_id);
             expect(response.body.data.title).toBe('Get Single Post');
-            expect(response.body.data.base_content).toBe('Content for get test');
+            expect(response.body.data.description).toBe('Content for get test');
         });
 
         it('should return 404 for non-existent post', async () => {
@@ -200,7 +203,7 @@ describe('Posts Integration Tests', () => {
                 .set('Authorization', `Bearer ${root_token}`)
                 .send({
                     title: 'Update Test Post',
-                    base_content: 'Original content',
+                    description: 'Original content',
                     tags: ['original']
                 });
             test_post_id = response.body.data.id;
@@ -212,13 +215,13 @@ describe('Posts Integration Tests', () => {
                 .set('Authorization', `Bearer ${root_token}`)
                 .send({
                     title: 'Updated Title',
-                    base_content: 'Updated content',
+                    description: 'Updated content',
                     tags: ['updated', 'new-tag']
                 });
 
             expect(response.status).toBe(200);
             expect(response.body.data.title).toBe('Updated Title');
-            expect(response.body.data.base_content).toBe('Updated content');
+            expect(response.body.data.description).toBe('Updated content');
             expect(response.body.data.tags).toEqual(['updated', 'new-tag']);
         });
 
@@ -244,7 +247,7 @@ describe('Posts Integration Tests', () => {
                 .set('Authorization', `Bearer ${root_token}`)
                 .send({
                     title: 'Delete Test Post',
-                    base_content: 'Content to delete'
+                    description: 'Content to delete'
                 });
             test_post_id = response.body.data.id;
         });
@@ -275,6 +278,133 @@ describe('Posts Integration Tests', () => {
 
             expect(response.status).toBe(403);
             expect(response.body.errors[0].error_code).toBe('POST_ACCESS_DENIED');
+        });
+    });
+
+    describe('Audit User Columns', () => {
+        it('should set created_by_user_id when creating a post', async () => {
+            const response = await request(app)
+                .post('/api/v1/posts')
+                .set('Authorization', `Bearer ${root_token}`)
+                .send({
+                    title: 'Audit Test Post',
+                    description: 'Testing audit columns',
+                    tags: ['audit']
+                });
+
+            expect(response.status).toBe(201);
+            const post_id = response.body.data.id;
+
+            // Query database directly to check audit columns
+            const result = await db_pool.query(
+                'SELECT created_by_user_id, updated_by_user_id, deleted_by_user_id FROM posts WHERE id = $1',
+                [post_id]
+            );
+
+            expect(result.rows[0].created_by_user_id).toBeTruthy();
+            expect(result.rows[0].updated_by_user_id).toBeNull();
+            expect(result.rows[0].deleted_by_user_id).toBeNull();
+        });
+
+        it('should set updated_by_user_id when updating a post', async () => {
+            // Create post
+            const createResponse = await request(app)
+                .post('/api/v1/posts')
+                .set('Authorization', `Bearer ${root_token}`)
+                .send({
+                    title: 'Original Title',
+                    description: 'Original content',
+                    tags: []
+                });
+
+            const post_id = createResponse.body.data.id;
+
+            // Update post
+            await request(app)
+                .patch(`/api/v1/posts/${post_id}`)
+                .set('Authorization', `Bearer ${root_token}`)
+                .send({
+                    title: 'Updated Title'
+                });
+
+            // Check audit columns
+            const result = await db_pool.query(
+                'SELECT created_by_user_id, updated_by_user_id, deleted_by_user_id FROM posts WHERE id = $1',
+                [post_id]
+            );
+
+            expect(result.rows[0].created_by_user_id).toBeTruthy();
+            expect(result.rows[0].updated_by_user_id).toBeTruthy();
+            expect(result.rows[0].created_by_user_id).toBe(result.rows[0].updated_by_user_id);
+            expect(result.rows[0].deleted_by_user_id).toBeNull();
+        });
+
+        it('should set deleted_by_user_id when deleting a post', async () => {
+            // Create post
+            const createResponse = await request(app)
+                .post('/api/v1/posts')
+                .set('Authorization', `Bearer ${root_token}`)
+                .send({
+                    title: 'To Be Deleted',
+                    description: 'This will be deleted',
+                    tags: []
+                });
+
+            const post_id = createResponse.body.data.id;
+
+            // Delete post
+            await request(app)
+                .delete(`/api/v1/posts/${post_id}`)
+                .set('Authorization', `Bearer ${root_token}`);
+
+            // Check audit columns
+            const result = await db_pool.query(
+                'SELECT created_by_user_id, updated_by_user_id, deleted_by_user_id, is_deleted FROM posts WHERE id = $1',
+                [post_id]
+            );
+
+            expect(result.rows[0].is_deleted).toBe(true);
+            expect(result.rows[0].created_by_user_id).toBeTruthy();
+            expect(result.rows[0].deleted_by_user_id).toBeTruthy();
+            expect(result.rows[0].created_by_user_id).toBe(result.rows[0].deleted_by_user_id);
+        });
+
+        it('should track different users for create and update', async () => {
+            // Root user creates post
+            const createResponse = await request(app)
+                .post('/api/v1/posts')
+                .set('Authorization', `Bearer ${root_token}`)
+                .send({
+                    title: 'Multi-User Audit Test',
+                    description: 'Testing different users',
+                    tags: []
+                });
+
+            expect(createResponse.status).toBe(201);
+            const post_id = createResponse.body.data.id;
+
+            // Check created_by_user_id
+            const afterCreate = await db_pool.query(
+                'SELECT created_by_user_id FROM posts WHERE id = $1',
+                [post_id]
+            );
+            expect(afterCreate.rows[0].created_by_user_id).toBe(root_user_id);
+
+            // Root user updates (same user)
+            const updateResponse = await request(app)
+                .patch(`/api/v1/posts/${post_id}`)
+                .set('Authorization', `Bearer ${root_token}`)
+                .send({
+                    title: 'Updated by Root'
+                });
+
+            expect(updateResponse.status).toBe(200);
+
+            const afterUpdate = await db_pool.query(
+                'SELECT updated_by_user_id FROM posts WHERE id = $1',
+                [post_id]
+            );
+            expect(afterUpdate.rows[0].updated_by_user_id).toBe(root_user_id);
         });
     });
 });

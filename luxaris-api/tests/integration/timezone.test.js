@@ -22,7 +22,7 @@ describe('Timezone Handling', () => {
 
         const post_response = await request(app).post('/api/v1/posts')
             .set('Authorization', 'Bearer ' + auth_token)
-            .send({ title: 'Test Post', base_content: 'Content' });
+            .send({ title: 'Test Post', description: 'Content' });
         post_id = post_response.body.data.id;
     });
 

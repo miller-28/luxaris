@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const connection_manager = require('../../../../core/infrastructure/connection-manager');
 
 class PresetRepository {
+    
     /**
      * Find user's custom preset
      * @param {string} user_id - User UUID

@@ -16,6 +16,7 @@ export const usePresetStore = defineStore('preset', {
     }),
 
     getters: {
+        
         isLoaded: (state) => state.loaded,
         isLoading: (state) => state.loading,
     

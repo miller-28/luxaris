@@ -1,6 +1,7 @@
 const connection_manager = require('../../../../core/infrastructure/connection-manager');
 
 class OAuthAccountRepository {
+    
     /**
      * Find OAuth account by provider and provider user ID
      * @param {string} provider_id - OAuth provider UUID

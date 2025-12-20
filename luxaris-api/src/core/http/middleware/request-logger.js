@@ -1,60 +1,102 @@
-const { DateTime } = require('luxon');
+const winston = require('winston');
+const RequestLogRepository = require('../../infrastructure/repositories/request-log-repository');
 
 class RequestLogger {
+    
     constructor(db_pool) {
-        this.db_pool = db_pool;
+        this.repository = db_pool ? new RequestLogRepository() : null;
+        
+        // Winston logger for console output
+        this.logger = winston.createLogger({
+            level: 'info',
+            format: winston.format.combine(
+                winston.format.timestamp(),
+                winston.format.json()
+            ),
+            transports: [
+                new winston.transports.Console({
+                    format: winston.format.combine(
+                        winston.format.printf(({ timestamp, level, message }) => {
+                            return `${timestamp} \x1b[32m[info]\x1b[0m: ${message}`;
+                        })
+                    )
+                })
+            ]
+        });
     }
 
     middleware() {
-        return async (req, res, next) => {
-            const start_time = DateTime.now();
+        return (req, res, next) => {
 
-            // Capture response
-            const original_send = res.send;
-            const original_json = res.json;
-            let response_body = null;
+            const start_time = Date.now();
+            const request_id = req.id;
+            const route = `${req.method} ${req.path || req.url}`;
 
-            res.send = function(data) {
-                response_body = data;
-                original_send.call(this, data);
+            this.logger.info(
+                `[INCOMING] Request UUID: ${request_id} | Route: ${route}`
+            );
+
+            // Capture request size
+            const request_size = parseInt(req.get('content-length') || '0', 10);
+
+            // Store original methods to capture response
+            const original_json = res.json.bind(res);
+            const original_send = res.send.bind(res);
+            let response_size = 0;
+
+            // Override res.json
+            res.json = function(body) {
+                response_size = JSON.stringify(body).length;
+                return original_json(body);
             };
 
-            res.json = function(data) {
-                response_body = data;
-                original_json.call(this, data);
+            // Override res.send
+            res.send = function(body) {
+                if (body) {
+                    response_size = typeof body === 'string' ? body.length : JSON.stringify(body).length;
+                }
+                return original_send(body);
             };
 
-            // Log after response is sent
+            // On response finish, log to database
             res.on('finish', async () => {
-                const end_time = DateTime.now();
-                const duration_ms = end_time.diff(start_time).milliseconds;
 
-                const log_entry = {
-                    request_id: req.id,
-                    user_id: req.user ? req.user.user_id : null,
-                    method: req.method,
-                    path: req.path,
-                    query_params: Object.keys(req.query).length > 0 ? JSON.stringify(req.query) : null,
-                    request_body: req.body && Object.keys(req.body).length > 0 ? JSON.stringify(req.body) : null,
-                    status_code: res.statusCode,
-                    response_body: response_body ? JSON.stringify(response_body) : null,
-                    duration_ms: Math.round(duration_ms),
-                    ip_address: req.ip,
-                    user_agent: req.get('user-agent') || null,
-                    created_at: start_time.toJSDate()
-                };
+                const duration = Date.now() - start_time;
+                const user_id = req.user?.id || 'anonymous';
+                this.logger.info(
+                    `[COMPLETED] Request UUID: ${request_id} | Route: ${route} | User: ${user_id} | Duration: ${duration}ms | Status: ${res.statusCode}`
+                );
 
-                // Persist to database (async, non-blocking)
-                // Note: request_logs table will be created in Phase 2
-                if (this.db_pool) {
-                    this._persist_to_db(log_entry).catch(error => {
-                        console.error('Failed to persist request log:', error.message);
-                    });
+                if (!this.repository) {
+                    return;
                 }
 
-                // Console log in development
-                if (process.env.NODE_ENV === 'development') {
-                    console.log(`[${req.id}] ${req.method} ${req.path} ${res.statusCode} ${duration_ms}ms`);
+                try {
+                    await this.repository.create({
+                        request_id,
+                        timestamp: new Date(start_time),
+                        method: req.method,
+                        path: req.path || req.url,
+                        status_code: res.statusCode,
+                        duration_ms: duration,
+                        principal_id: req.user?.id || null,
+                        principal_type: req.user ? 'user' : 'anonymous',
+                        ip_address: req.ip || req.connection.remoteAddress,
+                        user_agent: req.get('user-agent'),
+                        request_size_bytes: request_size,
+                        response_size_bytes: response_size,
+                        error_code: res.locals.errorCode || null,
+                        error_message: res.locals.errorMessage || null,
+                        context: {
+                            query_params: this.sanitize_params(req.query),
+                            route_params: req.params,
+                            referrer: req.get('referrer'),
+                            correlation_id: req.get('x-correlation-id')
+                        }
+                    });
+                } catch (error) {
+                    // Fail silently - don't break request flow
+                    this.logger.error('Failed to log request:', error.message);
                 }
             });
 
@@ -62,29 +104,43 @@ class RequestLogger {
         };
     }
 
-    async _persist_to_db(log_entry) {
-        // TODO: Phase 2 - Implement when request_logs table is created
-        // const query = `
-        //   INSERT INTO request_logs (
-        //     request_id, user_id, method, path, query_params, request_body,
-        //     status_code, response_body, duration_ms, ip_address, user_agent, created_at
-        //   ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-        // `;
-        // await this.db_pool.query(query, [
-        //   log_entry.request_id,
-        //   log_entry.user_id,
-        //   log_entry.method,
-        //   log_entry.path,
-        //   log_entry.query_params,
-        //   log_entry.request_body,
-        //   log_entry.status_code,
-        //   log_entry.response_body,
-        //   log_entry.duration_ms,
-        //   log_entry.ip_address,
-        //   log_entry.user_agent,
-        //   log_entry.created_at
-        // ]);
+    sanitize_params(params) {
+        const sensitive = ['password', 'token', 'secret', 'api_key', 'authorization'];
+        const sanitized = { ...params };
+
+        for (const key of Object.keys(sanitized)) {
+            if (sensitive.some(s => key.toLowerCase().includes(s))) {
+                sanitized[key] = '[REDACTED]';
+            }
+        }
+
+        return sanitized;
+    }
+
+    async query(filters) {
+        if (!this.repository) {
+            throw new Error('Database repository not initialized');
+        }
+        return await this.repository.query(filters);
+    }
+
+    async get_metrics(options = {}) {
+        if (!this.repository) {
+            throw new Error('Database repository not initialized');
+        }
+        return await this.repository.get_metrics(options);
     }
 }
 
-module.exports = RequestLogger;
+// Singleton instance
+let instance = null;
+
+module.exports = {
+    RequestLogger,
+    get_request_logger: (db_pool) => {
+        if (!instance) {
+            instance = new RequestLogger(db_pool);
+        }
+        return instance;
+    }
+};

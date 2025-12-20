@@ -1,16 +1,33 @@
 require('dotenv').config();
 
+const winston = require('winston');
 const { get_app_config, validate_app_config } = require('./config/app');
 const { get_auth_config, validate_auth_config } = require('./config/auth');
 const connection_manager = require('./core/infrastructure/connection-manager');
 const Server = require('./core/http/server');
-const { get_logger } = require('./core/logging/system_logger');
+const { get_logger } = require('./core/infrastructure/system-logger');
 const EventRegistry = require('./core/events/event-registry');
-const { get_request_logger } = require('./core/http/middleware/request_logger');
-const error_handler = require('./core/http/middleware/error-handler');
-const not_found_handler = require('./core/http/middleware/not-found-handler');
-const origin_validation = require('./core/http/middleware/origin-validation');
-const xss_sanitization = require('./core/http/middleware/xss-sanitization');
+const { get_request_logger } = require('./core/http/middleware/request-logger');
+const error_handler = require('./core/http/middleware/error-handler-middleware');
+const not_found_handler = require('./core/http/middleware/not-found-handler-middleware');
+const origin_validation = require('./core/http/middleware/origin-validation-middleware');
+const xss_sanitization = require('./core/http/middleware/xss-sanitization-middleware');
+const acl_middleware = require('./core/http/middleware/acl-middleware');
+
+// Error logger for bootstrap errors (before system_logger is available)
+const error_logger = winston.createLogger({
+    level: 'error',
+    transports: [
+        new winston.transports.Console({
+            format: winston.format.combine(
+                winston.format.timestamp(),
+                winston.format.printf(({ timestamp, message }) => {
+                    return `${timestamp} \x1b[31m[error]\x1b[0m: ${message}`;
+                })
+            )
+        })
+    ]
+});
 
 // System context dependencies
 const UserRepository = require('./contexts/system/infrastructure/repositories/user-repository');
@@ -30,8 +47,7 @@ const AuthHandler = require('./contexts/system/interface/http/handlers/auth-hand
 const OpsHandler = require('./contexts/system/interface/http/handlers/ops-handler');
 const PresetHandler = require('./contexts/system/interface/http/handlers/preset-handler');
 const UserHandler = require('./contexts/system/interface/http/handlers/user-handler');
-const { create_auth_routes, create_preset_routes, create_user_routes } = require('./contexts/system/interface/http/routes');
-const create_ops_routes = require('./contexts/system/interface/http/ops-routes');
+const { create_auth_routes, create_preset_routes, create_user_routes, create_ops_routes } = require('./contexts/system/interface/http/routes');
 const { initialize_channels_domain } = require('./contexts/channels');
 const { initialize_posts_domain } = require('./contexts/posts');
 const { initialize_generation_domain } = require('./contexts/generation');
@@ -73,7 +89,7 @@ async function bootstrap() {
             console.log('Luxaris API stopped');
             process.exit(0);
         } catch (shutdown_error) {
-            console.error('Error during shutdown:', shutdown_error);
+            error_logger.error(`Error during shutdown: ${shutdown_error.message}`);
             process.exit(1);
         }
     };
@@ -98,7 +114,7 @@ async function bootstrap() {
                     { exit_code: code }
                 );
             } catch (err) {
-                console.error('Failed to log process exit:', err);
+                error_logger.error(`Failed to log process exit: ${err.message}`);
             }
         }
     });
@@ -177,7 +193,9 @@ async function bootstrap() {
         const channels_domain = initialize_channels_domain({
             system_logger,
             acl_service: auth_service.acl_service,
-            event_registry
+            event_registry,
+            cache_service,
+            auth_config
         });
 
         // 2. Posts domain (depends on channels for channel_service)
@@ -238,12 +256,7 @@ async function bootstrap() {
                 };
                 next();
             } catch (error) {
-                console.error('[Auth Middleware] Token verification failed:', {
-                    error: error.message,
-                    tokenPreview: token.substring(0, 20) + '...',
-                    url: req.url,
-                    method: req.method
-                });
+                error_logger.error(`[Auth Middleware] Token verification failed: ${error.message} | URL: ${req.method} ${req.url}`);
                 return res.status(401).json({
                     errors: [{
                         error_code: 'INVALID_TOKEN',
@@ -269,24 +282,21 @@ async function bootstrap() {
         const channel_routes = channels_domain.create_channel_routes({
             channel_service: channels_domain.channel_service,
             channel_connection_service: channels_domain.channel_connection_service,
+            oauth_credentials_service: channels_domain.oauth_credentials_service,
+            linkedin_oauth_service: channels_domain.linkedin_oauth_service,
+            x_oauth_service: channels_domain.x_oauth_service,
             auth_middleware,
-            error_handler
+            acl_middleware,
+            error_handler,
+            app_config
         });
         server.register_routes(`/api/${app_config.api_version}/channels`, channel_routes);
 
         // Register posts domain routes
-        const post_routes = posts_domain.create_post_routes({
-            post_service: posts_domain.post_service,
-            auth_middleware,
-            error_handler
-        });
+        const post_routes = posts_domain.create_post_routes(posts_domain.post_handler, auth_middleware, error_handler);
         server.register_routes(`/api/${app_config.api_version}/posts`, post_routes);
 
-        const post_variant_routes = posts_domain.create_post_variant_routes({
-            post_variant_service: posts_domain.post_variant_service,
-            auth_middleware,
-            error_handler
-        });
+        const post_variant_routes = posts_domain.create_post_variant_routes(posts_domain.post_variant_handler, auth_middleware, error_handler);
         server.register_routes(`/api/${app_config.api_version}`, post_variant_routes);
 
         // Register generation domain routes
@@ -325,7 +335,7 @@ async function bootstrap() {
         );
 
     } catch (error) {
-        console.error('Failed to start Luxaris API:', error);
+        error_logger.error(`Failed to start Luxaris API: ${error.message}`);
 
         // Log to system_logs if logger is available
         if (system_logger) {
@@ -341,7 +351,7 @@ async function bootstrap() {
                     }
                 );
             } catch (log_error) {
-                console.error('Failed to log startup error to database:', log_error);
+                error_logger.error(`Failed to log startup error to database: ${log_error.message}`);
             }
         }
 
@@ -349,7 +359,7 @@ async function bootstrap() {
         try {
             await connection_manager.shutdown();
         } catch (cleanup_error) {
-            console.error('Error during cleanup:', cleanup_error);
+            error_logger.error(`Error during cleanup: ${cleanup_error.message}`);
         }
 
         process.exit(1);

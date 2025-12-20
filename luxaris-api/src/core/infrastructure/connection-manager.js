@@ -1,3 +1,4 @@
+const winston = require('winston');
 const { create_database_pool, test_database_connection } = require('../../connections/database');
 const { create_cache_client, test_cache_connection } = require('../../connections/cache');
 const { create_queue_connection, declare_queues } = require('../../connections/queue');
@@ -13,12 +14,31 @@ const { create_queue_connection, declare_queues } = require('../../connections/q
 class ConnectionManager {
     
     constructor() {
+
         this._db_pool = null;
         this._cache_client = null;
         this._queue_connection = null;
         this._queue_channel = null;
         this._initialized = false;
         this._default_schema = 'luxaris'; // Current single-tenant schema
+        
+        // Winston logger for query logging
+        this.logger = winston.createLogger({
+            level: 'info',
+            format: winston.format.combine(
+                winston.format.timestamp(),
+                winston.format.json()
+            ),
+            transports: [
+                new winston.transports.Console({
+                    format: winston.format.combine(
+                        winston.format.printf(({ timestamp, message }) => {
+                            return `${timestamp} \x1b[33m[query]\x1b[0m: ${message}`;
+                        })
+                    )
+                })
+            ]
+        });
     }
 
     /**
@@ -27,6 +47,7 @@ class ConnectionManager {
      * Idempotent - safe to call multiple times (will skip if already initialized)
      */
     async initialize() {
+
         if (this._initialized) {
             return; // Already initialized - skip
         }
@@ -55,6 +76,7 @@ class ConnectionManager {
      * @returns {Pool} PostgreSQL connection pool with query logging
      */
     get_db_pool() {
+
         if (!this._db_pool) {
             throw new Error('Database pool not initialized. Call ConnectionManager.initialize() first.');
         }
@@ -64,21 +86,40 @@ class ConnectionManager {
             const original_query = this._db_pool.query.bind(this._db_pool);
             this._db_pool.query = async (text, params) => {
                 const start_time = Date.now();
-                const result = await original_query(text, params);
-                const duration = Date.now() - start_time;
                 
-                // Replace placeholders with actual values for logging
-                let query_with_values = text;
-                if (params && params.length > 0) {
-                    params.forEach((param, index) => {
-                        const placeholder = `$${index + 1}`;
-                        const value = typeof param === 'string' ? `'${param}'` : (param === null ? 'NULL' : param);
-                        query_with_values = query_with_values.replace(placeholder, value);
-                    });
+                try {
+                    const result = await original_query(text, params);
+                    const duration = Date.now() - start_time;
+                    
+                    // Replace placeholders with actual values for logging
+                    let query_with_values = text;
+                    if (params && params.length > 0) {
+                        params.forEach((param, index) => {
+                            const placeholder = `$${index + 1}`;
+                            const value = typeof param === 'string' ? `'${param}'` : (param === null ? 'NULL' : param);
+                            query_with_values = query_with_values.replace(placeholder, value);
+                        });
+                    }
+                    
+                    this.logger.info(`[Query] ${query_with_values.replace(/\s+/g, ' ').trim()} | Duration: ${duration}ms`);
+                    return result;
+                } catch (error) {
+                    const duration = Date.now() - start_time;
+                    
+                    // Replace placeholders with actual values for error logging
+                    let query_with_values = text;
+                    if (params && params.length > 0) {
+                        params.forEach((param, index) => {
+                            const placeholder = `$${index + 1}`;
+                            const value = typeof param === 'string' ? `'${param}'` : (param === null ? 'NULL' : param);
+                            query_with_values = query_with_values.replace(placeholder, value);
+                        });
+                    }
+                    
+                    // Log error in red with timestamp
+                    console.error(`${new Date().toISOString()} \x1b[31m[query-error]\x1b[0m ${query_with_values.replace(/\s+/g, ' ').trim()} | Duration: ${duration}ms | Error: ${error.message}`);
+                    throw error;
                 }
-                
-                console.log(`[DB] ${duration}ms | ${query_with_values}`);
-                return result;
             };
             this._db_pool._query_logged = true;
         }
@@ -111,6 +152,7 @@ class ConnectionManager {
      * );
      */
     async query(sql, params = [], options = {}) {
+
         const db_pool = this.get_db_pool();
         const schema = options.schema || this._default_schema;
 
@@ -135,6 +177,21 @@ class ConnectionManager {
             
             console.log(`[DB] ${duration}ms | ${query_with_values}`);
             return result;
+        } catch (error) {
+            const duration = Date.now() - start_time;
+            
+            // Replace placeholders with actual values for error logging
+            let query_with_values = sql;
+            if (params && params.length > 0) {
+                params.forEach((param, index) => {
+                    const placeholder = `$${index + 1}`;
+                    const value = typeof param === 'string' ? `'${param}'` : (param === null ? 'NULL' : param);
+                    query_with_values = query_with_values.replace(placeholder, value);
+                });
+            }
+            
+            console.error(`${new Date().toISOString()} \x1b[31m[query-error]\x1b[0m ${duration}ms | ${query_with_values} | Error: ${error.message}`);
+            throw error;
         } finally {
             client.release();
         }
@@ -155,6 +212,7 @@ class ConnectionManager {
      * });
      */
     async transaction(callback, options = {}) {
+
         const db_pool = this.get_db_pool();
         const schema = options.schema || this._default_schema;
 
@@ -167,21 +225,39 @@ class ConnectionManager {
         const original_client_query = client.query.bind(client);
         client.query = async (text, params) => {
             const start_time = Date.now();
-            const result = await original_client_query(text, params);
-            const duration = Date.now() - start_time;
             
-            // Replace placeholders with actual values for logging
-            let query_with_values = text;
-            if (params && params.length > 0) {
-                params.forEach((param, index) => {
-                    const placeholder = `$${index + 1}`;
-                    const value = typeof param === 'string' ? `'${param}'` : (param === null ? 'NULL' : param);
-                    query_with_values = query_with_values.replace(placeholder, value);
-                });
+            try {
+                const result = await original_client_query(text, params);
+                const duration = Date.now() - start_time;
+                
+                // Replace placeholders with actual values for logging
+                let query_with_values = text;
+                if (params && params.length > 0) {
+                    params.forEach((param, index) => {
+                        const placeholder = `$${index + 1}`;
+                        const value = typeof param === 'string' ? `'${param}'` : (param === null ? 'NULL' : param);
+                        query_with_values = query_with_values.replace(placeholder, value);
+                    });
+                }
+                
+                console.log(`[DB TX:${tx_id}] ${duration}ms | ${query_with_values}`);
+                return result;
+            } catch (error) {
+                const duration = Date.now() - start_time;
+                
+                // Replace placeholders with actual values for error logging
+                let query_with_values = text;
+                if (params && params.length > 0) {
+                    params.forEach((param, index) => {
+                        const placeholder = `$${index + 1}`;
+                        const value = typeof param === 'string' ? `'${param}'` : (param === null ? 'NULL' : param);
+                        query_with_values = query_with_values.replace(placeholder, value);
+                    });
+                }
+                
+                console.error(`${new Date().toISOString()} \x1b[31m[query-error TX:${tx_id}]\x1b[0m ${duration}ms | ${query_with_values} | Error: ${error.message}`);
+                throw error;
             }
-            
-            console.log(`[DB TX:${tx_id}] ${duration}ms | ${query_with_values}`);
-            return result;
         };
         
         try {
@@ -251,6 +327,7 @@ class ConnectionManager {
      * Closes database pool, cache client, and queue connection
      */
     async shutdown() {
+        
         const errors = [];
 
         // Close database pool

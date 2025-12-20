@@ -65,8 +65,25 @@ function create_user_routes(user_handler, auth_middleware) {
     return router;
 }
 
+function create_ops_routes(ops_handler) {
+    
+    const router = express.Router();
+
+    // Health check endpoints (public)
+    router.get('/health', (req, res, next) => ops_handler.get_health(req, res, next));
+    router.get('/status', (req, res, next) => ops_handler.get_status(req, res, next));
+
+    // Feature flag endpoints (public read access)
+    router.get('/flags', (req, res, next) => ops_handler.get_feature_flags(req, res, next));
+    router.get('/flags/:key', (req, res, next) => ops_handler.get_feature_flag(req, res, next));
+    router.get('/flags/:key/check', (req, res, next) => ops_handler.check_feature_flag(req, res, next));
+
+    return router;
+}
+
 module.exports = {
     create_auth_routes,
     create_preset_routes,
-    create_user_routes
+    create_user_routes,
+    create_ops_routes
 };

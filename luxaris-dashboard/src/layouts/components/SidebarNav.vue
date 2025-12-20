@@ -11,14 +11,33 @@
         />
 
         <!-- Channels -->
-        <v-list-item
-            v-if="can('read', 'channels')"
-            prepend-icon="mdi-pound"
-            :title="$t('nav.channels')"
-            value="channels"
-            to="/dashboard/channels"
-            :active="isActive('/dashboard/channels')"
-        />
+        <v-list-group v-if="can('read', 'channels')" class="channels-group">
+            <template v-slot:activator="{ props }">
+                <v-list-item
+                    v-bind="props"
+                    prepend-icon="mdi-pound"
+                    :title="$t('nav.channels')"
+                />
+            </template>
+
+            <v-list-item
+                prepend-icon="mdi-link-variant"
+                :title="$t('nav.availableChannels')"
+                value="available-channels"
+                to="/dashboard/channels/available"
+                :active="isActive('/dashboard/channels/available')"
+                class="sub-menu-item"
+            />
+
+            <v-list-item
+                prepend-icon="mdi-link-box-variant"
+                :title="$t('nav.connectedChannels')"
+                value="connected-channels"
+                to="/dashboard/channels/connections"
+                :active="isActive('/dashboard/channels/connections')"
+                class="sub-menu-item"
+            />
+        </v-list-group>
 
         <!-- Posts -->
         <v-list-item
@@ -53,7 +72,7 @@
         <v-divider class="my-2" />
 
         <!-- Admin Section -->
-        <v-list-group v-if="isAdmin">
+        <v-list-group v-if="isAdmin" class="admin-group">
             <template v-slot:activator="{ props }">
                 <v-list-item
                     v-bind="props"
@@ -68,6 +87,16 @@
                 value="admin-users"
                 to="/dashboard/admin/users"
                 :active="isActive('/dashboard/admin/users')"
+                class="sub-menu-item"
+            />
+
+            <v-list-item
+                prepend-icon="mdi-link-variant"
+                :title="$t('nav.adminChannels')"
+                value="admin-channels"
+                to="/dashboard/admin/channels"
+                :active="isActive('/dashboard/admin/channels')"
+                class="sub-menu-item"
             />
 
             <v-list-item
@@ -76,6 +105,7 @@
                 value="admin-settings"
                 to="/dashboard/admin/settings"
                 :active="isActive('/dashboard/admin/settings')"
+                class="sub-menu-item"
             />
         </v-list-group>
     </v-list>
@@ -98,3 +128,32 @@ const isActive = (path) => {
     return route.path === path || route.path.startsWith(path + '/');
 };
 </script>
+
+<style scoped>
+/* Remove default indentation from Vuetify sub-menu items */
+.channels-group :deep(.v-list-group__items),
+.admin-group :deep(.v-list-group__items) {
+    padding-inline-start: 0 !important;
+    --indent-padding: 0 !important;
+}
+
+/* Remove padding from individual sub-menu items */
+.channels-group :deep(.v-list-group__items .v-list-item),
+.admin-group :deep(.v-list-group__items .v-list-item) {
+    padding-inline-start: 16px !important;
+}
+
+/* Add different background color to sub-menu items */
+.sub-menu-item {
+    background-color: rgba(255, 255, 255, 0.03) !important;
+}
+
+.sub-menu-item:hover {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Style active sub-menu items */
+.sub-menu-item.v-list-item--active {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+}
+</style>

@@ -11,7 +11,10 @@ export class Post {
         description = null,
         tags = [],
         status = 'draft',
-        metadata = {}
+        metadata = {},
+        created_at = null,
+        updated_at = null,
+        deleted_at = null
     } = {}) {
         this.id = id;
         this.user_id = user_id;
@@ -20,6 +23,9 @@ export class Post {
         this.tags = Array.isArray(tags) ? tags : [];
         this.status = status;
         this.metadata = metadata || {};
+        this.created_at = created_at;
+        this.updated_at = updated_at;
+        this.deleted_at = deleted_at;
     }
 
     /**
@@ -65,7 +71,10 @@ export class Post {
             title: data.title,
             description: data.description,
             tags: data.tags || [],
-            status: data.status
+            status: data.status,
+            created_at: data.created_at,
+            updated_at: data.updated_at,
+            deleted_at: data.deleted_at
         });
     }
 }

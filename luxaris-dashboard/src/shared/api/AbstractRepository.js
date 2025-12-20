@@ -11,6 +11,14 @@ export class AbstractRepository {
     }
 
     /**
+     * Get the HTTP client instance
+     * @returns {Object} HTTP client
+     */
+    getClient() {
+        return client;
+    }
+
+    /**
      * Clean query parameters by removing null, undefined, empty strings, and empty arrays
      * @param {Object} params - Query parameters to clean
      * @returns {Object} Cleaned query parameters

@@ -5,6 +5,7 @@ const RefreshTokenSchema = z.object({
 });
 
 class RefreshTokenUseCase {
+    
     constructor(auth_service) {
         this.auth_service = auth_service;
     }

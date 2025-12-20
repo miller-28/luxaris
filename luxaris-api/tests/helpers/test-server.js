@@ -1,12 +1,12 @@
 const Server = require('../../src/core/http/server');
-const error_handler = require('../../src/core/http/middleware/error-handler');
-const not_found_handler = require('../../src/core/http/middleware/not-found-handler');
-const origin_validation = require('../../src/core/http/middleware/origin-validation');
-const xss_sanitization = require('../../src/core/http/middleware/xss-sanitization');
+const error_handler = require('../../src/core/http/middleware/error-handler-middleware');
+const not_found_handler = require('../../src/core/http/middleware/not-found-handler-middleware');
+const origin_validation = require('../../src/core/http/middleware/origin-validation-middleware');
+const xss_sanitization = require('../../src/core/http/middleware/xss-sanitization-middleware');
 const { get_auth_config } = require('../../src/config/auth');
 const connection_manager = require('../../src/core/infrastructure/connection-manager');
 const { get_logger } = require('../../src/core/logging/system_logger');
-const { get_request_logger } = require('../../src/core/http/middleware/request_logger');
+const { get_request_logger } = require('../../src/core/http/middleware/request-logger');
 const EventRegistry = require('../../src/core/events/event-registry');
 const UserRepository = require('../../src/contexts/system/infrastructure/repositories/user-repository');
 const FeatureFlagRepository = require('../../src/contexts/system/infrastructure/repositories/feature-flag-repository');

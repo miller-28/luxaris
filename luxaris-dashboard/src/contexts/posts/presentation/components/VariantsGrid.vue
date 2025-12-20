@@ -36,7 +36,7 @@
                         <span>{{ variant.channelName }}</span>
                         <v-spacer />
                         <v-chip size="small" variant="tonal">
-                            {{ variant.platform }}
+                            {{ variant.channelName }}
                         </v-chip>
                     </v-card-title>
                     
@@ -57,7 +57,7 @@
                         </v-chip-group>
                         
                         <div class="text-caption text-grey mt-3">
-                            {{ $t('posts.variants.stats.characters') }}: {{ variant.character_count || 0 }}
+                            {{ $t('posts.variants.stats.characters') }}: {{ variant.characterCount || 0 }}
                         </div>
                     </v-card-text>
                     

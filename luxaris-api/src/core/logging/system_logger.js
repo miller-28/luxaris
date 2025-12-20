@@ -1,5 +1,5 @@
 const winston = require('winston');
-const SystemLogRepository = require('./system_log_repository');
+const SystemLogRepository = require('../infrastructure/repositories/system-log-repository');
 const connection_manager = require('../infrastructure/connection-manager');
 
 class SystemLogger {

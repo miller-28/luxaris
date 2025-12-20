@@ -1,6 +1,7 @@
 const { ZodError } = require('zod');
 
 class UserHandler {
+    
     constructor(user_service) {
         this.user_service = user_service;
     }

@@ -15,6 +15,7 @@ exports.setup = function(options, seedLink) {
 };
 
 exports.up = async function(db) {
+
     const schema = process.env.DB_SCHEMA || 'luxaris';
 
     // Add audit user columns to major editable entities
@@ -122,6 +123,7 @@ exports.up = async function(db) {
 };
 
 exports.down = async function(db) {
+    
     const schema = process.env.DB_SCHEMA || 'luxaris';
 
     // Remove audit user columns in reverse order

@@ -16,7 +16,7 @@ exports.setup = function(options, seedLink) {
 
 exports.up = async function(db) {
 
-	  const schema = process.env.DB_SCHEMA || 'luxaris';
+	const schema = process.env.DB_SCHEMA || 'luxaris';
 
     // Drop the incorrect unique constraint
     await db.runSql(`
@@ -38,7 +38,7 @@ exports.up = async function(db) {
 
 exports.down = async function(db) {
 
-	  const schema = process.env.DB_SCHEMA || 'luxaris';
+	const schema = process.env.DB_SCHEMA || 'luxaris';
 
     // Drop the partial unique index
     await db.runSql(`

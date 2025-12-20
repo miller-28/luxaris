@@ -4,6 +4,7 @@
  * Business logic for managing user channel connections
  */
 class ChannelConnectionService {
+    
     constructor(
         channel_connection_repository,
         channel_service,
@@ -20,8 +21,8 @@ class ChannelConnectionService {
     }
 
     /**
-   * Create new channel connection (after OAuth success)
-   */
+     * Create new channel connection (after OAuth success)
+     */
     async create_connection(principal, connection_data) {
         // Validate channel exists and is active
         await this.channel_service.validate_channel_active(connection_data.channel_id);
@@ -72,8 +73,8 @@ class ChannelConnectionService {
     }
 
     /**
-   * List user's channel connections with filters
-   */
+     * List user's channel connections with filters
+     */
     async list_connections(principal, filters = {}) {
         const result = await this.connection_repo.list_by_owner(principal.id, filters);
 
@@ -93,9 +94,9 @@ class ChannelConnectionService {
     }
 
     /**
-   * Get single connection with ownership check
-   */
-    async get_connection(principal, connection_id) {
+     * Get single connection with ownership check
+     */
+    async get_connection(principal, connection_id, sanitize = true) {
         const connection = await this.connection_repo.find_by_id(connection_id);
 
         if (!connection) {
@@ -115,15 +116,18 @@ class ChannelConnectionService {
             throw error;
         }
 
+        if (sanitize) {
+            // Sanitize auth state
+            connection.auth_state = this._sanitize_auth_state(connection.auth_state);
+        }   
         // Sanitize auth state
-        connection.auth_state = this._sanitize_auth_state(connection.auth_state);
 
         return connection;
     }
 
     /**
-   * Disconnect channel connection
-   */
+     * Disconnect channel connection
+     */
     async disconnect_connection(principal, connection_id) {
         // Get connection with ownership check
         const connection = await this.get_connection(principal, connection_id);
@@ -156,8 +160,18 @@ class ChannelConnectionService {
     }
 
     /**
-   * Update connection status (for error handling)
-   */
+     * Check if user has connection to a channel
+     */
+    async has_connection(principal, channel_id) {
+        return await this.connection_repo.has_connection_to_channel(
+            principal.id,
+            channel_id
+        );
+    }
+
+    /**
+     * Update connection status (for error handling)
+     */
     async update_connection_status(connection_id, status) {
         const updated = await this.connection_repo.update_status(connection_id, status);
 
@@ -170,8 +184,8 @@ class ChannelConnectionService {
     }
 
     /**
-   * Sanitize auth state - remove sensitive tokens
-   */
+     * Sanitize auth state - remove sensitive tokens
+     */
     _sanitize_auth_state(auth_state) {
         if (typeof auth_state === 'string') {
             auth_state = JSON.parse(auth_state);

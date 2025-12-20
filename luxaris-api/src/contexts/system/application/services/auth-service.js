@@ -1,8 +1,8 @@
 const argon2 = require('argon2');
 const jwt = require('jsonwebtoken');
 const { UserStatus, AuthMethod } = require('../../domain/models/user');
-const RoleRepository = require('../../infrastructure/persistence/role_repository');
-const AclRepository = require('../../infrastructure/persistence/acl_repository');
+const RoleRepository = require('../../infrastructure/repositories/role-repository');
+const AclRepository = require('../../infrastructure/repositories/acl-repository');
 const OAuthProviderRepository = require('../../infrastructure/repositories/oauth-provider-repository');
 const OAuthAccountRepository = require('../../infrastructure/repositories/oauth-account-repository');
 

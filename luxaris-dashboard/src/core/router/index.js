@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { systemRoutes } from '@/contexts/system/presentation/routes';
 import { postsRoutes } from '@/contexts/posts/presentation/routes';
+import { channelsRoutes } from '@/contexts/channels/presentation/routes';
 import { useAuthStore } from '@/contexts/system/infrastructure/store/authStore';
 import { TokenManager } from '@/contexts/system/application/tokenManager';
 
@@ -17,6 +18,7 @@ const routes = [
     },
     ...systemRoutes,
     ...postsRoutes,
+    ...channelsRoutes,
 ];
 
 export const router = createRouter({
@@ -39,15 +41,23 @@ router.beforeEach(async (to, from, next) => {
         tokenInStorage: localStorage.getItem('auth_token') ? 'exists' : 'null',
         hasUser: !!authStore.currentUser,
         userName: authStore.currentUser?.name,
+        userEmail: authStore.currentUser?.email,
+        userPermissions: authStore.currentUser?.permissions?.length || 0,
         requiresAuth: to.meta.requiresAuth,
         guestOnly: to.meta.guestOnly
     });
 
     // Load user if authenticated but user data not loaded
     if (isAuthenticated && !authStore.currentUser) {
+        console.log('[Router Guard] User not loaded, loading now...');
         try {
             await authStore.loadUser();
-            console.log('[Router Guard] User loaded successfully');
+            console.log('[Router Guard] User loaded successfully:', {
+                userName: authStore.currentUser?.name,
+                userEmail: authStore.currentUser?.email,
+                permissions: authStore.currentUser?.permissions?.length || 0,
+                roles: authStore.currentUser?.roles?.map(r => r.name).join(', ')
+            });
         } catch (error) {
             console.error('[Router Guard] Failed to load user:', error);
             // Failed to load user, token might be invalid

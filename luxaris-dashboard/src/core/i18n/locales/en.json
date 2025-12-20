@@ -76,10 +76,13 @@
     "scheduling": "Scheduling",
     "schedules": "Schedules",
     "channels": "Channels",
+    "availableChannels": "Available Channels",
+    "connectedChannels": "Connected Channels",
     "templates": "Templates",
     "generation": "AI Generation",
     "admin": "Admin",
     "users": "Users",
+    "adminChannels": "Channels",
     "settings": "Settings"
   },
   "user": {
@@ -104,7 +107,8 @@
     "error": "Error",
     "success": "Success",
     "confirm": "Confirm",
-    "close": "Close"
+    "close": "Close",
+    "never": "Never"
   },
   "dashboard": {
     "totalPosts": "Total Posts",
@@ -113,6 +117,61 @@
     "generated": "Generated",
     "recentActivity": "Recent Activity",
     "noRecentActivity": "No recent activity"
+  },
+  "channels": {
+    "title": "Channels",
+    "description": "Connect and manage your social media channels",
+    "availableDescription": "Connect your social media channels to start publishing",
+    "connectionsDescription": "Manage your connected social media channels",
+    "sections": {
+      "available": "Available Channels",
+      "connections": "Connected Channels"
+    },
+    "fields": {
+      "channelName": "Channel Name",
+      "accountUsername": "Username",
+      "supportedFeatures": "Supported Features",
+      "lastUsed": "Last Used",
+      "createdAt": "Connected At"
+    },
+    "actions": {
+      "connect": "Connect",
+      "disconnect": "Disconnect",
+      "reconnect": "Reconnect",
+      "test": "Test Connection",
+      "viewConnection": "View Connection"
+    },
+    "status": {
+      "connected": "Connected",
+      "active": "Active",
+      "error": "Error",
+      "expired": "Expired"
+    },
+    "filters": {
+      "all": "All",
+      "connected": "Connected",
+      "error": "With Errors",
+      "expired": "Expired"
+    },
+    "empty": {
+      "noChannels": "No channels available at the moment",
+      "noConnections": "No connections found"
+    },
+    "disconnect": {
+      "title": "Disconnect Channel",
+      "warning": "This will remove the connection to your social media channel.",
+      "confirmation": "Are you sure you want to disconnect this channel?"
+    },
+    "messages": {
+      "connectSuccess": "Channel connected successfully",
+      "connectError": "Failed to connect channel",
+      "disconnectSuccess": "Channel disconnected successfully",
+      "testSuccess": "Connection test successful",
+      "testError": "Connection test failed",
+      "oauthDenied": "OAuth authorization was denied",
+      "invalidCallback": "Invalid OAuth callback",
+      "invalidState": "Invalid OAuth state token"
+    }
   },
   "posts": {
     "title": "Posts",
@@ -130,7 +189,8 @@
       "description": "Description",
       "content": "Content",
       "tags": "Tags",
-      "status": "Status"
+      "status": "Status",
+      "updatedAt": "Updated"
     },
     "hints": {
       "tags": "Press Enter to add a tag"
@@ -143,7 +203,8 @@
       "publish": "Publish",
       "unpublish": "Unpublish",
       "edit": "Edit",
-      "delete": "Delete"
+      "delete": "Delete",
+      "actions": "Actions"
     },
     "status": {
       "draft": "Draft",
@@ -189,7 +250,8 @@
       },
       "stats": {
         "characters": "Characters",
-        "media": "Media {index}"
+        "media": "Media {index}",
+        "mediaUrls": "Media URLs"
       },
       "validation": {
         "maxMedia": "Maximum 10 media URLs"
@@ -199,11 +261,57 @@
         "message": "Are you sure you want to delete this variant? This action cannot be undone."
       }
     },
+    "messages": {
+      "createSuccess": "Post created successfully",
+      "updateSuccess": "Post updated successfully",
+      "deleteSuccess": "Post deleted successfully",
+      "publishSuccess": "Post published successfully",
+      "unpublishSuccess": "Post unpublished successfully",
+      "createError": "Failed to create post",
+      "updateError": "Failed to update post",
+      "deleteError": "Failed to delete post",
+      "publishError": "Failed to publish post",
+      "unpublishError": "Failed to unpublish post",
+      "variantCreateSuccess": "Variant created successfully",
+      "variantUpdateSuccess": "Variant updated successfully",
+      "variantDeleteSuccess": "Variant deleted successfully",
+      "variantCreateError": "Failed to create variant",
+      "variantUpdateError": "Failed to update variant",
+      "variantDeleteError": "Failed to delete variant"
+    },
     "errors": {
       "validationFailed": "Validation failed",
       "titleRequired": "Title is required",
       "descriptionRequired": "Description is required",
       "cannotPublish": "Cannot publish post"
     }
+  },
+  "admin": {
+    "channels": {
+      "title": "Channel Settings",
+      "description": "Configure OAuth credentials for social media channels. These credentials are required for channel connection creation.",
+      "configured": "Configured",
+      "notConfigured": "Not Configured",
+      "clientId": "Client ID",
+      "clientSecret": "Client Secret",
+      "configure": "Configure",
+      "reconfigure": "Reconfigure",
+      "delete": "Delete",
+      "linkedinDescription": "Configure LinkedIn OAuth credentials to allow users to connect their LinkedIn channels.",
+      "xDescription": "Configure X (Twitter) OAuth credentials to allow users to connect their X channels.",
+      "configureOAuth": "Configure OAuth - {channel}",
+      "configureInstructions": "Get your OAuth credentials from the developer portal:",
+      "openDeveloperPortal": "Open Developer Portal",
+      "saveSuccess": "{channel} OAuth credentials saved successfully",
+      "saveError": "Failed to save OAuth credentials",
+      "deleteSuccess": "{channel} OAuth credentials deleted successfully",
+      "deleteError": "Failed to delete OAuth credentials",
+      "deleteConfirmTitle": "Delete OAuth Credentials",
+      "deleteConfirmMessage": "Are you sure you want to delete {channel} OAuth credentials? Users will not be able to connect new channels until credentials are reconfigured.",
+      "loadError": "Failed to load channel status"
+    }
+  },
+  "validation": {
+    "required": "This field is required"
   }
 }

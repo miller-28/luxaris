@@ -2,7 +2,7 @@ const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
 const { RateLimiterMemory } = require('rate-limiter-flexible');
-const request_id_middleware = require('./middleware/request-id');
+const request_id_middleware = require('./middleware/request-id-middleware');
 
 class Server {
     

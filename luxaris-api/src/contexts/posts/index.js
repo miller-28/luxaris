@@ -12,9 +12,13 @@ const PostVariantRepository = require('./infrastructure/repositories/post_varian
 const PostService = require('./application/services/post_service');
 const PostVariantService = require('./application/services/post_variant_service');
 
-// HTTP Routes
-const create_post_routes = require('./interface/http/post_routes');
-const create_post_variant_routes = require('./interface/http/post_variant_routes');
+// HTTP Routes and Handlers
+const { 
+    create_post_routes, 
+    create_post_variant_routes,
+    PostHandler,
+    PostVariantHandler
+} = require('./interface/http/routes');
 
 /**
  * Initialize Posts Domain
@@ -46,6 +50,10 @@ function initialize_posts_domain(dependencies) {
         system_logger
     );
 
+    // Initialize handlers
+    const post_handler = new PostHandler(post_service);
+    const post_variant_handler = new PostVariantHandler(post_variant_service);
+
     return {
         // Repositories
         post_repository,
@@ -54,6 +62,10 @@ function initialize_posts_domain(dependencies) {
         // Services
         post_service,
         post_variant_service,
+
+        // Handlers
+        post_handler,
+        post_variant_handler,
 
         // Routes factory
         create_post_routes,

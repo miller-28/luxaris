@@ -51,7 +51,13 @@ export const authRepository = {
      * Get current user info
      */
     async getCurrentUser() {
+        console.log('[authRepository] Calling GET /auth/me...');
         const response = await client.get('/auth/me');
+        console.log('[authRepository] Response from /auth/me:', {
+            status: response.status,
+            hasData: !!response.data,
+            dataKeys: Object.keys(response.data || {})
+        });
         return response.data;
     },
 

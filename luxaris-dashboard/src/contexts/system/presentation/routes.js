@@ -5,6 +5,7 @@
 import LoginView from './views/LoginView.vue';
 import RegisterView from './views/RegisterView.vue';
 import GoogleOAuthCallback from './views/GoogleOAuthCallback.vue';
+import ChannelSettingsView from './views/ChannelSettingsView.vue';
 
 export const systemRoutes = [
     {
@@ -31,6 +32,17 @@ export const systemRoutes = [
         component: GoogleOAuthCallback,
         meta: {
             requiresAuth: false,
+        },
+    },
+    {
+        path: '/dashboard/admin/channels',
+        name: 'AdminChannels',
+        component: ChannelSettingsView,
+        meta: {
+            requiresAuth: true,
+            requiresAdmin: true,
+            permission: 'channels:configure',
+            title: 'Channel Settings'
         },
     },
 ];

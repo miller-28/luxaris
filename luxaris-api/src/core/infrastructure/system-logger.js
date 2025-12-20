@@ -1,0 +1,120 @@
+const winston = require('winston');
+const SystemLogRepository = require('./repositories/system-log-repository');
+const connection_manager = require('./connection-manager');
+
+class SystemLogger {
+
+    constructor() {
+        this.repository = connection_manager.is_initialized() ? new SystemLogRepository() : null;
+		
+        // Winston logger for console output
+        this.winston = winston.createLogger({
+            level: process.env.LOG_LEVEL || 'info',
+            format: winston.format.combine(
+                winston.format.timestamp(),
+                winston.format.json()
+            ),
+            transports: [
+                new winston.transports.Console({
+                    format: winston.format.combine(
+                        winston.format.printf(({ timestamp, level, message, logger, ...meta }) => {
+                            // Color map for different log levels
+                            const color_map = {
+                                'debug': '\x1b[36m', // cyan
+                                'info': '\x1b[32m',  // green
+                                'warn': '\x1b[33m',  // yellow
+                                'error': '\x1b[31m' // red
+                            };
+                            const color = color_map[level] || '\x1b[0m';
+                            const meta_str = Object.keys(meta).length ? ` | ${JSON.stringify(meta)}` : '';
+                            return `${timestamp} ${color}[${level}]\x1b[0m: [${logger}] ${message}${meta_str}`;
+                        })
+                    )
+                })
+            ]
+        });
+    }
+
+    async _log(level, logger, message, context = {}) {
+        // Ensure message is a string - properly stringify objects
+        const message_str = typeof message === 'string' ? message : JSON.stringify(message);
+		
+        // Map our log levels to Winston levels
+        const winston_level_map = {
+            'DEBUG': 'debug',
+            'INFO': 'info',
+            'WARNING': 'warn',
+            'ERROR': 'error',
+            'CRITICAL': 'error'
+        };
+		
+        // Always log to console via Winston
+        this.winston.log(winston_level_map[level], message_str, { ...context, logger });
+
+        // Persist to database if repository available and not DEBUG in production
+        if (this.repository && !(level === 'DEBUG' && process.env.NODE_ENV === 'production')) {
+            await this.repository.create({
+                level,
+                logger,
+                message: message_str,
+                timestamp: new Date(),
+                request_id: context.request_id || null,
+                principal_id: context.principal_id || null,
+                principal_type: context.principal_type || null,
+                context: context
+            });
+        }
+    }
+
+    async debug(logger, message, context = {}) {
+        await this._log('DEBUG', logger, message, context);
+    }
+
+    async info(logger, message, context = {}) {
+        await this._log('INFO', logger, message, context);
+    }
+
+    async warning(logger, message, context = {}) {
+        await this._log('WARNING', logger, message, context);
+    }
+
+    async error(logger, message, error, context = {}) {
+        const error_context = {
+            ...context,
+            error_message: error?.message,
+            error_name: error?.name,
+            stack_trace: error?.stack
+        };
+        await this._log('ERROR', logger, message, error_context);
+    }
+
+    async critical(logger, message, error, context = {}) {
+        const error_context = {
+            ...context,
+            error_message: error?.message,
+            error_name: error?.name,
+            stack_trace: error?.stack
+        };
+        await this._log('CRITICAL', logger, message, error_context);
+    }
+
+    async query(filters) {
+        if (!this.repository) {
+            throw new Error('Database repository not initialized');
+        }
+        return await this.repository.query(filters);
+    }
+}
+
+// Singleton instance
+let instance = null;
+
+module.exports = {
+    SystemLogger,
+    get_logger: () => {
+        if (!instance) {
+            instance = new SystemLogger();
+        }
+        return instance;
+    }
+};

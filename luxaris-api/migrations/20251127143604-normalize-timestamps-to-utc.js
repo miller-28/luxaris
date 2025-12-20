@@ -25,23 +25,23 @@ exports.up = async function(db) {
     // Identity tables - users
     try {
         await db.runSql(`
-      ALTER TABLE ${schema}.users 
-        ALTER COLUMN approved_at TYPE TIMESTAMP WITH TIME ZONE,
-        ALTER COLUMN created_at TYPE TIMESTAMP WITH TIME ZONE,
-        ALTER COLUMN updated_at TYPE TIMESTAMP WITH TIME ZONE,
-        ALTER COLUMN last_login_at TYPE TIMESTAMP WITH TIME ZONE;
-    `);
-    } catch (err) {
-        console.log('✗ Skipping users table:', err.message);
-    }
+          ALTER TABLE ${schema}.users 
+            ALTER COLUMN approved_at TYPE TIMESTAMP WITH TIME ZONE,
+            ALTER COLUMN created_at TYPE TIMESTAMP WITH TIME ZONE,
+            ALTER COLUMN updated_at TYPE TIMESTAMP WITH TIME ZONE,
+            ALTER COLUMN last_login_at TYPE TIMESTAMP WITH TIME ZONE;
+        `);
+        } catch (err) {
+            console.log('✗ Skipping users table:', err.message);
+        }
   
     // OAuth Providers
     try {
         await db.runSql(`
-      ALTER TABLE ${schema}.oauth_providers
-        ALTER COLUMN created_at TYPE TIMESTAMP WITH TIME ZONE,
-        ALTER COLUMN updated_at TYPE TIMESTAMP WITH TIME ZONE;
-    `);
+          ALTER TABLE ${schema}.oauth_providers
+            ALTER COLUMN created_at TYPE TIMESTAMP WITH TIME ZONE,
+            ALTER COLUMN updated_at TYPE TIMESTAMP WITH TIME ZONE;
+        `);
     } catch (err) {
         console.log('✗ Skipping oauth_providers table:', err.message);
     }
@@ -49,12 +49,12 @@ exports.up = async function(db) {
     // OAuth Accounts
     try {
         await db.runSql(`
-      ALTER TABLE ${schema}.oauth_accounts
-        ALTER COLUMN token_expires_at TYPE TIMESTAMP WITH TIME ZONE,
-        ALTER COLUMN created_at TYPE TIMESTAMP WITH TIME ZONE,
-        ALTER COLUMN updated_at TYPE TIMESTAMP WITH TIME ZONE,
-        ALTER COLUMN last_used_at TYPE TIMESTAMP WITH TIME ZONE;
-    `);
+          ALTER TABLE ${schema}.oauth_accounts
+            ALTER COLUMN token_expires_at TYPE TIMESTAMP WITH TIME ZONE,
+            ALTER COLUMN created_at TYPE TIMESTAMP WITH TIME ZONE,
+            ALTER COLUMN updated_at TYPE TIMESTAMP WITH TIME ZONE,
+            ALTER COLUMN last_used_at TYPE TIMESTAMP WITH TIME ZONE;
+        `);
     } catch (err) {
         console.log('✗ Skipping oauth_accounts table:', err.message);
     }
@@ -62,10 +62,10 @@ exports.up = async function(db) {
     // Service Accounts
     try {
         await db.runSql(`
-      ALTER TABLE ${schema}.service_accounts
-        ALTER COLUMN created_at TYPE TIMESTAMP WITH TIME ZONE,
-        ALTER COLUMN updated_at TYPE TIMESTAMP WITH TIME ZONE;
-    `);
+          ALTER TABLE ${schema}.service_accounts
+            ALTER COLUMN created_at TYPE TIMESTAMP WITH TIME ZONE,
+            ALTER COLUMN updated_at TYPE TIMESTAMP WITH TIME ZONE;
+        `);
     } catch (err) {
         console.log('✗ Skipping service_accounts table:', err.message);
     }
@@ -73,11 +73,11 @@ exports.up = async function(db) {
     // API Keys
     try {
         await db.runSql(`
-      ALTER TABLE ${schema}.api_keys
-        ALTER COLUMN created_at TYPE TIMESTAMP WITH TIME ZONE,
-        ALTER COLUMN revoked_at TYPE TIMESTAMP WITH TIME ZONE,
-        ALTER COLUMN last_used_at TYPE TIMESTAMP WITH TIME ZONE;
-    `);
+          ALTER TABLE ${schema}.api_keys
+            ALTER COLUMN created_at TYPE TIMESTAMP WITH TIME ZONE,
+            ALTER COLUMN revoked_at TYPE TIMESTAMP WITH TIME ZONE,
+            ALTER COLUMN last_used_at TYPE TIMESTAMP WITH TIME ZONE;
+        `);
     } catch (err) {
         console.log('✗ Skipping api_keys table:', err.message);
     }
@@ -85,10 +85,10 @@ exports.up = async function(db) {
     // Sessions
     try {
         await db.runSql(`
-      ALTER TABLE ${schema}.sessions
-        ALTER COLUMN created_at TYPE TIMESTAMP WITH TIME ZONE,
-        ALTER COLUMN expires_at TYPE TIMESTAMP WITH TIME ZONE;
-    `);
+          ALTER TABLE ${schema}.sessions
+            ALTER COLUMN created_at TYPE TIMESTAMP WITH TIME ZONE,
+            ALTER COLUMN expires_at TYPE TIMESTAMP WITH TIME ZONE;
+        `);
     } catch (err) {
         console.log('✗ Skipping sessions table:', err.message);
     }
@@ -96,10 +96,10 @@ exports.up = async function(db) {
     // System Logs
     try {
         await db.runSql(`
-      ALTER TABLE ${schema}.system_logs
-        ALTER COLUMN timestamp TYPE TIMESTAMP WITH TIME ZONE,
-        ALTER COLUMN created_at TYPE TIMESTAMP WITH TIME ZONE;
-    `);
+          ALTER TABLE ${schema}.system_logs
+            ALTER COLUMN timestamp TYPE TIMESTAMP WITH TIME ZONE,
+            ALTER COLUMN created_at TYPE TIMESTAMP WITH TIME ZONE;
+        `);
     } catch (err) {
         console.log('✗ Skipping system_logs table:', err.message);
     }
@@ -107,10 +107,10 @@ exports.up = async function(db) {
     // System Events
     try {
         await db.runSql(`
-      ALTER TABLE ${schema}.system_events
-        ALTER COLUMN timestamp TYPE TIMESTAMP WITH TIME ZONE,
-        ALTER COLUMN created_at TYPE TIMESTAMP WITH TIME ZONE;
-    `);
+          ALTER TABLE ${schema}.system_events
+            ALTER COLUMN timestamp TYPE TIMESTAMP WITH TIME ZONE,
+            ALTER COLUMN created_at TYPE TIMESTAMP WITH TIME ZONE;
+        `);
     } catch (err) {
         console.log('✗ Skipping system_events table:', err.message);
     }
@@ -118,10 +118,10 @@ exports.up = async function(db) {
     // Request Logs
     try {
         await db.runSql(`
-      ALTER TABLE ${schema}.request_logs
-        ALTER COLUMN timestamp TYPE TIMESTAMP WITH TIME ZONE,
-        ALTER COLUMN created_at TYPE TIMESTAMP WITH TIME ZONE;
-    `);
+          ALTER TABLE ${schema}.request_logs
+            ALTER COLUMN timestamp TYPE TIMESTAMP WITH TIME ZONE,
+            ALTER COLUMN created_at TYPE TIMESTAMP WITH TIME ZONE;
+        `);
     } catch (err) {
         console.log('✗ Skipping request_logs table:', err.message);
     }
@@ -129,10 +129,10 @@ exports.up = async function(db) {
     // Audit Logs
     try {
         await db.runSql(`
-      ALTER TABLE ${schema}.audit_logs
-        ALTER COLUMN timestamp TYPE TIMESTAMP WITH TIME ZONE,
-        ALTER COLUMN created_at TYPE TIMESTAMP WITH TIME ZONE;
-    `);
+          ALTER TABLE ${schema}.audit_logs
+            ALTER COLUMN timestamp TYPE TIMESTAMP WITH TIME ZONE,
+            ALTER COLUMN created_at TYPE TIMESTAMP WITH TIME ZONE;
+        `);
     } catch (err) {
         console.log('✗ Skipping audit_logs table:', err.message);
     }
@@ -149,104 +149,104 @@ exports.down = async function(db) {
   
     // Identity tables
     await db.runSql(`
-    ALTER TABLE ${schema}.users 
-      ALTER COLUMN approved_at TYPE TIMESTAMP,
-      ALTER COLUMN created_at TYPE TIMESTAMP,
-      ALTER COLUMN updated_at TYPE TIMESTAMP,
-      ALTER COLUMN last_login_at TYPE TIMESTAMP;
-    
-    ALTER TABLE ${schema}.oauth_providers
-      ALTER COLUMN created_at TYPE TIMESTAMP,
-      ALTER COLUMN updated_at TYPE TIMESTAMP;
-    
-    ALTER TABLE ${schema}.oauth_accounts
-      ALTER COLUMN token_expires_at TYPE TIMESTAMP,
-      ALTER COLUMN created_at TYPE TIMESTAMP,
-      ALTER COLUMN updated_at TYPE TIMESTAMP,
-      ALTER COLUMN last_used_at TYPE TIMESTAMP;
-    
-    ALTER TABLE ${schema}.service_accounts
-      ALTER COLUMN created_at TYPE TIMESTAMP,
-      ALTER COLUMN updated_at TYPE TIMESTAMP;
-    
-    ALTER TABLE ${schema}.api_keys
-      ALTER COLUMN created_at TYPE TIMESTAMP,
-      ALTER COLUMN revoked_at TYPE TIMESTAMP,
-      ALTER COLUMN last_used_at TYPE TIMESTAMP;
-    
-    ALTER TABLE ${schema}.sessions
-      ALTER COLUMN created_at TYPE TIMESTAMP,
-      ALTER COLUMN expires_at TYPE TIMESTAMP;
-  `);
+      ALTER TABLE ${schema}.users 
+        ALTER COLUMN approved_at TYPE TIMESTAMP,
+        ALTER COLUMN created_at TYPE TIMESTAMP,
+        ALTER COLUMN updated_at TYPE TIMESTAMP,
+        ALTER COLUMN last_login_at TYPE TIMESTAMP;
+      
+      ALTER TABLE ${schema}.oauth_providers
+        ALTER COLUMN created_at TYPE TIMESTAMP,
+        ALTER COLUMN updated_at TYPE TIMESTAMP;
+      
+      ALTER TABLE ${schema}.oauth_accounts
+        ALTER COLUMN token_expires_at TYPE TIMESTAMP,
+        ALTER COLUMN created_at TYPE TIMESTAMP,
+        ALTER COLUMN updated_at TYPE TIMESTAMP,
+        ALTER COLUMN last_used_at TYPE TIMESTAMP;
+      
+      ALTER TABLE ${schema}.service_accounts
+        ALTER COLUMN created_at TYPE TIMESTAMP,
+        ALTER COLUMN updated_at TYPE TIMESTAMP;
+      
+      ALTER TABLE ${schema}.api_keys
+        ALTER COLUMN created_at TYPE TIMESTAMP,
+        ALTER COLUMN revoked_at TYPE TIMESTAMP,
+        ALTER COLUMN last_used_at TYPE TIMESTAMP;
+      
+      ALTER TABLE ${schema}.sessions
+        ALTER COLUMN created_at TYPE TIMESTAMP,
+        ALTER COLUMN expires_at TYPE TIMESTAMP;
+    `);
 
     await db.runSql(`
-    ALTER TABLE ${schema}.acl_permissions
-      ALTER COLUMN created_at TYPE TIMESTAMP;
-    
-    ALTER TABLE ${schema}.acl_roles
-      ALTER COLUMN created_at TYPE TIMESTAMP,
-      ALTER COLUMN updated_at TYPE TIMESTAMP;
-  `);
+      ALTER TABLE ${schema}.acl_permissions
+        ALTER COLUMN created_at TYPE TIMESTAMP;
+      
+      ALTER TABLE ${schema}.acl_roles
+        ALTER COLUMN created_at TYPE TIMESTAMP,
+        ALTER COLUMN updated_at TYPE TIMESTAMP;
+    `);
 
     await db.runSql(`
-    ALTER TABLE ${schema}.system_logs
-      ALTER COLUMN timestamp TYPE TIMESTAMP,
-      ALTER COLUMN created_at TYPE TIMESTAMP;
-    
-    ALTER TABLE ${schema}.system_events
-      ALTER COLUMN timestamp TYPE TIMESTAMP,
-      ALTER COLUMN created_at TYPE TIMESTAMP;
-    
-    ALTER TABLE ${schema}.request_logs
-      ALTER COLUMN timestamp TYPE TIMESTAMP,
-      ALTER COLUMN created_at TYPE TIMESTAMP;
-    
-    ALTER TABLE ${schema}.audit_logs
-      ALTER COLUMN timestamp TYPE TIMESTAMP,
-      ALTER COLUMN created_at TYPE TIMESTAMP;
-  `);
+      ALTER TABLE ${schema}.system_logs
+        ALTER COLUMN timestamp TYPE TIMESTAMP,
+        ALTER COLUMN created_at TYPE TIMESTAMP;
+      
+      ALTER TABLE ${schema}.system_events
+        ALTER COLUMN timestamp TYPE TIMESTAMP,
+        ALTER COLUMN created_at TYPE TIMESTAMP;
+      
+      ALTER TABLE ${schema}.request_logs
+        ALTER COLUMN timestamp TYPE TIMESTAMP,
+        ALTER COLUMN created_at TYPE TIMESTAMP;
+      
+      ALTER TABLE ${schema}.audit_logs
+        ALTER COLUMN timestamp TYPE TIMESTAMP,
+        ALTER COLUMN created_at TYPE TIMESTAMP;
+    `);
 
     await db.runSql(`
-    ALTER TABLE ${schema}.feature_flags
-      ALTER COLUMN created_at TYPE TIMESTAMP,
-      ALTER COLUMN updated_at TYPE TIMESTAMP;
-  `);
+      ALTER TABLE ${schema}.feature_flags
+        ALTER COLUMN created_at TYPE TIMESTAMP,
+        ALTER COLUMN updated_at TYPE TIMESTAMP;
+    `);
 
     await db.runSql(`
-    ALTER TABLE ${schema}.channels
-      ALTER COLUMN created_at TYPE TIMESTAMP,
-      ALTER COLUMN updated_at TYPE TIMESTAMP;
-    
-    ALTER TABLE ${schema}.channel_connections
-      ALTER COLUMN created_at TYPE TIMESTAMP,
-      ALTER COLUMN updated_at TYPE TIMESTAMP,
-      ALTER COLUMN last_used_at TYPE TIMESTAMP,
-      ALTER COLUMN disconnected_at TYPE TIMESTAMP;
-  `);
+      ALTER TABLE ${schema}.channels
+        ALTER COLUMN created_at TYPE TIMESTAMP,
+        ALTER COLUMN updated_at TYPE TIMESTAMP;
+      
+      ALTER TABLE ${schema}.channel_connections
+        ALTER COLUMN created_at TYPE TIMESTAMP,
+        ALTER COLUMN updated_at TYPE TIMESTAMP,
+        ALTER COLUMN last_used_at TYPE TIMESTAMP,
+        ALTER COLUMN disconnected_at TYPE TIMESTAMP;
+    `);
 
     await db.runSql(`
-    ALTER TABLE ${schema}.posts
-      ALTER COLUMN created_at TYPE TIMESTAMP,
-      ALTER COLUMN updated_at TYPE TIMESTAMP;
-    
-    ALTER TABLE ${schema}.post_variants
-      ALTER COLUMN created_at TYPE TIMESTAMP,
-      ALTER COLUMN updated_at TYPE TIMESTAMP,
-      ALTER COLUMN published_at TYPE TIMESTAMP;
-  `);
+      ALTER TABLE ${schema}.posts
+        ALTER COLUMN created_at TYPE TIMESTAMP,
+        ALTER COLUMN updated_at TYPE TIMESTAMP;
+      
+      ALTER TABLE ${schema}.post_variants
+        ALTER COLUMN created_at TYPE TIMESTAMP,
+        ALTER COLUMN updated_at TYPE TIMESTAMP,
+        ALTER COLUMN published_at TYPE TIMESTAMP;
+    `);
 
     await db.runSql(`
-    ALTER TABLE ${schema}.post_templates
-      ALTER COLUMN created_at TYPE TIMESTAMP,
-      ALTER COLUMN updated_at TYPE TIMESTAMP;
-    
-    ALTER TABLE ${schema}.generation_sessions
-      ALTER COLUMN created_at TYPE TIMESTAMP,
-      ALTER COLUMN updated_at TYPE TIMESTAMP;
-    
-    ALTER TABLE ${schema}.generation_suggestions
-      ALTER COLUMN created_at TYPE TIMESTAMP;
-  `);
+      ALTER TABLE ${schema}.post_templates
+        ALTER COLUMN created_at TYPE TIMESTAMP,
+        ALTER COLUMN updated_at TYPE TIMESTAMP;
+      
+      ALTER TABLE ${schema}.generation_sessions
+        ALTER COLUMN created_at TYPE TIMESTAMP,
+        ALTER COLUMN updated_at TYPE TIMESTAMP;
+      
+      ALTER TABLE ${schema}.generation_suggestions
+        ALTER COLUMN created_at TYPE TIMESTAMP;
+    `);
 
 };
 

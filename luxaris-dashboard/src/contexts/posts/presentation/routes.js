@@ -11,6 +11,7 @@ export const postsRoutes = [
         component: PostsView,
         meta: { 
             requiresAuth: true,
+            permission: 'posts:read',
             title: 'Posts'
         }
     },
@@ -20,6 +21,7 @@ export const postsRoutes = [
         component: PostDetailView,
         meta: { 
             requiresAuth: true,
+            permission: 'posts:read',
             title: 'Post Detail'
         }
     }

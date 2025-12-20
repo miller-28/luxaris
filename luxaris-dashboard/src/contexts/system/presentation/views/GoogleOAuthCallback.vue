@@ -97,19 +97,44 @@ onMounted(async () => {
         TokenManager.setToken(token);
         TokenManager.setRefreshToken(refreshToken);
         
-        console.log('[OAuth Callback] Tokens stored, loading user...');
+        // Update authStore state with tokens
+        authStore.token = token;
+        authStore.refreshToken = refreshToken;
+        
+        console.log('[OAuth Callback] Tokens stored, loading user with permissions...');
+        
+        // Load user data including permissions before redirecting
         await authStore.loadUser();
         
-        console.log('[OAuth Callback] User loaded, redirecting to dashboard');
-        // Redirect to dashboard
-        setTimeout(() => {
-            router.push('/dashboard');
-        }, 1000);
+        console.log('[OAuth Callback] User loaded successfully:', {
+            userName: authStore.currentUser?.name,
+            userEmail: authStore.currentUser?.email,
+            hasPermissions: authStore.currentUser?.permissions?.length > 0,
+            permissionsCount: authStore.currentUser?.permissions?.length,
+            roles: authStore.currentUser?.roles?.map(r => r.name).join(', '),
+            isAdmin: authStore.currentUser?.is_root
+        });
+        
+        // Ensure permissions are fully loaded before navigating
+        if (!authStore.currentUser?.permissions || authStore.currentUser.permissions.length === 0) {
+            console.warn('[OAuth Callback] No permissions loaded, this may cause menu issues');
+        }
+        
+        // Wait a moment for UI to update, then redirect
+        loading.value = false;
+        await new Promise(resolve => setTimeout(resolve, 800));
+        
+        console.log('[OAuth Callback] Redirecting to dashboard with user:', {
+            hasUser: !!authStore.currentUser,
+            permissions: authStore.currentUser?.permissions?.length
+        });
+        
+        // Use replace instead of push to avoid back button issues
+        await router.replace('/dashboard');
     } catch (err) {
-        console.error('[OAuth Callback] Error:', err);
+        console.error('[OAuth Callback] Error loading user:', err);
         error.value = err.message || t('auth.oauth.authenticationFailedGeneric');
+        loading.value = false;
     }
-
-    loading.value = false;
 });
 </script>

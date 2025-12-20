@@ -1,6 +1,7 @@
 const connection_manager = require('../../../../core/infrastructure/connection-manager');
 
 class OAuthProviderRepository {
+    
     /**
      * Find OAuth provider by key (e.g., 'google', 'facebook')
      * @param {string} key - Provider key

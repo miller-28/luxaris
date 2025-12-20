@@ -4,16 +4,13 @@
  */
 import { defineStore } from 'pinia';
 import { postsRepository } from '../api/postsRepository';
-import { variantsRepository } from '../api/variantsRepository';
 import { Post } from '../../domain/models/Post';
-import { PostVariant } from '../../domain/models/PostVariant';
 
 export const usePostsStore = defineStore('posts', {
 
     state: () => ({
         posts: [],
         currentPost: null,
-        variants: [],
         loading: false,
         error: null,
         filters: {
@@ -95,9 +92,6 @@ export const usePostsStore = defineStore('posts', {
             try {
                 const response = await postsRepository.getById(id);
                 this.currentPost = Post.fromApi(response.data);
-                
-                // Load variants for this post
-                await this.loadVariants(id);
                 
                 return { success: true, post: this.currentPost };
             } catch (error) {
@@ -194,92 +188,6 @@ export const usePostsStore = defineStore('posts', {
         },
 
         /**
-         * Load variants for a post
-         */
-        async loadVariants(postId) {
-            try {
-                const response = await variantsRepository.list(postId);
-                this.variants = (response.data || []).map(variant => PostVariant.fromApi(variant));
-                return { success: true, variants: this.variants };
-            } catch (error) {
-                console.error('[Posts Store] Load variants failed:', error);
-                this.error = error.response?.data?.errors?.[0]?.error_description || 'Failed to load variants';
-                return { success: false, error: this.error };
-            }
-        },
-
-        /**
-         * Create variant
-         */
-        async createVariant(postId, variantData) {
-            this.loading = true;
-            this.error = null;
-
-            try {
-                const response = await variantsRepository.create(postId, variantData);
-                const newVariant = PostVariant.fromApi(response.data);
-                
-                this.variants.push(newVariant);
-                
-                return { success: true, variant: newVariant };
-            } catch (error) {
-                console.error('[Posts Store] Create variant failed:', error);
-                this.error = error.response?.data?.errors?.[0]?.error_description || 'Failed to create variant';
-                return { success: false, error: this.error };
-            } finally {
-                this.loading = false;
-            }
-        },
-
-        /**
-         * Update variant
-         */
-        async updateVariant(postId, variantId, variantData) {
-            this.loading = true;
-            this.error = null;
-
-            try {
-                const response = await variantsRepository.update(postId, variantId, variantData);
-                const updatedVariant = PostVariant.fromApi(response.data);
-                
-                const index = this.variants.findIndex(v => v.id === variantId);
-                if (index !== -1) {
-                    this.variants[index] = updatedVariant;
-                }
-                
-                return { success: true, variant: updatedVariant };
-            } catch (error) {
-                console.error('[Posts Store] Update variant failed:', error);
-                this.error = error.response?.data?.errors?.[0]?.error_description || 'Failed to update variant';
-                return { success: false, error: this.error };
-            } finally {
-                this.loading = false;
-            }
-        },
-
-        /**
-         * Delete variant
-         */
-        async deleteVariant(postId, variantId) {
-            this.loading = true;
-            this.error = null;
-
-            try {
-                await variantsRepository.remove(postId, variantId);
-                
-                this.variants = this.variants.filter(v => v.id !== variantId);
-                
-                return { success: true };
-            } catch (error) {
-                console.error('[Posts Store] Delete variant failed:', error);
-                this.error = error.response?.data?.errors?.[0]?.error_description || 'Failed to delete variant';
-                return { success: false, error: this.error };
-            } finally {
-                this.loading = false;
-            }
-        },
-
-        /**
          * Update filters
          */
         setFilters(filters) {
@@ -316,7 +224,6 @@ export const usePostsStore = defineStore('posts', {
          */
         clearCurrentPost() {
             this.currentPost = null;
-            this.variants = [];
         }
     }
 });

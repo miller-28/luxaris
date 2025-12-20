@@ -3,12 +3,12 @@
  * Vue composable for post variants operations
  */
 import { computed, ref } from 'vue';
-import { usePostsStore } from '../../infrastructure/store/postsStore';
+import { usePostVariantsStore } from '../../infrastructure/store/postVariantsStore';
 import { PostVariantCreateSchema, PostVariantUpdateSchema } from '../../domain/rules/postSchemas';
 
 export function usePostVariants() {
 
-    const store = usePostsStore();
+    const store = usePostVariantsStore();
     const validationErrors = ref([]);
 
     // State
@@ -24,39 +24,39 @@ export function usePostVariants() {
 
     const createVariant = async (postId, variantData) => {
         validationErrors.value = [];
-
-        // Validate
         try {
             const validatedData = PostVariantCreateSchema.parse(variantData);
-            
             const result = await store.createVariant(postId, validatedData);
             return result;
         } catch (error) {
-            const errors = error.errors.map(err => ({
-                field: err.path.join('.'),
-                message: err.message
-            }));
-            validationErrors.value = errors;
-            return { success: false, errors };
+            if (error.issues && Array.isArray(error.issues)) {
+                const errors = error.issues.map(err => ({
+                    field: err.path.join('.'),
+                    message: err.message
+                }));
+                validationErrors.value = errors;
+                return { success: false, errors };
+            }
+            return { success: false, error: error.message };
         }
     };
 
     const updateVariant = async (postId, variantId, variantData) => {
         validationErrors.value = [];
-
-        // Validate
         try {
             const validatedData = PostVariantUpdateSchema.parse(variantData);
-            
-            const result = await store.updateVariant(postId, variantId, validatedData);
+            const result = await store.updateVariant(variantId, validatedData);
             return result;
         } catch (error) {
-            const errors = error.errors.map(err => ({
-                field: err.path.join('.'),
-                message: err.message
-            }));
-            validationErrors.value = errors;
-            return { success: false, errors };
+            if (error.issues && Array.isArray(error.issues)) {
+                const errors = error.issues.map(err => ({
+                    field: err.path.join('.'),
+                    message: err.message
+                }));
+                validationErrors.value = errors;
+                return { success: false, errors };
+            }
+            return { success: false, error: error.message };
         }
     };
 
@@ -75,7 +75,7 @@ export function usePostVariants() {
 
     // Utilities
     const getVariantByChannel = (channelId) => {
-        return variants.value.find(v => v.channel_connection_id === channelId);
+        return variants.value.find(v => v.channel_id === channelId);
     };
 
     const getVariantsByPlatform = (platform) => {
@@ -83,7 +83,7 @@ export function usePostVariants() {
     };
 
     const hasVariantForChannel = (channelId) => {
-        return variants.value.some(v => v.channel_connection_id === channelId);
+        return variants.value.some(v => v.channel_id === channelId);
     };
 
     const getVariantStats = (variant) => {

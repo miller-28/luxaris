@@ -2,6 +2,7 @@ const { User, UserStatus } = require('../../domain/models/user');
 const connection_manager = require('../../../../core/infrastructure/connection-manager');
 
 class UserRepository {
+    
     async create(user_data) {
         const query = `
 			INSERT INTO users (

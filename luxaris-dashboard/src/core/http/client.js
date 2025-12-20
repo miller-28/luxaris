@@ -60,34 +60,54 @@ const request = async (method, url, data = null, config = {}) => {
     } catch (error) {
     
         // Luminara stores response body in error.data
-        console.error('HTTP Error:', error);
+        console.error('[HTTP Client] Error caught:', {
+            hasData: !!error.data,
+            hasResponse: !!error.response,
+            hasBody: !!error.body,
+            status: error.status,
+            message: error.message,
+            errorKeys: Object.keys(error),
+            fullError: error
+        });
     
         // Extract response data from Luminara error
         let responseData = null;
         let status = null;
     
+        // Try multiple possible locations for response data
         if (error.data) {
             // Luminara stores response body in error.data
             responseData = error.data;
             status = error.status;
+        } else if (error.body) {
+            // Some HTTP clients use body property
+            responseData = error.body;
+            status = error.status || error.statusCode;
         } else if (error.response) {
             // Fallback to standard response property
-            responseData = error.response.data;
-            status = error.response.status;
+            responseData = error.response.data || error.response.body;
+            status = error.response.status || error.response.statusCode;
         } else {
             // Last resort - generic error
-            status = error.status || 500;
+            status = error.status || error.statusCode || 500;
             responseData = { 
                 errors: [{ 
-                    error_code: 'UNKNOWN_ERROR',
-                    error_description: error.message || 'An unknown error occurred',
+                    error_code: 'NETWORK_ERROR',
+                    error_description: 'Unable to connect to server. Please check your connection.',
                     error_severity: 'error'
                 }]
             };
         }
+        
+        console.error('[HTTP Client] Extracted error data:', {
+            status,
+            responseData
+        });
     
         // Attach response data to error for proper handling
-        const enhancedError = new Error(error.message);
+        // Use error_description if available, fallback to generic message
+        const errorMessage = responseData?.errors?.[0]?.error_description || error.message || 'An error occurred';
+        const enhancedError = new Error(errorMessage);
         enhancedError.response = {
             status,
             data: responseData,
@@ -100,10 +120,16 @@ const request = async (method, url, data = null, config = {}) => {
             url.includes('/auth/register') || 
             url.includes('/auth/refresh');
         
+        // Check if this is an OAuth provider error (not our JWT error)
+        const isOAuthProviderError = 
+            responseData?.errors?.[0]?.error_code === 'TOKEN_EXPIRED' ||
+            responseData?.errors?.[0]?.error_code === 'INVALID_TOKEN';
+        
         if (
             status === 401 &&
             !config._retry &&
-            !isAuthEndpoint
+            !isAuthEndpoint &&
+            !isOAuthProviderError
         ) {
             try {
                 const refreshToken = TokenManager.getRefreshToken();

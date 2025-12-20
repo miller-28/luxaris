@@ -1,5 +1,6 @@
 <template>
     <v-card>
+
         <v-card-title class="d-flex align-center">
             <span>{{ isEditMode ? $t('posts.editPost') : $t('posts.createPost') }}</span>
             <v-spacer />
@@ -57,8 +58,9 @@
                     class="mb-4"
                 />
                 
+                <!-- Error alert hidden - errors shown via toast in parent component -->
                 <v-alert 
-                    v-if="error" 
+                    v-if="false && error" 
                     type="error" 
                     variant="tonal"
                     closable
@@ -72,11 +74,7 @@
                 
                 <div class="d-flex justify-space-between align-center">
                     <div class="text-caption text-grey">
-                        <div v-if="stats">
-                            {{ $t('posts.stats.words') }}: {{ stats.word_count }} | 
-                            {{ $t('posts.stats.characters') }}: {{ stats.character_count }} | 
-                            {{ $t('posts.stats.tags') }}: {{ stats.tag_count }}
-                        </div>
+                        {{ $t('posts.stats.tags') }}: {{ formData.tags?.length || 0 }}
                     </div>
                     
                     <div class="d-flex gap-2">
@@ -162,16 +160,6 @@ const rules = {
         return value.length <= 10 || $t('posts.validation.maxTags');
     }
 };
-
-const stats = computed(() => {
-    if (!formData.value.description) return null;
-    
-    return {
-        word_count: formData.value.description.split(/\s+/).filter(w => w.length > 0).length,
-        character_count: formData.value.description.length,
-        tag_count: formData.value.tags?.length || 0
-    };
-});
 
 const getFieldError = (field) => {
     const error = props.validationErrors.find(e => e.field === field);

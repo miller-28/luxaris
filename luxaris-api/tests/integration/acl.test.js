@@ -3,9 +3,9 @@ const TestUsers = require('../helpers/test-users');
 const DbCleaner = require('../helpers/db-cleaner');
 const request = require('supertest');
 const { User } = require('../../src/contexts/system/domain/models/user');
-const RoleRepository = require('../../src/contexts/system/infrastructure/persistence/role_repository');
-const PermissionRepository = require('../../src/contexts/system/infrastructure/persistence/permission_repository');
-const AclRepository = require('../../src/contexts/system/infrastructure/persistence/acl_repository');
+const RoleRepository = require('../../src/contexts/system/infrastructure/repositories/role-repository');
+const PermissionRepository = require('../../src/contexts/system/infrastructure/repositories/permission-repository');
+const AclRepository = require('../../src/contexts/system/infrastructure/repositories/acl-repository');
 const AclService = require('../../src/contexts/system/application/services/acl_service');
 
 describe('ACL Integration Tests', () => {

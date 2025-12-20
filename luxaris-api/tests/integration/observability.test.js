@@ -3,7 +3,7 @@ const DbCleaner = require('../helpers/db-cleaner');
 const request = require('supertest');
 const { get_logger } = require('../../src/core/logging/system_logger');
 const EventRegistry = require('../../src/core/events/event-registry');
-const { get_request_logger } = require('../../src/core/http/middleware/request_logger');
+const { get_request_logger } = require('../../src/core/http/middleware/request-logger');
 const { get_audit_service } = require('../../src/core/audit/audit_service');
 const crypto = require('crypto');
 

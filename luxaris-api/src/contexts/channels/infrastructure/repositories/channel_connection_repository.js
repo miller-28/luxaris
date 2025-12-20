@@ -6,19 +6,20 @@ const connection_manager = require('../../../../core/infrastructure/connection-m
  * Data access layer for channel_connections table (user OAuth connections)
  */
 class ChannelConnectionRepository {
+    
     /**
-   * Create new channel connection
-   */
+     * Create new channel connection
+     */
     async create(data) {
         const now = new Date().toISOString();
 
         const query = `
-      INSERT INTO channel_connections (
-        owner_principal_id, channel_id, display_name,
-        status, auth_state, created_at, updated_at, created_by_user_id
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-      RETURNING *
-    `;
+            INSERT INTO channel_connections (
+                owner_principal_id, channel_id, display_name,
+                status, auth_state, created_at, updated_at, created_by_user_id
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            RETURNING *
+        `;
 
         const values = [
             data.owner_principal_id,
@@ -36,38 +37,42 @@ class ChannelConnectionRepository {
     }
 
     /**
-   * Find connection by ID
-   */
+     * Find connection by ID
+     */
     async find_by_id(connection_id) {
         const query = `
-      SELECT 
-        cc.id, cc.owner_principal_id, cc.channel_id,
-        cc.display_name, cc.status, cc.auth_state,
-        cc.created_at, cc.updated_at, cc.last_used_at, cc.disconnected_at,
-        c.key as channel_key, c.name as channel_name, c.limits as channel_limits
-      FROM channel_connections cc
-      JOIN channels c ON cc.channel_id = c.id
-      WHERE cc.id = $1
-    `;
+            SELECT 
+                cc.id, cc.owner_principal_id, cc.channel_id,
+                cc.display_name, cc.account_username, cc.account_avatar,
+                cc.status, cc.error_message, cc.auth_state,
+                cc.created_at, cc.updated_at, cc.last_used_at, cc.disconnected_at,
+                c.key as channel_key, c.name as channel_name, c.icon as channel_icon,
+                c.color as channel_color, c.limits as channel_limits
+            FROM channel_connections cc
+            JOIN channels c ON cc.channel_id = c.id
+            WHERE cc.id = $1
+        `;
 
         const result = await connection_manager.get_db_pool().query(query, [connection_id]);
         return result.rows[0] || null;
     }
 
     /**
-   * List connections for a user with filters
-   */
+     * List connections for a user with filters
+     */
     async list_by_owner(owner_principal_id, filters = {}) {
         let query = `
-      SELECT 
-        cc.id, cc.owner_principal_id, cc.channel_id,
-        cc.display_name, cc.status, cc.auth_state,
-        cc.created_at, cc.updated_at, cc.last_used_at, cc.disconnected_at,
-        c.key as channel_key, c.name as channel_name, c.limits as channel_limits
-      FROM channel_connections cc
-      JOIN channels c ON cc.channel_id = c.id
-      WHERE cc.owner_principal_id = $1 AND cc.is_deleted = false
-    `;
+            SELECT 
+                cc.id, cc.owner_principal_id, cc.channel_id,
+                cc.display_name, cc.account_username, cc.account_avatar,
+                cc.status, cc.error_message, cc.auth_state,
+                cc.created_at, cc.updated_at, cc.last_used_at, cc.disconnected_at,
+                c.key as channel_key, c.name as channel_name, c.icon as channel_icon,
+                c.color as channel_color, c.limits as channel_limits
+            FROM channel_connections cc
+            JOIN channels c ON cc.channel_id = c.id
+            WHERE cc.owner_principal_id = $1 AND cc.is_deleted = false
+        `;
 
         const params = [owner_principal_id];
         let param_index = 2;
@@ -104,10 +109,10 @@ class ChannelConnectionRepository {
 
         // Get total count for pagination
         let count_query = `
-      SELECT COUNT(*) as total
-      FROM channel_connections cc
-      WHERE cc.owner_principal_id = $1
-    `;
+            SELECT COUNT(*) as total
+            FROM channel_connections cc
+            WHERE cc.owner_principal_id = $1
+        `;
 
         const count_params = [owner_principal_id];
         let count_param_index = 2;
@@ -143,103 +148,125 @@ class ChannelConnectionRepository {
     }
 
     /**
-   * Update connection status
-   */
+     * Update connection status
+     */
     async update_status(connection_id, status, updated_by_user_id = null) {
         const query = `
-      UPDATE channel_connections
-      SET 
-        status = $1,
-        updated_at = CURRENT_TIMESTAMP,
-        updated_by_user_id = $3,
-        disconnected_at = CASE WHEN $1 = 'disconnected' THEN CURRENT_TIMESTAMP ELSE disconnected_at END
-      WHERE id = $2
-      RETURNING *
-    `;
+            UPDATE channel_connections
+            SET 
+                status = $1,
+                updated_at = CURRENT_TIMESTAMP,
+                updated_by_user_id = $3,
+                disconnected_at = CASE WHEN $1 = 'disconnected' THEN CURRENT_TIMESTAMP ELSE disconnected_at END
+            WHERE id = $2
+            RETURNING *
+        `;
 
         const result = await connection_manager.get_db_pool().query(query, [status, connection_id, updated_by_user_id]);
         return result.rows[0] || null;
     }
 
     /**
-   * Update auth state
-   */
+     * Update auth state
+     */
     async update_auth_state(connection_id, auth_state, updated_by_user_id = null) {
         const query = `
-      UPDATE channel_connections
-      SET 
-        auth_state = $1,
-        updated_at = CURRENT_TIMESTAMP,
-        updated_by_user_id = $3
-      WHERE id = $2
-      RETURNING *
-    `;
+            UPDATE channel_connections
+            SET 
+                auth_state = $1,
+                updated_at = CURRENT_TIMESTAMP,
+                updated_by_user_id = $3
+            WHERE id = $2
+            RETURNING *
+        `;
 
         const result = await connection_manager.get_db_pool().query(query, [JSON.stringify(auth_state), connection_id, updated_by_user_id]);
         return result.rows[0] || null;
     }
 
     /**
-   * Update last used timestamp
-   */
+     * Update last used timestamp
+     */
     async mark_used(connection_id) {
         const query = `
-      UPDATE channel_connections
-      SET last_used_at = CURRENT_TIMESTAMP
-      WHERE id = $1
-    `;
+            UPDATE channel_connections
+            SET last_used_at = CURRENT_TIMESTAMP
+            WHERE id = $1
+        `;
 
         await connection_manager.get_db_pool().query(query, [connection_id]);
     }
 
     /**
-   * Disconnect connection (soft delete approach)
-   */
+     * Disconnect connection (soft delete approach)
+     */
     async disconnect(connection_id, updated_by_user_id = null) {
         const query = `
-      UPDATE channel_connections
-      SET 
-        status = 'disconnected',
-        auth_state = '{}',
-        disconnected_at = CURRENT_TIMESTAMP,
-        updated_at = CURRENT_TIMESTAMP,
-        updated_by_user_id = $2
-      WHERE id = $1
-      RETURNING *
-    `;
+            UPDATE channel_connections
+            SET 
+                status = 'disconnected',
+                auth_state = '{}',
+                disconnected_at = CURRENT_TIMESTAMP,
+                updated_at = CURRENT_TIMESTAMP,
+                updated_by_user_id = $2
+            WHERE id = $1
+            RETURNING *
+        `;
 
         const result = await connection_manager.get_db_pool().query(query, [connection_id, updated_by_user_id]);
         return result.rows[0] || null;
     }
 
     /**
-   * Check if connection exists and is owned by principal
-   */
+     * Check if connection exists and is owned by principal
+     */
     async is_owned_by(connection_id, principal_id) {
         const query = `
-      SELECT 1 
-      FROM channel_connections
-      WHERE id = $1 AND owner_principal_id = $2
-    `;
+            SELECT 1 
+            FROM channel_connections
+            WHERE id = $1 AND owner_principal_id = $2
+        `;
 
         const result = await connection_manager.get_db_pool().query(query, [connection_id, principal_id]);
         return result.rows.length > 0;
     }
 
     /**
-   * Check if user already has connection to a channel
-   */
+     * Check if user already has connection to a channel
+     */
     async has_connection_to_channel(principal_id, channel_id) {
         const query = `
-      SELECT id
-      FROM channel_connections
-      WHERE owner_principal_id = $1 
-        AND channel_id = $2 
-        AND status = 'connected'
-    `;
+            SELECT id
+            FROM channel_connections
+            WHERE owner_principal_id = $1 
+                AND channel_id = $2 
+                AND status = 'connected'
+        `;
 
         const result = await connection_manager.get_db_pool().query(query, [principal_id, channel_id]);
         return result.rows[0] || null;
+    }
+
+    /**
+     * List all connections for a specific channel (platform-wide)
+     */
+    async list_by_channel(channel_id) {
+        const query = `
+            SELECT 
+                cc.id, cc.owner_principal_id, cc.channel_id,
+                cc.display_name, cc.account_username, cc.account_avatar,
+                cc.status, cc.error_message, cc.auth_state,
+                cc.created_at, cc.updated_at, cc.last_used_at, cc.disconnected_at,
+                c.key as channel_key, c.name as channel_name, c.icon as channel_icon,
+                c.color as channel_color, c.limits as channel_limits
+            FROM channel_connections cc
+            JOIN channels c ON cc.channel_id = c.id
+            WHERE cc.channel_id = $1 AND cc.is_deleted = false
+            ORDER BY cc.created_at DESC
+        `;
+
+        const result = await connection_manager.get_db_pool().query(query, [channel_id]);
+        return result.rows;
     }
 }
 

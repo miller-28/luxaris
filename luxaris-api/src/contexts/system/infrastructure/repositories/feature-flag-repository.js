@@ -1,6 +1,7 @@
 const connection_manager = require('../../../../core/infrastructure/connection-manager');
 
 class FeatureFlagRepository {
+    
     async get_by_key(key) {
         const query = 'SELECT * FROM feature_flags WHERE key = $1';
         const result = await connection_manager.get_db_pool().query(query, [key]);

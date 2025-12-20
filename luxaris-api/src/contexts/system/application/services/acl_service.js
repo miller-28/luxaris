@@ -1,7 +1,8 @@
-const AclRepository = require('../../infrastructure/persistence/acl_repository');
-const PermissionRepository = require('../../infrastructure/persistence/permission_repository');
+const AclRepository = require('../../infrastructure/repositories/acl-repository');
+const PermissionRepository = require('../../infrastructure/repositories/permission-repository');
 
 class AclService {
+    
     constructor() {
         this.acl_repository = new AclRepository();
         this.permission_repository = new PermissionRepository();
@@ -144,6 +145,31 @@ class AclService {
 	 */
     async get_all_permissions(principal_id, principal_type, scope = null, scope_id = null) {
         return this.acl_repository.get_all_principal_permissions(principal_id, principal_type, scope, scope_id);
+    }
+
+    /**
+	 * Get both roles and flattened permissions for principal
+	 * Used for attaching to user object in auth middleware
+	 */
+    async get_principal_roles_and_permissions(principal_id, principal_type, scope = null, scope_id = null) {
+        // Get role assignments
+        const role_assignments = await this.acl_repository.get_principal_roles(principal_id, principal_type, scope, scope_id);
+        const roles = role_assignments.map(ra => ({
+            id: ra.role.id,
+            name: ra.role.name,
+            slug: ra.role.slug
+        }));
+
+        // Get all permissions (from roles + direct grants)
+        const permission_objects = await this.acl_repository.get_all_principal_permissions(principal_id, principal_type, scope, scope_id);
+        
+        // Flatten permissions to simple string format: "resource:action"
+        const permissions = permission_objects.map(({ permission }) => `${permission.resource}:${permission.action}`);
+
+        return {
+            roles,
+            permissions: [...new Set(permissions)] // Remove duplicates
+        };
     }
 
     /**

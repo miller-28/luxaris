@@ -32,6 +32,7 @@
         
         <!-- Post Content -->
         <v-card v-if="currentPost" class="mb-4">
+
                 <v-card-text>
                     <div class="text-h5 mb-3">{{ currentPost.title }}</div>
                     
@@ -138,7 +139,7 @@
         >
             <VariantEditPanel 
                 :variant="selectedVariant"
-                :channels="[]"
+                :channels="channels"
                 :loading="loading"
                 :error="error"
                 :validation-errors="variantValidationErrors"
@@ -171,18 +172,21 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import DashboardLayout from '@/layouts/DashboardLayout.vue';
-
-const { t: $t } = useI18n();
-import PostStatusBadge from '../components/PostStatusBadge.vue';
 import PostEditPanel from '../components/PostEditPanel.vue';
 import VariantsGrid from '../components/VariantsGrid.vue';
 import VariantEditPanel from '../components/VariantEditPanel.vue';
 import DeleteConfirmModal from '../components/DeleteConfirmModal.vue';
 import { usePosts } from '../../application/composables/usePosts';
 import { usePostVariants } from '../../application/composables/usePostVariants';
+import { useToast } from '@/shared/composables/useToast';
+import { useChannels } from '@/contexts/channels/application/composables/useChannels';
 
+const { t: $t } = useI18n();
+const { showToastSuccess, showToastError } = useToast();
 const router = useRouter();
 const route = useRoute();
+
+const { channels, loadChannels } = useChannels();
 
 const {
     currentPost,
@@ -279,12 +283,24 @@ const handleSubmit = async (formData) => {
     if (currentPost.value) {
         // Update existing post
         result = await updatePost(postId.value, formData);
+        if (result.success) {
+            showToastSuccess($t('posts.messages.updateSuccess'));
+        } else {
+            const errorMsg = result.errors?.[0]?.message || result.error || $t('posts.messages.updateError');
+            showToastError(errorMsg);
+        }
     } else {
         // Create new post
         result = await createPost(formData);
-        if (result.success && result.post) {
-            // Navigate to the new post's detail page
-            router.push(`/dashboard/posts/${result.post.id}`);
+        if (result.success) {
+            showToastSuccess($t('posts.messages.createSuccess'));
+            if (result.post) {
+                // Navigate to the new post's detail page
+                router.push(`/dashboard/posts/${result.post.id}`);
+            }
+        } else {
+            const errorMsg = result.errors?.[0]?.message || result.error || $t('posts.messages.createError');
+            showToastError(errorMsg);
         }
     }
     
@@ -297,8 +313,12 @@ const handleDelete = async () => {
     const result = await deletePost(postId.value);
     
     if (result.success) {
+        showToastSuccess($t('posts.messages.deleteSuccess'));
         deleteDialog.value = false;
         goBack();
+    } else {
+        const errorMsg = result.error || $t('posts.messages.deleteError');
+        showToastError(errorMsg);
     }
 };
 
@@ -306,7 +326,11 @@ const handlePublish = async () => {
     const result = await publishPost(postId.value);
     
     if (result.success) {
+        showToastSuccess($t('posts.messages.publishSuccess'));
         await loadPost(postId.value);
+    } else {
+        const errorMsg = result.error || $t('posts.messages.publishError');
+        showToastError(errorMsg);
     }
 };
 
@@ -314,7 +338,11 @@ const handleUnpublish = async () => {
     const result = await unpublishPost(postId.value);
     
     if (result.success) {
+        showToastSuccess($t('posts.messages.unpublishSuccess'));
         await loadPost(postId.value);
+    } else {
+        const errorMsg = result.error || $t('posts.messages.unpublishError');
+        showToastError(errorMsg);
     }
 };
 
@@ -323,8 +351,20 @@ const handleVariantSubmit = async (formData) => {
     
     if (selectedVariant.value) {
         result = await updateVariant(postId.value, selectedVariant.value.id, formData);
+        if (result.success) {
+            showToastSuccess($t('posts.messages.variantUpdateSuccess'));
+        } else {
+            const errorMsg = result.errors?.[0]?.message || result.error || $t('posts.messages.variantUpdateError');
+            showToastError(errorMsg);
+        }
     } else {
         result = await createVariant(postId.value, formData);
+        if (result.success) {
+            showToastSuccess($t('posts.messages.variantCreateSuccess'));
+        } else {
+            const errorMsg = result.errors?.[0]?.message || result.error || $t('posts.messages.variantCreateError');
+            showToastError(errorMsg);
+        }
     }
     
     if (result.success) {
@@ -339,8 +379,12 @@ const handleDeleteVariant = async () => {
     const result = await deleteVariant(postId.value, selectedVariant.value.id);
     
     if (result.success) {
+        showToastSuccess($t('posts.messages.variantDeleteSuccess'));
         deleteVariantDialog.value = false;
         selectedVariant.value = null;
+    } else {
+        const errorMsg = result.error || $t('posts.messages.variantDeleteError');
+        showToastError(errorMsg);
     }
 };
 
@@ -348,12 +392,18 @@ const formatDate = (dateString) => {
     return new Date(dateString).toLocaleString();
 };
 
-// Load post when ID changes
+// Load post and variants when ID changes
 watch(postId, async (newId) => {
     if (newId) {
         await loadPost(newId);
+        await loadVariants(newId);
     }
 }, { immediate: true });
+
+// Load channels on mount
+onMounted(async () => {
+    await loadChannels();
+});
 
 // Cleanup on unmount
 onMounted(() => {
@@ -362,3 +412,4 @@ onMounted(() => {
     };
 });
 </script>
+

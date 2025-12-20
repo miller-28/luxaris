@@ -1,6 +1,7 @@
 const { UserLoginSchema } = require('../../domain/models/user');
 
 class LoginUserUseCase {
+    
     constructor(auth_service) {
         this.auth_service = auth_service;
     }

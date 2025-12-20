@@ -80,16 +80,24 @@
                 {{ error }}
             </v-alert>
             
-            <!-- Posts Grid -->
-            <PostsGrid 
+            <!-- Posts Table -->
+            <PostsGridTable
                 :posts="posts"
                 :loading="loading"
-                @select="openPostDetail"
+                :items-per-page="itemsPerPage"
+                :page="currentPage"
+                :sort-by="sortBy"
+                :total-records="pagination.total"
+                @row-click="handleRowClick"
+                @view="handleViewPost"
                 @edit="openEditDialog"
                 @delete="openDeleteDialog"
                 @publish="handlePublish"
                 @unpublish="handleUnpublish"
                 @create="openCreateDialog"
+                @sort-change="handleSortChange"
+                @page-change="handlePageChange"
+                @per-page-change="handlePerPageChange"
             />
             
             <!-- Create/Edit Dialog -->
@@ -124,12 +132,14 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import DashboardLayout from '@/layouts/DashboardLayout.vue';
-import PostsGrid from '../components/PostsGrid.vue';
+import PostsGridTable from '../components/PostsGridTable.vue';
 import PostEditPanel from '../components/PostEditPanel.vue';
 import DeleteConfirmModal from '../components/DeleteConfirmModal.vue';
 import { usePosts } from '../../application/composables/usePosts';
+import { useToast } from '@/shared/composables/useToast';
 
 const { t: $t } = useI18n();
+const { showToastSuccess, showToastError } = useToast();
 const router = useRouter();
 
 const {
@@ -156,6 +166,9 @@ const tagsFilter = ref([]);
 const editDialog = ref(false);
 const deleteDialog = ref(false);
 const selectedPost = ref(null);
+const currentPage = ref(1);
+const itemsPerPage = ref(10);
+const sortBy = ref([{ key: 'updated_at', order: 'desc' }]);
 
 const statusOptions = [
     { title: $t('posts.status.all'), value: null },
@@ -165,14 +178,57 @@ const statusOptions = [
 
 // Watch filters and trigger server-side filtering
 watch([searchQuery, statusFilter, tagsFilter], () => {
+    currentPage.value = 1; // Reset to first page
     loadPosts({
         search: searchQuery.value,
         status: statusFilter.value,
-        tags: tagsFilter.value
+        tags: tagsFilter.value,
+        page: 1,
+        sortBy: sortBy.value[0]?.key,
+        sortOrder: sortBy.value[0]?.order
     }, true); // resetPage = true to go back to first page on filter change
 });
 
 // Actions
+const handlePageChange = (page) => {
+    currentPage.value = page;
+    loadPosts({
+        search: searchQuery.value,
+        status: statusFilter.value,
+        tags: tagsFilter.value,
+        page,
+        per_page: itemsPerPage.value,
+        sortBy: sortBy.value[0]?.key,
+        sortOrder: sortBy.value[0]?.order
+    }, false);
+};
+
+const handleSortChange = (newSort) => {
+    currentPage.value = 1;
+    loadPosts({
+        search: searchQuery.value,
+        status: statusFilter.value,
+        tags: tagsFilter.value,
+        page: 1,
+        sortBy: newSort[0]?.key,
+        sortOrder: newSort[0]?.order
+    }, true);
+};
+
+const handlePerPageChange = (perPage) => {
+    currentPage.value = 1;
+    itemsPerPage.value = perPage;
+    loadPosts({
+        search: searchQuery.value,
+        status: statusFilter.value,
+        tags: tagsFilter.value,
+        page: 1,
+        per_page: perPage,
+        sortBy: sortBy.value[0]?.key,
+        sortOrder: sortBy.value[0]?.order
+    }, true);
+};
+
 const openCreateDialog = () => {
     selectedPost.value = null;
     clearValidationErrors();
@@ -204,8 +260,20 @@ const handleSubmit = async (formData) => {
     
     if (selectedPost.value) {
         result = await updatePost(selectedPost.value.id, formData);
+        if (result.success) {
+            showToastSuccess($t('posts.messages.updateSuccess'));
+        } else {
+            const errorMsg = result.errors?.[0]?.message || result.error || $t('posts.messages.updateError');
+            showToastError(errorMsg);
+        }
     } else {
         result = await createPost(formData);
+        if (result.success) {
+            showToastSuccess($t('posts.messages.createSuccess'));
+        } else {
+            const errorMsg = result.errors?.[0]?.message || result.error || $t('posts.messages.createError');
+            showToastError(errorMsg);
+        }
     }
     
     if (result.success) {
@@ -220,8 +288,12 @@ const handleDelete = async () => {
     const result = await deletePost(selectedPost.value.id);
     
     if (result.success) {
+        showToastSuccess($t('posts.messages.deleteSuccess'));
         deleteDialog.value = false;
         selectedPost.value = null;
+    } else {
+        const errorMsg = result.error || $t('posts.messages.deleteError');
+        showToastError(errorMsg);
     }
 };
 
@@ -229,7 +301,11 @@ const handlePublish = async (post) => {
     const result = await publishPost(post.id);
     
     if (result.success) {
+        showToastSuccess($t('posts.messages.publishSuccess'));
         await loadPosts({}, false);
+    } else {
+        const errorMsg = result.error || $t('posts.messages.publishError');
+        showToastError(errorMsg);
     }
 };
 
@@ -237,11 +313,19 @@ const handleUnpublish = async (post) => {
     const result = await unpublishPost(post.id);
     
     if (result.success) {
+        showToastSuccess($t('posts.messages.unpublishSuccess'));
         await loadPosts({}, false);
+    } else {
+        const errorMsg = result.error || $t('posts.messages.unpublishError');
+        showToastError(errorMsg);
     }
 };
 
-const openPostDetail = (post) => {
+const handleRowClick = (post) => {
+    router.push(`/dashboard/posts/${post.id}`);
+};
+
+const handleViewPost = (post) => {
     router.push(`/dashboard/posts/${post.id}`);
 };
 
@@ -249,11 +333,18 @@ const clearFilters = () => {
     searchQuery.value = '';
     statusFilter.value = null;
     tagsFilter.value = [];
+    currentPage.value = 1;
     clearStoreFilters();
 };
 
 // Load posts on mount
 onMounted(async () => {
-    await loadPosts({}, true);
+    await loadPosts({ 
+        page: 1,
+        sortBy: 'updated_at',
+        sortOrder: 'desc'
+    }, true);
 });
 </script>
+
+

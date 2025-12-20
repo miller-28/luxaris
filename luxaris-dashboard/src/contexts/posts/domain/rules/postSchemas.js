@@ -53,9 +53,9 @@ export const PostUpdateSchema = z.object({
  * Post variant creation schema
  */
 export const PostVariantCreateSchema = z.object({
-    channel_connection_id: z.number()
-        .int('Channel connection ID must be an integer')
-        .positive('Channel connection ID must be positive'),
+    channel_id: z.number()
+        .int('Channel ID must be an integer')
+        .positive('Channel ID must be positive'),
     content: z.string()
         .trim()
         .min(1, 'Content is required')
@@ -71,9 +71,9 @@ export const PostVariantCreateSchema = z.object({
  * Post variant update schema
  */
 export const PostVariantUpdateSchema = z.object({
-    channel_connection_id: z.number()
-        .int('Channel connection ID must be an integer')
-        .positive('Channel connection ID must be positive')
+    channel_id: z.number()
+        .int('Channel ID must be an integer')
+        .positive('Channel ID must be positive')
         .optional(),
     content: z.string()
         .trim()

@@ -4,6 +4,7 @@
  * Business logic for managing post variants.
  */
 class PostVariantService {
+
     constructor(post_variant_repository, post_repository, channel_service, event_registry, logger) {
         this.post_variant_repository = post_variant_repository;
         this.post_repository = post_repository;
@@ -16,6 +17,7 @@ class PostVariantService {
 	 * Create a new post variant
 	 */
     async create_variant(principal, variant_data) {
+        
         this.logger.info('Creating post variant', { 
             principal_id: principal.id,
             post_id: variant_data.post_id,
@@ -42,6 +44,34 @@ class PostVariantService {
 
         // Validate channel is active
         await this.channel_service.validate_channel_active(variant_data.channel_id);
+
+        // Resolve active connection for this channel (global platform connection)
+        const active_connection = await this.channel_service.get_active_connection_for_channel(variant_data.channel_id);
+        
+        if (!active_connection) {
+            const error = new Error('No active connection found for this channel. Please connect your account first.');
+            error.status_code = 400;
+            error.error_code = 'NO_ACTIVE_CONNECTION';
+            error.severity = 'error';
+            throw error;
+        }
+
+        // Check if an active variant already exists for this post and channel
+        const existing_variant = await this.post_variant_repository.find_by_post_and_channel(
+            variant_data.post_id,
+            variant_data.channel_id
+        );
+
+        if (existing_variant) {
+            const error = new Error('An active variant already exists for this channel. Only one variant per channel is allowed.');
+            error.status_code = 409;
+            error.error_code = 'VARIANT_ALREADY_EXISTS';
+            error.severity = 'error';
+            throw error;
+        }
+
+        // Connection will be resolved dynamically at publish time
+        // No need to store it in the variant
 
         // Validate content
         if (!variant_data.content || variant_data.content.trim().length === 0) {

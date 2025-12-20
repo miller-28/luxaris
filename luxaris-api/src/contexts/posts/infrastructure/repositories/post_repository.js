@@ -75,8 +75,17 @@ class PostRepository {
             param_index++;
         }
 
-        // Order by created_at desc
-        query += ' ORDER BY created_at DESC';
+        // Sorting
+        const valid_sort_columns = ['title', 'description', 'tags', 'status', 'created_at', 'updated_at'];
+        const sort_by = filters.sortBy && valid_sort_columns.includes(filters.sortBy) ? filters.sortBy : 'updated_at';
+        const sort_order = filters.sortOrder === 'asc' ? 'ASC' : 'DESC';
+        
+        if (sort_by === 'tags') {
+            // Sort by first tag alphabetically
+            query += ` ORDER BY (tags->0)::text ${sort_order}`;
+        } else {
+            query += ` ORDER BY ${sort_by} ${sort_order}`;
+        }
 
         // Pagination
         const limit = filters.limit || 50;

@@ -13,16 +13,14 @@ class PostVariantRepository {
     async create(variant_data) {
         const query = `
 			INSERT INTO post_variants (
-				post_id, channel_id, channel_connection_id, content, media, 
+				post_id, channel_id, content, media, 
 				tone, source, status, metadata, created_by_user_id
-			) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+			) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 			RETURNING *
 		`;
-
         const values = [
             variant_data.post_id,
             variant_data.channel_id,
-            variant_data.channel_connection_id || null,
             variant_data.content,
             JSON.stringify(variant_data.media || {}),
             variant_data.tone || null,
@@ -31,7 +29,6 @@ class PostVariantRepository {
             JSON.stringify(variant_data.metadata || {}),
             variant_data.created_by_user_id || null
         ];
-
         const result = await connection_manager.get_db_pool().query(query, values);
         return this._map_to_model(result.rows[0]);
     }
@@ -42,11 +39,9 @@ class PostVariantRepository {
     async find_by_id(variant_id) {
         const query = 'SELECT * FROM post_variants WHERE id = $1';
         const result = await connection_manager.get_db_pool().query(query, [variant_id]);
-		
         if (result.rows.length === 0) {
             return null;
         }
-
         return this._map_to_model(result.rows[0]);
     }
 
@@ -55,11 +50,18 @@ class PostVariantRepository {
 	 */
     async list_by_post(post_id) {
         const query = `
-			SELECT * FROM post_variants 
-			WHERE post_id = $1 AND is_deleted = false
-			ORDER BY created_at DESC
+			SELECT 
+				pv.*,
+				json_build_object(
+					'id', c.id,
+					'key', c.key,
+					'name', c.display_name
+				) as channel
+			FROM post_variants pv
+			LEFT JOIN channels c ON pv.channel_id = c.id
+			WHERE pv.post_id = $1 AND pv.is_deleted = false
+			ORDER BY pv.created_at DESC
 		`;
-
         const result = await connection_manager.get_db_pool().query(query, [post_id]);
         return result.rows.map(row => this._map_to_model(row));
     }
@@ -165,11 +167,6 @@ class PostVariantRepository {
             param_index++;
         }
 
-        if (updates.channel_connection_id !== undefined) {
-            fields.push(`channel_connection_id = $${param_index}`);
-            params.push(updates.channel_connection_id);
-            param_index++;
-        }
 
         if (updates.metadata !== undefined) {
             fields.push(`metadata = $${param_index}`);
@@ -253,18 +250,34 @@ class PostVariantRepository {
     }
 
     /**
+	 * Find active variant by post and channel
+	 * Used to check if a variant already exists for a specific channel
+	 */
+    async find_by_post_and_channel(post_id, channel_id) {
+        const query = `
+			SELECT * FROM post_variants 
+			WHERE post_id = $1 AND channel_id = $2 AND is_deleted = false
+			ORDER BY created_at DESC
+			LIMIT 1
+		`;
+        const result = await connection_manager.get_db_pool().query(query, [post_id, channel_id]);
+        if (result.rows.length === 0) {
+            return null;
+        }
+        return this._map_to_model(result.rows[0]);
+    }
+
+    /**
 	 * Map database row to PostVariant model
 	 */
     _map_to_model(row) {
         if (!row) {
             return null;
         }
-
         return new PostVariant({
             id: row.id,
             post_id: row.post_id,
             channel_id: row.channel_id,
-            channel_connection_id: row.channel_connection_id,
             content: row.content,
             media: row.media,
             tone: row.tone,
@@ -273,7 +286,8 @@ class PostVariantRepository {
             metadata: row.metadata,
             created_at: row.created_at,
             updated_at: row.updated_at,
-            published_at: row.published_at
+            published_at: row.published_at,
+            channel: row.channel || null
         });
     }
 }

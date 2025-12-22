@@ -20,15 +20,13 @@
                     :headers="computedHeaders"
                     :items="items"
                     :loading="loading"
-                    :items-per-page="itemsPerPage"
-                    :page="page"
-                    v-model:sort-by="localSortBy"
+                    :items-per-page="items.length"
+                    :sort-by="sortBy"
                     hide-default-footer
                     @click:row="handleRowClick"
                     @update:sort-by="handleSortChange"
                     hover
                     :class="tableClass"
-                    must-sort
                     :sort-asc-icon="'mdi-arrow-up'"
                     :sort-desc-icon="'mdi-arrow-down'"
                 >
@@ -295,7 +293,20 @@ const handleRowClick = (event, { item }) => {
 };
 
 const handleSortChange = (newSort) => {
-    emit('sort-change', newSort);
+    // If user tries to clear sort (third click), keep the current sort but reverse direction
+    if (!newSort || newSort.length === 0) {
+        const currentSort = props.sortBy[0];
+        if (currentSort) {
+            // Toggle between asc and desc, never allow no sort
+            const toggledSort = [{
+                key: currentSort.key,
+                order: currentSort.order === 'asc' ? 'desc' : 'asc'
+            }];
+            emit('sort-change', toggledSort);
+        }
+    } else {
+        emit('sort-change', newSort);
+    }
 };
 
 const handlePageChange = (page) => {

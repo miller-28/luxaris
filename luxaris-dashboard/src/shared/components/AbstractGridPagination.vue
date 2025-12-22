@@ -107,7 +107,7 @@ onUnmounted(() => {
     window.removeEventListener('resize', updateIsMobile);
 });
 
-const perPageCounts = [1, 3, 10, 25, 50, 100];
+const perPageCounts = [1, 3, 10, 25, 50, 100, 250, 500, 1000];
 
 const perPageOptions = computed(() => perPageCounts.map((count) => ({
     title: count.toString(),

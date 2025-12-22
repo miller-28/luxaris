@@ -60,7 +60,7 @@ class PostHandler {
                 status: req.query.status,
                 tags: req.query.tags ? req.query.tags.split(',') : undefined,
                 search: req.query.search,
-                limit: Math.min(parseInt(req.query.limit) || 50, 100),
+                limit: Math.min(parseInt(req.query.limit) || 50, 1000), // Allow up to 1000 records
                 offset: parseInt(req.query.offset) || 0,
                 sortBy: req.query.sortBy,
                 sortOrder: req.query.sortOrder

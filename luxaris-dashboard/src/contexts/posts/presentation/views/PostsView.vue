@@ -26,7 +26,7 @@
                 :items-per-page="itemsPerPage"
                 :page="currentPage"
                 :sort-by="sortBy"
-                :total-records="pagination.total"
+                :total-records="postsStore.pagination.total"
                 :selectable="true"
                 :selected-items="postsStore.selectedItems"
                 @update:selected-items="postsStore.setSelectedItems"
@@ -71,7 +71,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import DashboardLayout from '@/layouts/DashboardLayout.vue';
@@ -89,35 +89,57 @@ const { showToastSuccess, showToastError } = useToast();
 const router = useRouter();
 const postsStore = usePostsStore();
 
+// Local state for posts (loaded fresh each time)
+const posts = ref([]);
+const loading = ref(false);
+const error = ref(null);
+const validationErrors = ref([]);
+
 const {
-    posts,
-    loading,
-    error,
-    validationErrors,
-    pagination,
-    loadPosts,
     createPost,
     updatePost,
     deletePost,
     publishPost,
-    unpublishPost,
-    clearFilters: clearStoreFilters,
-    clearError,
-    clearValidationErrors
+    unpublishPost
 } = usePosts();
 
-// Local state
-const filters = ref({
-    search: '',
-    status: null,
-    tags: []
+const clearError = () => { error.value = null; };
+const clearValidationErrors = () => { validationErrors.value = []; };
+
+// Use store state directly instead of local refs for persistence
+const filters = computed({
+    get: () => postsStore.filters,
+    set: (value) => {
+        postsStore.filters = { ...postsStore.filters, ...value };
+    }
 });
+
+const currentPage = computed({
+    get: () => postsStore.pagination.page,
+    set: (value) => {
+        postsStore.pagination.page = value;
+    }
+});
+
+const itemsPerPage = computed({
+    get: () => postsStore.pagination.limit,
+    set: (value) => {
+        postsStore.pagination.limit = value;
+    }
+});
+
+// Local state for dialog and non-persistent data
 const editDialog = ref(false);
 const deleteDialog = ref(false);
 const selectedPost = ref(null);
-const currentPage = ref(1);
-const itemsPerPage = ref(10);
-const sortBy = ref([{ key: 'updated_at', order: 'desc' }]);
+
+// Sort state persisted in store
+const sortBy = computed({
+    get: () => postsStore.sortBy,
+    set: (value) => {
+        postsStore.sortBy = value;
+    }
+});
 
 // Filter field definitions for AbstractGridTableFilter
 const filterFields = computed(() => [
@@ -185,21 +207,23 @@ const handleSearch = (filters) => {
 // Handle clear filters from AbstractGridTableFilter
 const handleClearFilters = () => {
     currentPage.value = 1;
-    clearStoreFilters();
+    postsStore.clearFilters();
     loadPostsWithFilters();
 };
 
 // Load posts with current filters
-const loadPostsWithFilters = () => {
-    loadPosts({
-        search: filters.value.search,
-        status: filters.value.status,
-        tags: filters.value.tags,
+const loadPostsWithFilters = async () => {
+    loading.value = true;
+    await postsStore.loadPosts({
+        ...filters.value,
         page: currentPage.value,
         per_page: itemsPerPage.value,
         sortBy: sortBy.value[0]?.key,
         sortOrder: sortBy.value[0]?.order
-    }, currentPage.value === 1);
+    });
+    // Copy fresh posts from store to local ref
+    posts.value = [...postsStore.posts];
+    loading.value = false;
 };
 
 // Actions
@@ -261,12 +285,20 @@ const openDeleteDialog = (post) => {
 const handleSubmit = async (formData) => {
     let result;
     
+    // Clear previous errors
+    clearValidationErrors();
+    clearError();
+    
     if (selectedPost.value) {
         result = await updatePost(selectedPost.value.id, formData);
         if (result.success) {
             showToastSuccess($t('posts.messages.updateSuccess'));
         } else {
+            if (result.errors) {
+                validationErrors.value = result.errors;
+            }
             const errorMsg = result.errors?.[0]?.message || result.error || $t('posts.messages.updateError');
+            error.value = errorMsg;
             showToastError(errorMsg);
         }
     } else {
@@ -274,7 +306,11 @@ const handleSubmit = async (formData) => {
         if (result.success) {
             showToastSuccess($t('posts.messages.createSuccess'));
         } else {
+            if (result.errors) {
+                validationErrors.value = result.errors;
+            }
             const errorMsg = result.errors?.[0]?.message || result.error || $t('posts.messages.createError');
+            error.value = errorMsg;
             showToastError(errorMsg);
         }
     }
@@ -332,17 +368,10 @@ const handleViewPost = (post) => {
     router.push(`/dashboard/posts/${post.id}`);
 };
 
-// Load posts on mount
+// Always reload posts on mount to ensure fresh data, but preserve filters/pagination state
 onMounted(async () => {
+    // Load fresh posts with stored filters and pagination
     await loadPostsWithFilters();
-});
-
-// Watch for errors and show as toast
-watch(error, (newError) => {
-    if (newError) {
-        showToastError(newError);
-        clearError();
-    }
 });
 </script>
 

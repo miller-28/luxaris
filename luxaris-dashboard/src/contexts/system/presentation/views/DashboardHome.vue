@@ -51,7 +51,7 @@
                 </v-col>
             </v-row>
 
-            <v-card elevation="2">
+            <v-card class="ma-4" elevation="2">
                 <v-card-title>{{ $t('dashboard.recentActivity') }}</v-card-title>
                 <v-card-text>
                     <p class="text-grey">{{ $t('dashboard.noRecentActivity') }}</p>

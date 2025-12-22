@@ -21,7 +21,8 @@ export const usePostsStore = defineStore('posts', {
             page: 1,
             limit: 10,
             total: 0
-        }
+        },
+        sortBy: [{ key: 'updated_at', order: 'desc' }]
     }),
 
     getters: AbstractStore.mergeGetters({
@@ -65,6 +66,7 @@ export const usePostsStore = defineStore('posts', {
                     }
                 );
 
+                // Assign new array to trigger reactivity
                 this.posts = (response.data || []).map(post => Post.fromApi(post));
                 this.pagination.total = response.pagination?.total || this.posts.length;
                 

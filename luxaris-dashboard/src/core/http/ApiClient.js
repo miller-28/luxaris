@@ -161,7 +161,7 @@ const request = async (method, url, data = null, config = {}) => {
 };
 
 // Export HTTP client with common methods
-const client = {
+const ApiClient = {
     get: (url, config) => request('get', url, null, config),
     post: (url, data, config) => request('post', url, data, config),
     put: (url, data, config) => request('put', url, data, config),
@@ -169,5 +169,5 @@ const client = {
     delete: (url, config) => request('delete', url, null, config),
 };
 
-export default client;
+export default ApiClient;
 export { baseURL };

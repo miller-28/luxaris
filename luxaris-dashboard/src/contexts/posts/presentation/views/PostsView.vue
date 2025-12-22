@@ -1,93 +1,35 @@
 <template>
     <DashboardLayout>
+        <div class="page-content">
 
-        <!-- Header -->
-        <div class="d-flex align-center justify-space-between mb-6">
-            <h1 class="text-h4">{{ $t('posts.title') }}</h1>
-            <v-btn 
-                color="primary" 
-                prepend-icon="mdi-plus"
-                @click="openCreateDialog"
-            >
-                {{ $t('posts.createPost') }}
-            </v-btn>
-        </div>
-        
-        <!-- Filters -->
-            <v-card class="mb-4">
-                <v-card-text>
-                    <v-row>
-                        <v-col cols="12" md="4">
-                            <v-text-field
-                                v-model="searchQuery"
-                                :label="$t('posts.searchPosts')"
-                                prepend-inner-icon="mdi-magnify"
-                                variant="outlined"
-                                density="compact"
-                                clearable
-                                hide-details
-                            />
-                        </v-col>
-                        
-                        <v-col cols="12" md="3">
-                            <v-select
-                                v-model="statusFilter"
-                                :label="$t('posts.fields.status')"
-                                :items="statusOptions"
-                                variant="outlined"
-                                density="compact"
-                                clearable
-                                hide-details
-                            />
-                        </v-col>
-                        
-                        <v-col cols="12" md="3">
-                            <v-combobox
-                                v-model="tagsFilter"
-                                :label="$t('posts.fields.tags')"
-                                multiple
-                                chips
-                                variant="outlined"
-                                density="compact"
-                                clearable
-                                hide-details
-                            />
-                        </v-col>
-                        
-                        <v-col cols="12" md="2" class="d-flex align-center">
-                            <v-btn 
-                                color="grey" 
-                                variant="text"
-                                @click="clearFilters"
-                                block
-                            >
-                                {{ $t('posts.clearFilters') }}
-                            </v-btn>
-                        </v-col>
-                    </v-row>
-                </v-card-text>
-            </v-card>
+            <!-- Header -->
+            <AbstractPageHeader
+                :title="$t('posts.title')"
+                :subtitle="$t('posts.subtitle')"
+                :actions="pageActions"
+            />
             
-            <!-- Error Alert -->
-            <v-alert 
-                v-if="error" 
-                type="error" 
-                variant="tonal"
-                closable
-                @click:close="clearError"
-                class="mb-4"
-            >
-                {{ error }}
-            </v-alert>
+            <!-- Filters -->
+            <AbstractGridTableFilter
+                v-model="filters"
+                :filter-fields="filterFields"
+                @filter-change="handleFilterChange"
+                @clear-filters="handleClearFilters"
+                @search="handleSearch"
+            />
             
             <!-- Posts Table -->
             <PostsGridTable
+                class="flex-1"
                 :posts="posts"
                 :loading="loading"
                 :items-per-page="itemsPerPage"
                 :page="currentPage"
                 :sort-by="sortBy"
                 :total-records="pagination.total"
+                :selectable="true"
+                :selected-items="postsStore.selectedItems"
+                @update:selected-items="postsStore.setSelectedItems"
                 @row-click="handleRowClick"
                 @view="handleViewPost"
                 @edit="openEditDialog"
@@ -124,6 +66,7 @@
                 :message="$t('posts.delete.message')"
                 @confirm="handleDelete"
             />
+        </div>
     </DashboardLayout>
 </template>
 
@@ -132,15 +75,19 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import DashboardLayout from '@/layouts/DashboardLayout.vue';
+import AbstractPageHeader from '@/shared/components/AbstractPageHeader.vue';
+import AbstractGridTableFilter from '@/shared/components/AbstractGridTableFilter.vue';
 import PostsGridTable from '../components/PostsGridTable.vue';
 import PostEditPanel from '../components/PostEditPanel.vue';
 import DeleteConfirmModal from '../components/DeleteConfirmModal.vue';
 import { usePosts } from '../../application/composables/usePosts';
+import { usePostsStore } from '../../infrastructure/store/postsStore';
 import { useToast } from '@/shared/composables/useToast';
 
 const { t: $t } = useI18n();
 const { showToastSuccess, showToastError } = useToast();
 const router = useRouter();
+const postsStore = usePostsStore();
 
 const {
     posts,
@@ -160,9 +107,11 @@ const {
 } = usePosts();
 
 // Local state
-const searchQuery = ref('');
-const statusFilter = ref(null);
-const tagsFilter = ref([]);
+const filters = ref({
+    search: '',
+    status: null,
+    tags: []
+});
 const editDialog = ref(false);
 const deleteDialog = ref(false);
 const selectedPost = ref(null);
@@ -170,63 +119,105 @@ const currentPage = ref(1);
 const itemsPerPage = ref(10);
 const sortBy = ref([{ key: 'updated_at', order: 'desc' }]);
 
-const statusOptions = [
-    { title: $t('posts.status.all'), value: null },
-    { title: $t('posts.status.draft'), value: 'draft' },
-    { title: $t('posts.status.published'), value: 'published' }
-];
+// Filter field definitions for AbstractGridTableFilter
+const filterFields = computed(() => [
+    {
+        key: 'search',
+        type: 'text',
+        label: $t('posts.searchPosts'),
+        icon: 'mdi-magnify',
+        cols: 12,
+        md: 4
+    },
+    {
+        key: 'status',
+        type: 'select',
+        label: $t('posts.fields.status'),
+        options: [
+            { title: $t('posts.status.all'), value: null },
+            { title: $t('posts.status.draft'), value: 'draft' },
+            { title: $t('posts.status.published'), value: 'published' }
+        ],
+        cols: 12,
+        md: 3
+    },
+    {
+        key: 'tags',
+        type: 'combobox',
+        label: $t('posts.fields.tags'),
+        cols: 12,
+        md: 2
+    },
+    {
+        key: 'search',
+        type: 'search-button',
+        label: $t('posts.search'),
+        icon: 'mdi-magnify',
+        color: 'primary',
+        variant: 'flat',
+        cols: 12,
+        md: 'auto'
+    },
+    {
+        key: 'clear',
+        type: 'clear-button',
+        label: $t('posts.clearFilters'),
+        icon: 'mdi-filter-remove',
+        color: 'grey',
+        variant: 'flat',
+        cols: 12,
+        md: 'auto'
+    }
+]);
 
-// Watch filters and trigger server-side filtering
-watch([searchQuery, statusFilter, tagsFilter], () => {
+// Handle filter changes from AbstractGridTableFilter
+const handleFilterChange = (newFilters) => {
     currentPage.value = 1; // Reset to first page
+    loadPostsWithFilters();
+};
+
+// Handle search button click
+const handleSearch = (filters) => {
+    currentPage.value = 1;
+    loadPostsWithFilters();
+};
+
+// Handle clear filters from AbstractGridTableFilter
+const handleClearFilters = () => {
+    currentPage.value = 1;
+    clearStoreFilters();
+    loadPostsWithFilters();
+};
+
+// Load posts with current filters
+const loadPostsWithFilters = () => {
     loadPosts({
-        search: searchQuery.value,
-        status: statusFilter.value,
-        tags: tagsFilter.value,
-        page: 1,
+        search: filters.value.search,
+        status: filters.value.status,
+        tags: filters.value.tags,
+        page: currentPage.value,
+        per_page: itemsPerPage.value,
         sortBy: sortBy.value[0]?.key,
         sortOrder: sortBy.value[0]?.order
-    }, true); // resetPage = true to go back to first page on filter change
-});
+    }, currentPage.value === 1);
+};
 
 // Actions
 const handlePageChange = (page) => {
     currentPage.value = page;
-    loadPosts({
-        search: searchQuery.value,
-        status: statusFilter.value,
-        tags: tagsFilter.value,
-        page,
-        per_page: itemsPerPage.value,
-        sortBy: sortBy.value[0]?.key,
-        sortOrder: sortBy.value[0]?.order
-    }, false);
+    loadPostsWithFilters();
 };
 
 const handleSortChange = (newSort) => {
+    sortBy.value = newSort;
     currentPage.value = 1;
-    loadPosts({
-        search: searchQuery.value,
-        status: statusFilter.value,
-        tags: tagsFilter.value,
-        page: 1,
-        sortBy: newSort[0]?.key,
-        sortOrder: newSort[0]?.order
-    }, true);
+    loadPostsWithFilters();
 };
 
 const handlePerPageChange = (perPage) => {
-    currentPage.value = 1;
     itemsPerPage.value = perPage;
-    loadPosts({
-        search: searchQuery.value,
-        status: statusFilter.value,
-        tags: tagsFilter.value,
-        page: 1,
-        per_page: perPage,
-        sortBy: sortBy.value[0]?.key,
-        sortOrder: sortBy.value[0]?.order
-    }, true);
+    currentPage.value = 1;
+    loadPostsWithFilters();
 };
 
 const openCreateDialog = () => {
@@ -235,6 +226,18 @@ const openCreateDialog = () => {
     clearError();
     editDialog.value = true;
 };
+
+const pageActions = computed(() => ([
+    {
+        key: 'create',
+        label: $t('posts.createPost'),
+        icon: 'mdi-plus',
+        color: 'primary',
+        variant: 'flat',
+        size: 'default',
+        onClick: openCreateDialog
+    }
+]));
 
 const openEditDialog = (post) => {
     selectedPost.value = post;
@@ -278,7 +281,7 @@ const handleSubmit = async (formData) => {
     
     if (result.success) {
         closeEditDialog();
-        await loadPosts({}, false);
+        await loadPostsWithFilters();
     }
 };
 
@@ -302,7 +305,7 @@ const handlePublish = async (post) => {
     
     if (result.success) {
         showToastSuccess($t('posts.messages.publishSuccess'));
-        await loadPosts({}, false);
+        await loadPostsWithFilters();
     } else {
         const errorMsg = result.error || $t('posts.messages.publishError');
         showToastError(errorMsg);
@@ -314,7 +317,7 @@ const handleUnpublish = async (post) => {
     
     if (result.success) {
         showToastSuccess($t('posts.messages.unpublishSuccess'));
-        await loadPosts({}, false);
+        await loadPostsWithFilters();
     } else {
         const errorMsg = result.error || $t('posts.messages.unpublishError');
         showToastError(errorMsg);
@@ -329,22 +332,37 @@ const handleViewPost = (post) => {
     router.push(`/dashboard/posts/${post.id}`);
 };
 
-const clearFilters = () => {
-    searchQuery.value = '';
-    statusFilter.value = null;
-    tagsFilter.value = [];
-    currentPage.value = 1;
-    clearStoreFilters();
-};
-
 // Load posts on mount
 onMounted(async () => {
-    await loadPosts({ 
-        page: 1,
-        sortBy: 'updated_at',
-        sortOrder: 'desc'
-    }, true);
+    await loadPostsWithFilters();
+});
+
+// Watch for errors and show as toast
+watch(error, (newError) => {
+    if (newError) {
+        showToastError(newError);
+        clearError();
+    }
 });
 </script>
 
+<style scoped>
 
+.flex-1 {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* Mobile: allow scrolling and remove fixed constraints */
+@media (max-width: 960px) {
+   
+     .flex-1 {
+        overflow: visible;
+        height: auto;
+        min-height: auto;
+        flex: none;
+        margin-bottom: 70px;
+    }
+}
+</style>

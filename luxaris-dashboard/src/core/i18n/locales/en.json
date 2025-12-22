@@ -108,7 +108,10 @@
     "success": "Success",
     "confirm": "Confirm",
     "close": "Close",
-    "never": "Never"
+    "never": "Never",
+    "key": "Key",
+    "status": "Status",
+    "actions": "Actions"
   },
   "dashboard": {
     "totalPosts": "Total Posts",
@@ -128,11 +131,13 @@
       "connections": "Connected Channels"
     },
     "fields": {
-      "channelName": "Channel Name",
+      "channelName": "Channel name",
       "accountUsername": "Username",
-      "supportedFeatures": "Supported Features",
-      "lastUsed": "Last Used",
-      "createdAt": "Connected At"
+      "supportedFeatures": "Supported features",
+      "lastUsed": "Last used",
+      "createdAt": "Connected at",
+      "connectedAt": "Connected at",
+      "status": "Status"
     },
     "actions": {
       "connect": "Connect",
@@ -143,6 +148,7 @@
     },
     "status": {
       "connected": "Connected",
+      "notConnected": "Not connected",
       "active": "Active",
       "error": "Error",
       "expired": "Expired"
@@ -150,6 +156,7 @@
     "filters": {
       "all": "All",
       "connected": "Connected",
+      "notConnected": "Not connected",
       "error": "With Errors",
       "expired": "Expired"
     },
@@ -175,11 +182,13 @@
   },
   "posts": {
     "title": "Posts",
+    "subtitle": "Create and manage your social media posts",
     "createPost": "Create Post",
     "editPost": "Edit Post",
     "deletePost": "Delete Post",
     "backToGrid": "Back to Grid",
     "searchPosts": "Search posts",
+    "search": "Search",
     "clearFilters": "Clear Filters",
     "noPostsFound": "No posts found",
     "createYourFirstPost": "Create Your First Post",
@@ -190,7 +199,7 @@
       "content": "Content",
       "tags": "Tags",
       "status": "Status",
-      "updatedAt": "Updated"
+      "updatedAt": "Updated at"
     },
     "hints": {
       "tags": "Press Enter to add a tag"
@@ -313,5 +322,10 @@
   },
   "validation": {
     "required": "This field is required"
+  },
+  "pagination": {
+    "records": "Records",
+    "pages": "Pages",
+    "perPage": "{count} per page"
   }
 }

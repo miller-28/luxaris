@@ -7,6 +7,9 @@
         :page="page"
         :sort-by="sortBy"
         :total-records="totalRecords"
+        :selectable="selectable"
+        :selected-items="selectedItems"
+        :item-key="itemKey"
         table-class="posts-grid-table"
         :empty-icon="'mdi-file-document-outline'"
         :empty-title="$t('posts.noPostsFound')"
@@ -18,6 +21,7 @@
         @page-change="$emit('page-change', $event)"
         @per-page-change="$emit('per-page-change', $event)"
         @empty-action="$emit('create')"
+        @update:selected-items="$emit('update:selected-items', $event)"
     >
         <!-- Title Column -->
         <template #item.title="{ item }">
@@ -86,22 +90,6 @@
                     @click.stop="$emit('edit', item)"
                 />
                 <v-btn
-                    v-if="item.status === 'draft'"
-                    icon="mdi-upload"
-                    size="small"
-                    variant="text"
-                    color="success"
-                    @click.stop="$emit('publish', item)"
-                />
-                <v-btn
-                    v-else
-                    icon="mdi-download"
-                    size="small"
-                    variant="text"
-                    color="warning"
-                    @click.stop="$emit('unpublish', item)"
-                />
-                <v-btn
                     icon="mdi-delete"
                     size="small"
                     variant="text"
@@ -144,10 +132,34 @@ const props = defineProps({
     totalRecords: {
         type: Number,
         required: true
+    },
+    selectable: {
+        type: Boolean,
+        default: false
+    },
+    selectedItems: {
+        type: Array,
+        default: () => []
+    },
+    itemKey: {
+        type: String,
+        default: 'id'
     }
 });
 
-const emit = defineEmits(['row-click', 'view', 'edit', 'delete', 'publish', 'unpublish', 'create', 'sort-change', 'page-change', 'per-page-change']);
+const emit = defineEmits([
+    'row-click', 
+    'view', 
+    'edit', 
+    'delete', 
+    'publish', 
+    'unpublish', 
+    'create', 
+    'sort-change', 
+    'page-change', 
+    'per-page-change', 
+    'update:selected-items'
+]);
 
 // Table headers definition
 const headers = computed(() => [

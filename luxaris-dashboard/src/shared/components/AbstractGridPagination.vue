@@ -1,9 +1,9 @@
 <template>
-    <v-card class="mb-4">
+    <v-card class="pagination-card ml-4 mt-4 mr-4">
         <v-card-text class="py-3">
-            <v-row align="center">
+            <v-row align="center" class="pagination-row">
                 <!-- Pagination Controls -->
-                <v-col cols="12" md="6" class="d-flex align-center justify-center justify-md-start">
+                <v-col cols="auto" md="6" class="d-flex align-center justify-center justify-md-start gap-1 pagination-controls">
                     <v-btn
                         icon="mdi-chevron-left"
                         variant="text"
@@ -18,7 +18,6 @@
                         :variant="pageNum === currentPage ? 'flat' : 'text'"
                         :color="pageNum === currentPage ? 'primary' : undefined"
                         size="small"
-                        class="mx-1"
                         @click="handlePageClick(pageNum)"
                         :disabled="pageNum === '...'"
                     >
@@ -32,16 +31,17 @@
                         :disabled="currentPage === totalPages"
                         @click="handleNext"
                     />
+                    
+                    <span v-if="totalPages > 5" class="text-body-2 ml-2 out-of-pages-label">
+                        out of <strong class="clickable-page" @click="handlePageClick(totalPages)">{{ totalPages }}</strong> pages
+                    </span>
                 </v-col>
                 
                 <!-- Info and Per Page Selector -->
-                <v-col cols="12" md="6" class="d-flex align-center justify-center justify-md-end">
+                <v-col cols="auto" md="6" class="d-flex align-center justify-center justify-md-end pagination-info">
                     <div class="d-flex align-center">
-                        <span class="text-body-2 mr-4">
-                            Total Pages: <strong>{{ totalPages }}</strong>
-                        </span>
-                        <span class="text-body-2 mr-4">
-                            Total Records: <strong>{{ totalRecords }}</strong>
+                        <span class="text-body-2 mr-3">
+                            <strong>{{ totalRecords }}</strong> Records
                         </span>
                         <v-select
                             :model-value="itemsPerPage"
@@ -49,9 +49,11 @@
                             density="compact"
                             variant="outlined"
                             hide-details
-                            style="min-width: 140px"
+                            class="mx-2"
+                            style="min-width: 100px; max-width: 120px"
                             @update:model-value="handlePerPageChange"
                         />
+                        <span class="text-body-2 ml-2">items per page</span>
                     </div>
                 </v-col>
             </v-row>
@@ -60,7 +62,8 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, ref, onMounted, onUnmounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 const props = defineProps({
     currentPage: {
@@ -87,18 +90,33 @@ const props = defineProps({
 
 const emit = defineEmits(['page-change', 'per-page-change']);
 
-const perPageOptions = [
-    { title: '1 per page', value: 1 },
-    { title: '3 per page', value: 3 },
-    { title: '10 per page', value: 10 },
-    { title: '25 per page', value: 25 },
-    { title: '50 per page', value: 50 },
-    { title: '100 per page', value: 100 }
-];
+const { t } = useI18n();
+
+const isMobile = ref(false);
+
+const updateIsMobile = () => {
+    isMobile.value = window.innerWidth <= 960;
+};
+
+onMounted(() => {
+    updateIsMobile();
+    window.addEventListener('resize', updateIsMobile);
+});
+
+onUnmounted(() => {
+    window.removeEventListener('resize', updateIsMobile);
+});
+
+const perPageCounts = [1, 3, 10, 25, 50, 100];
+
+const perPageOptions = computed(() => perPageCounts.map((count) => ({
+    title: count.toString(),
+    value: count
+})));
 
 const visiblePages = computed(() => {
     const pages = [];
-    const maxVisible = props.maxVisiblePages;
+    const maxVisible = isMobile.value ? 3 : props.maxVisiblePages;
     const total = props.totalPages;
     const current = props.currentPage;
     
@@ -156,7 +174,87 @@ const handlePerPageChange = (value) => {
 </script>
 
 <style scoped>
+.pagination-card {
+    flex-shrink: 0;
+}
+
+/* Mobile: sticky pagination at bottom */
+@media (max-width: 960px) {
+    .pagination-card {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 100;
+        margin: 0;
+        box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.3) !important;
+    }
+    
+    .pagination-card :deep(.v-card-text) {
+        padding: 8px 12px !important;
+    }
+    
+    /* Hide "out of X pages" label on mobile */
+    .out-of-pages-label {
+        display: none !important;
+    }
+    
+    /* Keep in same row but swap positions */
+    .pagination-row {
+        flex-wrap: nowrap;
+    }
+    
+    .pagination-controls {
+        order: 1;
+        flex: 0 0 auto;
+    }
+    
+    .pagination-info {
+        order: 2;
+        flex: 1;
+        justify-content: flex-end !important;
+    }
+    
+    .pagination-info .d-flex {
+        gap: 4px;
+        flex-wrap: nowrap;
+    }
+    
+    .pagination-info .text-body-2 {
+        font-size: 0.7rem;
+        white-space: nowrap;
+    }
+    
+    .pagination-info .v-select {
+        min-width: 60px !important;
+        max-width: 80px !important;
+    }
+    
+    .pagination-info .mx-2 {
+        margin-left: 4px !important;
+        margin-right: 4px !important;
+    }
+    
+    .pagination-info .mr-3 {
+        margin-right: 8px !important;
+    }
+    
+    .pagination-info .ml-2 {
+        margin-left: 4px !important;
+    }
+}
+
 .v-btn {
     min-width: 36px;
+}
+
+.clickable-page {
+    cursor: pointer;
+    color: rgb(var(--v-theme-primary));
+    text-decoration: underline;
+}
+
+.clickable-page:hover {
+    opacity: 0.8;
 }
 </style>

@@ -3,6 +3,7 @@ import { channelsRepository } from '../api/channelsRepository';
 import { connectionsRepository } from '../api/connectionsRepository';
 import { Channel } from '../../domain/models/Channel';
 import { ChannelConnection } from '../../domain/models/ChannelConnection';
+import { AbstractStore } from '@/shared/store/AbstractStore';
 
 /**
  * Channels Pinia Store
@@ -10,19 +11,17 @@ import { ChannelConnection } from '../../domain/models/ChannelConnection';
  */
 export const useChannelsStore = defineStore('channels', {
 
-    state: () => ({
+    state: () => AbstractStore.mergeState({
         channels: [],
         connections: [],
         currentConnection: null,
-        loading: false,
-        error: null,
         filters: {
             status: null,
             channel_id: null
         }
     }),
 
-  getters: {
+  getters: AbstractStore.mergeGetters({
 
     /**
      * Get channels that are active
@@ -67,9 +66,9 @@ export const useChannelsStore = defineStore('channels', {
         conn => conn.channel_id === channelId && conn.isActive
       );
     }
-  },
+  }),
 
-  actions: {
+  actions: AbstractStore.mergeActions({
 
     /**
      * Load all available channels
@@ -210,13 +209,6 @@ export const useChannelsStore = defineStore('channels', {
      */
     setFilters(filters) {
       this.filters = { ...this.filters, ...filters };
-    },
-
-    /**
-     * Clear error
-     */
-    clearError() {
-      this.error = null;
     }
-  }
+  }, 'id')
 });

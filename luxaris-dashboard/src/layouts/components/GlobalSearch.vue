@@ -177,6 +177,7 @@ onUnmounted(() => {
 
 <style scoped>
 .search-trigger {
-  max-width: 400px;
+  width: 100%;
+  max-width: 100%;
 }
 </style>

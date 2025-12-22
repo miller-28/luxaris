@@ -1,8 +1,8 @@
 /**
  * Posts Routes Configuration
  */
-import PostsView from './views/PostsView.vue';
-import PostDetailView from './views/PostDetailView.vue';
+import PostsView from './presentation/views/PostsView.vue';
+import PostDetailView from './presentation/views/PostDetailView.vue';
 
 export const postsRoutes = [
     {

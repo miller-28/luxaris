@@ -2,10 +2,10 @@
  * System Context Routes
  * Authentication and user management routes
  */
-import LoginView from './views/LoginView.vue';
-import RegisterView from './views/RegisterView.vue';
-import GoogleOAuthCallback from './views/GoogleOAuthCallback.vue';
-import ChannelSettingsView from './views/ChannelSettingsView.vue';
+import LoginView from './presentation/views/LoginView.vue';
+import RegisterView from './presentation/views/RegisterView.vue';
+import GoogleOAuthCallback from './presentation/views/GoogleOAuthCallback.vue';
+import ChannelSettingsView from './presentation/views/ChannelSettingsView.vue';
 
 export const systemRoutes = [
     {

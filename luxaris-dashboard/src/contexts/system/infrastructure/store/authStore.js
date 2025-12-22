@@ -8,7 +8,7 @@ import { User } from '../../domain/models/User';
 import { TokenManager } from '../../application/tokenManager';
 import { usePresetStore } from './presetStore';
 import { formatServerErrors } from '../../domain/validations/userSchemas';
-import { baseURL } from '@/core/http/client';
+import { baseURL } from '@/core/http/ApiClient';
 
 export const useAuthStore = defineStore('auth', {
 

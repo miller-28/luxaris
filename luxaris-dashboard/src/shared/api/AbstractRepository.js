@@ -2,7 +2,7 @@
  * Abstract Repository
  * Base class for all API repositories with common functionality
  */
-import client from '@/core/http/client';
+import ApiClient from '@/core/http/ApiClient';
 
 export class AbstractRepository {
     
@@ -15,7 +15,7 @@ export class AbstractRepository {
      * @returns {Object} HTTP client
      */
     getClient() {
-        return client;
+        return ApiClient;
     }
 
     /**
@@ -61,7 +61,7 @@ export class AbstractRepository {
      */
     async get(path = '', options = {}) {
         const url = path ? `${this.basePath}${path}` : this.basePath;
-        const response = await client.get(url, options);
+        const response = await ApiClient.get(url, options);
         return response.data;
     }
 
@@ -74,7 +74,7 @@ export class AbstractRepository {
      */
     async post(path = '', data = {}, options = {}) {
         const url = path ? `${this.basePath}${path}` : this.basePath;
-        const response = await client.post(url, data, options);
+        const response = await ApiClient.post(url, data, options);
         return response.data;
     }
 
@@ -87,7 +87,7 @@ export class AbstractRepository {
      */
     async patch(path = '', data = {}, options = {}) {
         const url = path ? `${this.basePath}${path}` : this.basePath;
-        const response = await client.patch(url, data, options);
+        const response = await ApiClient.patch(url, data, options);
         return response.data;
     }
 
@@ -99,7 +99,7 @@ export class AbstractRepository {
      */
     async delete(path = '', options = {}) {
         const url = path ? `${this.basePath}${path}` : this.basePath;
-        const response = await client.delete(url, options);
+        const response = await ApiClient.delete(url, options);
         return response.data;
     }
 }

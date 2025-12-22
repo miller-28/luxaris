@@ -11,33 +11,14 @@
         />
 
         <!-- Channels -->
-        <v-list-group v-if="can('read', 'channels')" class="channels-group">
-            <template v-slot:activator="{ props }">
-                <v-list-item
-                    v-bind="props"
-                    prepend-icon="mdi-pound"
-                    :title="$t('nav.channels')"
-                />
-            </template>
-
-            <v-list-item
-                prepend-icon="mdi-link-variant"
-                :title="$t('nav.availableChannels')"
-                value="available-channels"
-                to="/dashboard/channels/available"
-                :active="isActive('/dashboard/channels/available')"
-                class="sub-menu-item"
-            />
-
-            <v-list-item
-                prepend-icon="mdi-link-box-variant"
-                :title="$t('nav.connectedChannels')"
-                value="connected-channels"
-                to="/dashboard/channels/connections"
-                :active="isActive('/dashboard/channels/connections')"
-                class="sub-menu-item"
-            />
-        </v-list-group>
+        <v-list-item
+            v-if="can('read', 'channels')"
+            prepend-icon="mdi-pound"
+            :title="$t('nav.channels')"
+            value="channels"
+            to="/dashboard/channels"
+            :active="isActive('/dashboard/channels')"
+        />
 
         <!-- Posts -->
         <v-list-item

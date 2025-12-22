@@ -2,7 +2,7 @@
  * Authentication Repository
  * Handles all authentication-related API calls
  */
-import client from '@/core/http/client';
+import ApiClient from '@/core/http/ApiClient';
 
 export const authRepository = {
 
@@ -10,7 +10,7 @@ export const authRepository = {
      * Login with email and password
      */
     async login(email, password) {
-        const response = await client.post('/auth/login', {
+        const response = await ApiClient.post('/auth/login', {
             email,
             password,
         });
@@ -21,7 +21,7 @@ export const authRepository = {
      * Register new user
      */
     async register(userData) {
-        const response = await client.post('/auth/register', {
+        const response = await ApiClient.post('/auth/register', {
             name: userData.name,
             email: userData.email,
             password: userData.password,
@@ -33,7 +33,7 @@ export const authRepository = {
      * Logout current user
      */
     async logout() {
-        const response = await client.post('/auth/logout', {});
+        const response = await ApiClient.post('/auth/logout', {});
         return response.data;
     },
 
@@ -41,7 +41,7 @@ export const authRepository = {
      * Refresh access token
      */
     async refreshToken(refreshToken) {
-        const response = await client.post('/auth/refresh', {
+        const response = await ApiClient.post('/auth/refresh', {
             refresh_token: refreshToken,
         });
         return response.data;
@@ -52,7 +52,7 @@ export const authRepository = {
      */
     async getCurrentUser() {
         console.log('[authRepository] Calling GET /auth/me...');
-        const response = await client.get('/auth/me');
+        const response = await ApiClient.get('/auth/me');
         console.log('[authRepository] Response from /auth/me:', {
             status: response.status,
             hasData: !!response.data,
@@ -65,7 +65,7 @@ export const authRepository = {
      * Get Google OAuth URL
      */
     async getGoogleOAuthUrl() {
-        const response = await client.get('/auth/google');
+        const response = await ApiClient.get('/auth/google');
         return response.data;
     },
 
@@ -73,7 +73,7 @@ export const authRepository = {
      * Handle Google OAuth callback
      */
     async handleGoogleCallback(code, state) {
-        const response = await client.post('/auth/google/callback', {
+        const response = await ApiClient.post('/auth/google/callback', {
             code,
             state,
         });

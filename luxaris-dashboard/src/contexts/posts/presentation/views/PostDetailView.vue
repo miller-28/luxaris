@@ -1,47 +1,38 @@
 <template>
     <DashboardLayout>
-
-        <!-- Header -->
-        <div class="d-flex align-center justify-space-between mb-6">
-            <h1 class="text-h4">{{ $t('posts.title') }}</h1>
-            <v-btn 
-                color="primary" 
-                prepend-icon="mdi-arrow-left"
-                @click="goBack"
+        <div class="page-content">
+            <!-- Header -->
+            <AbstractPageHeader
+                :title="currentPost?.title || $t('posts.title')"
+                :actions="pageActions"
+            />
+            
+            <!-- Loading State -->
+            <v-card v-if="loading && !currentPost">
+                <v-skeleton-loader type="article, article" />
+            </v-card>
+            
+            <!-- Error Alert -->
+            <v-alert 
+                v-if="error" 
+                type="error" 
+                variant="tonal"
+                closable
+                @click:close="clearError"
             >
-                {{ $t('posts.backToGrid') }}
-            </v-btn>
-        </div>
-        
-        <!-- Loading State -->
-        <v-card v-if="loading && !currentPost" class="mb-4">
-            <v-skeleton-loader type="article, article" />
-        </v-card>
-        
-        <!-- Error Alert -->
-        <v-alert 
-            v-if="error" 
-            type="error" 
-            variant="tonal"
-            closable
-            @click:close="clearError"
-            class="mb-4"
-        >
-            {{ error }}
-        </v-alert>
-        
-        <!-- Post Content -->
-        <v-card v-if="currentPost" class="mb-4">
+                {{ error }}
+            </v-alert>
+            
+            <!-- Post Content -->
+            <v-card v-if="currentPost" class="post-content-card ml-4 mt-4 mr-4">
 
-                <v-card-text>
-                    <div class="text-h5 mb-3">{{ currentPost.title }}</div>
-                    
-                    <v-divider class="mb-3" />
+                <v-card-text class="post-content-scrollable">
                     
                     <div v-if="currentPost.description" class="text-body-1 mb-4" style="white-space: pre-wrap;">
                         {{ currentPost.description }}
                     </div>
                     
+                    <div v-if="currentPost.tags && currentPost.tags.length > 0" class="text-caption text-grey mb-2">{{ $t('posts.fields.tags') }}:</div>
                     <v-chip-group v-if="currentPost.tags && currentPost.tags.length > 0">
                         <v-chip 
                             v-for="tag in currentPost.tags" 
@@ -52,7 +43,7 @@
                         </v-chip>
                     </v-chip-group>
                 </v-card-text>
-                
+                    
                 <v-card-actions>
                     <v-btn 
                         prepend-icon="mdi-pencil"
@@ -86,84 +77,85 @@
                         {{ $t('posts.actions.unpublish') }}
                     </v-btn>
                 </v-card-actions>
-        </v-card>
+            </v-card>
         
-        <!-- Variants Section -->
-        <v-card v-if="currentPost">
-            <v-card-title class="d-flex align-center">
-                <span>{{ $t('posts.variants.title') }}</span>
-                <v-spacer />
-                <v-btn 
-                    color="primary" 
-                    prepend-icon="mdi-plus"
-                    size="small"
-                    @click="openCreateVariantDialog"
-                >
-                    {{ $t('posts.variants.addVariant') }}
-                </v-btn>
-            </v-card-title>
+            <!-- Variants Section -->
+            <v-card v-if="currentPost" class="variants-card ma-4">
+                <v-card-title class="d-flex align-center">
+                    <span>{{ $t('posts.variants.title') }}</span>
+                    <v-spacer />
+                    <v-btn 
+                        color="primary" 
+                        prepend-icon="mdi-plus"
+                        size="small"
+                        @click="openCreateVariantDialog"
+                    >
+                        {{ $t('posts.variants.addVariant') }}
+                    </v-btn>
+                </v-card-title>
+                
+                <v-card-text class="variants-content-scrollable">
+                    <VariantsGrid 
+                        :variants="variants"
+                        :loading="loading"
+                        @create="openCreateVariantDialog"
+                        @edit="openEditVariantDialog"
+                        @delete="openDeleteVariantDialog"
+                    />
+                </v-card-text>
+            </v-card>
             
-            <v-card-text>
-                <VariantsGrid 
-                    :variants="variants"
+            <!-- Edit Post Dialog -->
+            <v-dialog 
+                v-model="editDialog" 
+                max-width="800"
+                persistent
+            >
+                <PostEditPanel 
+                    :post="currentPost"
                     :loading="loading"
-                    @create="openCreateVariantDialog"
-                    @edit="openEditVariantDialog"
-                    @delete="openDeleteVariantDialog"
+                    :error="error"
+                    :validation-errors="validationErrors"
+                    @submit="handleSubmit"
+                    @close="closeEditDialog"
+                    @clear-error="clearError"
                 />
-            </v-card-text>
-        </v-card>
-        
-        <!-- Edit Post Dialog -->
-        <v-dialog 
-            v-model="editDialog" 
-            max-width="800"
-            persistent
-        >
-            <PostEditPanel 
-                :post="currentPost"
-                :loading="loading"
-                :error="error"
-                :validation-errors="validationErrors"
-                @submit="handleSubmit"
-                @close="closeEditDialog"
-                @clear-error="clearError"
-            />
-        </v-dialog>
-        
-        <!-- Edit Variant Dialog -->
-        <v-dialog 
-            v-model="variantDialog" 
-            max-width="800"
-            persistent
-        >
-            <VariantEditPanel 
-                :variant="selectedVariant"
-                :channels="channels"
-                :loading="loading"
-                :error="error"
-                :validation-errors="variantValidationErrors"
-                @submit="handleVariantSubmit"
-                @close="closeVariantDialog"
-                @clear-error="clearError"
-            />
-        </v-dialog>
-        
-        <!-- Delete Post Confirmation -->
-        <DeleteConfirmModal 
-            v-model="deleteDialog"
-            :title="$t('posts.delete.title')"
-            :message="$t('posts.delete.message')"
-            @confirm="handleDelete"
-        />
+            </v-dialog>
             
-        <!-- Delete Variant Confirmation -->
-        <DeleteConfirmModal 
-            v-model="deleteVariantDialog"
-            :title="$t('posts.variants.delete.title')"
-            :message="$t('posts.variants.delete.message')"
-            @confirm="handleDeleteVariant"
-        />
+            <!-- Edit Variant Dialog -->
+            <v-dialog 
+                v-model="variantDialog" 
+                max-width="800"
+                persistent
+            >
+                <VariantEditPanel 
+                    :variant="selectedVariant"
+                    :channels="channels"
+                    :loading="loading"
+                    :error="error"
+                    :validation-errors="variantValidationErrors"
+                    @submit="handleVariantSubmit"
+                    @close="closeVariantDialog"
+                    @clear-error="clearError"
+                />
+            </v-dialog>
+            
+            <!-- Delete Post Confirmation -->
+            <DeleteConfirmModal 
+                v-model="deleteDialog"
+                :title="$t('posts.delete.title')"
+                :message="$t('posts.delete.message')"
+                @confirm="handleDelete"
+            />
+                
+            <!-- Delete Variant Confirmation -->
+            <DeleteConfirmModal 
+                v-model="deleteVariantDialog"
+                :title="$t('posts.variants.delete.title')"
+                :message="$t('posts.variants.delete.message')"
+                @confirm="handleDeleteVariant"
+            />
+        </div>
     </DashboardLayout>
 </template>
 
@@ -172,6 +164,7 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import DashboardLayout from '@/layouts/DashboardLayout.vue';
+import AbstractPageHeader from '@/shared/components/AbstractPageHeader.vue';
 import PostEditPanel from '../components/PostEditPanel.vue';
 import VariantsGrid from '../components/VariantsGrid.vue';
 import VariantEditPanel from '../components/VariantEditPanel.vue';
@@ -222,6 +215,19 @@ const deleteVariantDialog = ref(false);
 const selectedVariant = ref(null);
 
 const postId = computed(() => parseInt(route.params.id));
+
+// Page actions for header
+const pageActions = computed(() => ([
+    {
+        key: 'back',
+        label: $t('posts.backToGrid'),
+        icon: 'mdi-arrow-left',
+        color: 'primary',
+        variant: 'flat',
+        size: 'default',
+        onClick: goBack
+    }
+]));
 
 // Actions
 const goBack = () => {
@@ -412,4 +418,35 @@ onMounted(() => {
     };
 });
 </script>
+
+<style scoped>
+.post-content-card {
+    display: flex;
+    flex-direction: column;
+}
+
+.post-content-scrollable {
+    overflow-y: auto;
+}
+
+.variants-card {
+    display: flex;
+    flex-direction: column;
+}
+
+.variants-content-scrollable {
+    overflow-y: auto;
+}
+
+/* Mobile: constrain content height to prevent pushing content off screen */
+@media (max-width: 960px) {
+    .post-content-scrollable {
+        max-height: 40vh;
+    }
+    
+    .variants-content-scrollable {
+        max-height: 40vh;
+    }
+}
+</style>
 

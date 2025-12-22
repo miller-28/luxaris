@@ -1,9 +1,10 @@
 import { createApp } from 'vue';
 import App from './App.vue';
 import { router } from './core/router';
-import { pinia } from './core/store';
+import { pinia } from './core/store.js';
 import { i18n } from './core/i18n';
-import { vuetify } from './core/vuetify';
+import { vuetify } from './core/vuetify.js';
+import './style.css';
 
 const app = createApp(App);
 

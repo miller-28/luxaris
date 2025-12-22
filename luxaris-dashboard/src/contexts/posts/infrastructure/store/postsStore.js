@@ -5,14 +5,13 @@
 import { defineStore } from 'pinia';
 import { postsRepository } from '../api/postsRepository';
 import { Post } from '../../domain/models/Post';
+import { AbstractStore } from '@/shared/store/AbstractStore';
 
 export const usePostsStore = defineStore('posts', {
 
-    state: () => ({
+    state: () => AbstractStore.mergeState({
         posts: [],
         currentPost: null,
-        loading: false,
-        error: null,
         filters: {
             status: null,
             tags: [],
@@ -20,31 +19,21 @@ export const usePostsStore = defineStore('posts', {
         },
         pagination: {
             page: 1,
-            limit: 20,
+            limit: 10,
             total: 0
         }
     }),
 
-    getters: {
+    getters: AbstractStore.mergeGetters({
         /**
          * Get post by ID
          */
         getPostById: (state) => (id) => {
             return state.posts.find(post => post.id === id);
-        },
+        }
+    }),
 
-        /**
-         * Check if loading
-         */
-        isLoading: (state) => state.loading,
-
-        /**
-         * Check if has error
-         */
-        hasError: (state) => !!state.error
-    },
-
-    actions: {
+    actions: AbstractStore.mergeActions({
 
         /**
          * Load posts with filters
@@ -56,15 +45,22 @@ export const usePostsStore = defineStore('posts', {
             // Update store filters with new values
             this.filters = { ...this.filters, ...filters };
 
-            if (resetPage) {
-                this.pagination.page = 1;
-            }
+            // Resolve pagination values
+            const requestedLimit = filters.per_page ?? this.pagination.limit;
+            const requestedPage = resetPage ? 1 : (filters.page ?? this.pagination.page);
+
+            this.pagination.limit = requestedLimit;
+            this.pagination.page = requestedPage;
 
             try {
+                const offset = (this.pagination.page - 1) * this.pagination.limit;
+
                 const response = await postsRepository.list(
                     this.filters,
                     {
-                        offset: (this.pagination.page - 1) * this.pagination.limit,
+                        page: this.pagination.page,
+                        per_page: this.pagination.limit,
+                        offset,
                         limit: this.pagination.limit
                     }
                 );
@@ -213,17 +209,10 @@ export const usePostsStore = defineStore('posts', {
         },
 
         /**
-         * Clear error
-         */
-        clearError() {
-            this.error = null;
-        },
-
-        /**
          * Clear current post
          */
         clearCurrentPost() {
             this.currentPost = null;
         }
-    }
+    }, 'id')
 });

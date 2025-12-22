@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import { systemRoutes } from '@/contexts/system/presentation/routes';
-import { postsRoutes } from '@/contexts/posts/presentation/routes';
-import { channelsRoutes } from '@/contexts/channels/presentation/routes';
+import { systemRoutes } from '@/contexts/system/routes';
+import { postsRoutes } from '@/contexts/posts/routes';
+import { channelsRoutes } from '@/contexts/channels/routes';
 import { useAuthStore } from '@/contexts/system/infrastructure/store/authStore';
 import { TokenManager } from '@/contexts/system/application/tokenManager';
 

@@ -67,6 +67,61 @@ services:
       timeout: 5s
       retries: 5
 
+  mongodb:
+    image: mongo:7
+    container_name: luxaris-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: luxaris_user
+      MONGO_INITDB_ROOT_PASSWORD: luxaris_password
+      MONGO_INITDB_DATABASE: luxaris
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - ./backups/mongodb:/backups
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+
+  redis:
+    image: redis:7-alpine
+    container_name: luxaris-redis
+    restart: unless-stopped
+    command: >
+      sh -c "echo 'user luxaris_user on >luxaris_password ~* &* +@all' > /tmp/users.acl &&
+             redis-server --aclfile /tmp/users.acl --maxmemory 512mb --maxmemory-policy allkeys-lru --appendonly yes"
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+      - ./backups/redis:/backups
+    healthcheck:
+      test: ["CMD", "redis-cli", "-u", "redis://luxaris_user:luxaris_password@localhost:6379", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+
   luxaris-api:
     build:
       context: ../luxaris-api
@@ -86,6 +141,17 @@ services:
       MEMCACHED_HOST: memcached
       MEMCACHED_PORT: 11211
       RABBITMQ_URL: amqp://luxaris_user:luxaris_password@rabbitmq:5672/luxaris
+      MONGODB_URL: mongodb://luxaris_user:luxaris_password@mongodb:27017/luxaris?authSource=admin
+      MONGODB_HOST: mongodb
+      MONGODB_PORT: 27017
+      MONGODB_USER: luxaris_user
+      MONGODB_PASSWORD: luxaris_password
+      MONGODB_DATABASE: luxaris
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_USER: luxaris_user
+      REDIS_PASSWORD: luxaris_password
+      REDIS_DB: 0
       JWT_SECRET: dev-secret-key-change-in-production
       JWT_EXPIRATION: 24h
       JWT_REFRESH_EXPIRATION: 7d
@@ -105,6 +171,10 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/v1/ops/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
       interval: 10s
@@ -116,6 +186,10 @@ volumes:
   postgres_data:
     driver: local
   rabbitmq_data:
+    driver: local
+  mongodb_data:
+    driver: local
+  redis_data:
     driver: local
 
 networks:

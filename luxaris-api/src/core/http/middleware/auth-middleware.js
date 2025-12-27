@@ -1,6 +1,5 @@
-// Authentication middleware - verifies JWT tokens and attaches user to request
+// Authentication middleware - verifies session ID and attaches user to request
 
-const jwt = require('jsonwebtoken');
 const AclService = require('../../../contexts/system/application/services/acl_service');
 const winston = require('winston');
 
@@ -19,55 +18,43 @@ const middleware_logger = winston.createLogger({
     transports: [new winston.transports.Console()]
 });
 
-function create_auth_middleware(user_repository, config) {
+function create_auth_middleware(user_repository, session_service) {
     const acl_service = new AclService();
 	
     return async function auth_middleware(req, res, next) {
         try {
-            // Extract token from Authorization header
-            const auth_header = req.headers.authorization;
+            // Extract session ID from X-Session-ID header
+            const session_id = req.headers['x-session-id'];
 			
-            if (!auth_header || !auth_header.startsWith('Bearer ')) {
+            if (!session_id) {
                 return res.status(401).json({
                     errors: [{
                         error_code: 'UNAUTHORIZED',
-                        error_description: 'No valid authentication token provided',
+                        error_description: 'No session ID provided',
                         error_severity: 'error'
                     }]
                 });
             }
 
-            const token = auth_header.substring(7); // Remove 'Bearer ' prefix
-
-            // Verify JWT token
-            let payload;
-            try {
-                payload = jwt.verify(token, config.jwt_secret);
-            } catch (error) {
+            // Get session from Redis
+            const session_data = await session_service.get(session_id);
+            
+            if (!session_data) {
                 return res.status(401).json({
                     errors: [{
-                        error_code: 'INVALID_TOKEN',
-                        error_description: 'Invalid or expired token',
-                        error_severity: 'error'
-                    }]
-                });
-            }
-
-            // Check token type
-            if (payload.typ !== 'user') {
-                return res.status(401).json({
-                    errors: [{
-                        error_code: 'INVALID_TOKEN_TYPE',
-                        error_description: 'Invalid token type',
+                        error_code: 'INVALID_SESSION',
+                        error_description: 'Invalid or expired session',
                         error_severity: 'error'
                     }]
                 });
             }
 
             // Load user from database
-            const user = await user_repository.find_by_id(payload.sub);
+            const user = await user_repository.find_by_id(session_data.user_id);
 			
             if (!user) {
+                // Session exists but user doesn't - clean up session
+                await session_service.delete(session_id);
                 return res.status(401).json({
                     errors: [{
                         error_code: 'USER_NOT_FOUND',
@@ -79,6 +66,8 @@ function create_auth_middleware(user_repository, config) {
 
             // Check if user can access the system
             if (!user.can_login()) {
+                // User deactivated - clean up session
+                await session_service.delete(session_id);
                 return res.status(403).json({
                     errors: [{
                         error_code: 'USER_INACTIVE',
@@ -110,9 +99,14 @@ function create_auth_middleware(user_repository, config) {
                 user.permissions = [];
             }
 
-            // Attach user to request
+            // Touch session to extend TTL (activity-based expiration)
+            await session_service.touch(session_id);
+
+            // Attach user and session to request
             req.user = user;
-            req.auth_payload = payload;
+            req.principal = user; // Alias for backward compatibility with handlers
+            req.session_id = session_id;
+            req.session_data = session_data;
 
             // Add ACL helper function to request
             req.can = async (resource, action, context = {}) => {

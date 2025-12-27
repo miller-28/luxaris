@@ -136,7 +136,7 @@ import { useI18n } from 'vue-i18n';
 import DashboardLayout from '@/layouts/DashboardLayout.vue';
 import AbstractPageHeader from '@/shared/components/AbstractPageHeader.vue';
 import AdminChannelsGridTable from '../components/AdminChannelsGridTable.vue';
-import { channelsRepository } from '@/contexts/system/infrastructure/api/channelsRepository';
+import { oauthCredentialsRepository } from '@/contexts/system/infrastructure/api/oauthCredentialsRepository';
 import { useToast } from '@/shared/composables/useToast';
 
 const { t } = useI18n();
@@ -204,7 +204,7 @@ const loadChannelStatus = async () => {
     try {
         // Load LinkedIn status
         try {
-            const linkedinResponse = await channelsRepository.getOAuthCredentials('linkedin');
+            const linkedinResponse = await oauthCredentialsRepository.getOAuthCredentials('linkedin');
             
             // Check if response has the expected structure
             if (linkedinResponse?.data?.data) {
@@ -225,7 +225,7 @@ const loadChannelStatus = async () => {
 
         // Load X status
         try {
-            const xResponse = await channelsRepository.getOAuthCredentials('x');
+            const xResponse = await oauthCredentialsRepository.getOAuthCredentials('x');
             
             // Check if response has the expected structure
             if (xResponse?.data?.data) {
@@ -271,7 +271,7 @@ const openConfigureDialog = async (channelKey, channelName) => {
         
         try {
             // Fetch decrypted credentials for editing
-            const response = await channelsRepository.getOAuthCredentials(channelKey, true);
+            const response = await oauthCredentialsRepository.getOAuthCredentials(channelKey, true);
             const credentials = response.data.data;
             
             if (credentials && credentials.client_id && credentials.client_secret) {
@@ -316,7 +316,7 @@ const saveConfiguration = async () => {
     error.value = null;
 
     try {
-        await channelsRepository.saveOAuthCredentials(
+        await oauthCredentialsRepository.saveOAuthCredentials(
             selectedChannel.value,
             formData.value.clientId,
             formData.value.clientSecret
@@ -364,7 +364,7 @@ const deleteConfiguration = async () => {
     error.value = null;
 
     try {
-        await channelsRepository.deleteOAuthCredentials(deleteChannelKey.value);
+        await oauthCredentialsRepository.deleteOAuthCredentials(deleteChannelKey.value);
         showToastSuccess(t('admin.channels.deleteSuccess', { channel: deleteChannelName.value }));
         deleteDialog.value = false;
         await loadChannelStatus();

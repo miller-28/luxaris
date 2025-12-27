@@ -5,7 +5,7 @@
 import { defineStore } from 'pinia';
 import { authRepository } from '../api/authRepository';
 import { User } from '../../domain/models/User';
-import { TokenManager } from '../../application/tokenManager';
+import { SessionManager } from '@/core/sessionManager';
 import { usePresetStore } from './presetStore';
 import { formatServerErrors } from '../../domain/validations/userSchemas';
 import { baseURL } from '@/core/http/ApiClient';
@@ -14,15 +14,14 @@ export const useAuthStore = defineStore('auth', {
 
     state: () => ({
         user: null,
-        token: TokenManager.getToken(),
-        refreshToken: TokenManager.getRefreshToken(),
+        sessionId: SessionManager.getSessionId(),
         loading: false,
         error: null,
     }),
 
     getters: {
         
-        isAuthenticated: (state) => !!state.token && !!state.user,
+        isAuthenticated: (state) => !!state.sessionId && !!state.user,
         currentUser: (state) => state.user,
         isRootAdmin: (state) => state.user?.is_root || false,
         isLoading: (state) => state.loading,
@@ -55,30 +54,25 @@ export const useAuthStore = defineStore('auth', {
         
                 console.log('[Auth Store] Login response:', data);
         
-                // Store tokens - API returns 'token' not 'access_token'
-                const accessToken = data.token || data.access_token;
-                const refreshToken = data.refresh_token;
+                // Store session ID
+                const sessionId = data.session_id;
         
+                if (!sessionId) {
+                    throw new Error('No session ID received from server');
+                }
+
                 try {
-                    TokenManager.setToken(accessToken);
-                    console.log('[Auth Store] Access token stored successfully');
+                    SessionManager.setSessionId(sessionId);
+                    console.log('[Auth Store] Session ID stored successfully');
                 } catch (error) {
-                    console.error('[Auth Store] Failed to store access token:', error);
+                    console.error('[Auth Store] Failed to store session ID:', error);
                     throw error;
                 }
 
-                try {
-                    TokenManager.setRefreshToken(refreshToken);
-                    console.log('[Auth Store] Refresh token stored successfully');
-                } catch (error) {
-                    console.error('[Auth Store] Failed to store refresh token:', error);
-                }
-
-                this.token = accessToken;
-                this.refreshToken = refreshToken;
+                this.sessionId = sessionId;
         
-                console.log('[Auth Store] Tokens stored. Checking localStorage:', {
-                    tokenInStorage: localStorage.getItem('auth_token') ? 'exists' : 'null'
+                console.log('[Auth Store] Session stored. Checking localStorage:', {
+                    sessionInStorage: localStorage.getItem('session_id') ? 'exists' : 'null'
                 });
         
                 // Store user data
@@ -212,12 +206,10 @@ export const useAuthStore = defineStore('auth', {
                     return { success: true, isPending: true };
                 }
 
-                // Store tokens and user data
-                TokenManager.setToken(data.access_token);
-                TokenManager.setRefreshToken(data.refresh_token);
+                // Store session ID and user data
+                SessionManager.setSessionId(data.session_id);
         
-                this.token = data.access_token;
-                this.refreshToken = data.refresh_token;
+                this.sessionId = data.session_id;
                 this.user = User.fromApiResponse(data.user);
 
                 // Load user preset
@@ -243,9 +235,8 @@ export const useAuthStore = defineStore('auth', {
                 console.error('Logout API call failed:', error);
             } finally {
                 // Clear local state
-                TokenManager.clearTokens();
-                this.token = null;
-                this.refreshToken = null;
+                SessionManager.clearSession();
+                this.sessionId = null;
                 this.user = null;
                 this.error = null;
             }
@@ -255,7 +246,7 @@ export const useAuthStore = defineStore('auth', {
          * Load current user data
          */
         async loadUser() {
-            if (!this.token) {
+            if (!this.sessionId) {
                 return;
             }
 

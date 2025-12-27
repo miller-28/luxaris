@@ -1,6 +1,6 @@
 # Luxaris Service Dockers
 
-Docker Compose setup for Luxaris backend services: PostgreSQL, Memcached, and RabbitMQ.
+Docker Compose setup for Luxaris backend services: PostgreSQL, Memcached, RabbitMQ, MongoDB, and Redis.
 
 ## Services
 
@@ -24,6 +24,22 @@ Docker Compose setup for Luxaris backend services: PostgreSQL, Memcached, and Ra
 - **Password:** `luxaris_password`
 - **Virtual Host:** `luxaris`
 - **Data Volume:** `rabbitmq_data`
+
+### MongoDB (Port 27017)
+- **Image:** `mongo:latest`
+- **Database:** `luxaris`
+- **User:** `luxaris_user`
+- **Password:** `luxaris_password`
+- **Data Volume:** `mongodb_data`
+- **Authentication Database:** `admin`
+
+### Redis (Port 6379)
+- **Image:** `redis:7-alpine`
+- **Password:** `luxaris_password`
+- **Max Memory:** 512 MB
+- **Eviction Policy:** allkeys-lru
+- **Persistence:** AOF enabled (appendonly.aof)
+- **Data Volume:** `redis_data`
 
 ## Quick Start
 
@@ -87,6 +103,16 @@ MEMCACHED_URL=localhost:11211
 
 # RabbitMQ
 RABBITMQ_URL=amqp://luxaris_user:luxaris_password@localhost:5672/luxaris
+
+# MongoDB
+MONGODB_URL=mongodb://luxaris_user:luxaris_password@localhost:27017/luxaris?authSource=admin
+
+# Redis
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_USER=luxaris_user
+REDIS_PASSWORD=luxaris_password
+REDIS_DB=0
 ```
 
 ## Individual Service Management
@@ -101,7 +127,7 @@ docker-compose up -d postgres
 docker exec -it luxaris-postgres psql -U luxaris_user -d luxaris
 
 # Backup database
-docker exec luxaris-postgres pg_dump -U luxaris_user luxaris > backup.sql
+.\backup-postgres.ps1
 
 # Restore database
 cat backup.sql | docker exec -i luxaris-postgres psql -U luxaris_user -d luxaris
@@ -135,6 +161,50 @@ docker exec luxaris-rabbitmq rabbitmqctl list_queues
 
 # List connections
 docker exec luxaris-rabbitmq rabbitmqctl list_connections
+```
+
+### MongoDB
+
+```powershell
+# Start only MongoDB
+docker-compose up -d mongodb
+
+# Connect to MongoDB shell
+docker exec -it luxaris-mongodb mongosh -u luxaris_user -p luxaris_password --authenticationDatabase admin luxaris
+
+# Backup database
+.\backup-mongodb.ps1
+
+# List databases
+docker exec luxaris-mongodb mongosh -u luxaris_user -p luxaris_password --authenticationDatabase admin --eval "show dbs"
+
+# List collections
+docker exec luxaris-mongodb mongosh -u luxaris_user -p luxaris_password --authenticationDatabase admin luxaris --eval "show collections"
+```
+
+### Redis
+
+```powershell
+# Start only Redis
+docker-compose up -d redis
+
+# Connect to Redis CLI
+docker exec -it luxaris-redis redis-cli -a luxaris_password
+
+# Backup database
+.\backup-redis.ps1
+
+# Check database size
+docker exec luxaris-redis redis-cli -a luxaris_password DBSIZE
+
+# Get Redis info
+docker exec luxaris-redis redis-cli -a luxaris_password INFO
+
+# List all keys (warning: slow on large databases)
+docker exec luxaris-redis redis-cli -a luxaris_password KEYS '*'
+
+# Monitor Redis commands in real-time
+docker exec luxaris-redis redis-cli -a luxaris_password MONITOR
 ```
 
 ## Production Considerations

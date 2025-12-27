@@ -3,7 +3,7 @@
  */
 import ChannelsView from './presentation/views/ChannelsView.vue';
 
-export const channelsRoutes = [
+export default [
   {
     path: '/dashboard/channels',
     redirect: '/dashboard/channels/all'

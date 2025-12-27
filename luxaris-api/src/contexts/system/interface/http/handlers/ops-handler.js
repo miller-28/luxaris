@@ -1,7 +1,8 @@
 class OpsHandler {
-    constructor(health_check_service, feature_flag_service) {
+    constructor(health_check_service, feature_flag_service, app_data_service) {
         this.health_check_service = health_check_service;
         this.feature_flag_service = feature_flag_service;
+        this.app_data_service = app_data_service;
     }
 
     async get_health(req, res, next) {
@@ -70,6 +71,24 @@ class OpsHandler {
             res.status(200).json({
                 key,
                 enabled: is_enabled
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async get_app_data(req, res, next) {
+        try {
+            const app_data = await this.app_data_service.get_app_data();
+            
+            res.status(200).json({
+                timezones: app_data.timezones,
+                countries: app_data.countries,
+                metadata: {
+                    timezones_count: app_data.timezones.length,
+                    countries_count: app_data.countries.length,
+                    cached: true
+                }
             });
         } catch (error) {
             next(error);

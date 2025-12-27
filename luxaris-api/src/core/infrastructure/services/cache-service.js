@@ -3,6 +3,7 @@
  * Provides a consistent interface for caching operations
  */
 class CacheService {
+    
     constructor(cache_client) {
         this.cache_client = cache_client;
     }

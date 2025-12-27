@@ -1,5 +1,5 @@
 import { createLuminara } from 'luminara';
-import { TokenManager } from '@/contexts/system/application/tokenManager';
+import { SessionManager } from '@/core/sessionManager';
 
 const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1';
 
@@ -9,25 +9,26 @@ const baseClient = createLuminara({
     timeout: 30000,
 });
 
-// Wrapper function to add token to requests
+// Wrapper function to add session ID to requests
 const request = async (method, url, data = null, config = {}) => {
     
-    const token = TokenManager.getToken();
+    const sessionId = SessionManager.getSessionId();
 
     console.log(`[HTTP Client] ${method.toUpperCase()} ${baseURL}${url}`, {
-        hasToken: !!token,
-        tokenPreview: token ? token.substring(0, 20) + '...' : 'none',
+        hasSession: !!sessionId,
+        sessionPreview: sessionId ? sessionId.substring(0, 20) + '...' : 'none',
         baseURL,
         url
     });
     
     const headers = {
         'Content-Type': 'application/json',
+        'X-Client-Type': 'luxaris-site', // Custom header to identify dashboard site
         ...config.headers,
     };
 
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
+    if (sessionId) {
+        headers['X-Session-ID'] = sessionId;
     }
 
     // Merge headers into config properly for Luminara
@@ -37,6 +38,7 @@ const request = async (method, url, data = null, config = {}) => {
     };
 
     try {
+
         // For GET, DELETE, HEAD, OPTIONS - pass config as second parameter
         // For POST, PUT, PATCH - pass body as second parameter, config as third
         let response;
@@ -114,48 +116,21 @@ const request = async (method, url, data = null, config = {}) => {
         };
         enhancedError.status = status;
 
-        // Handle 401 - Token expired (but NOT on login/register endpoints)
+        // Handle 401 - Session expired, redirect to login
         const isAuthEndpoint = 
             url.includes('/auth/login') || 
-            url.includes('/auth/register') || 
-            url.includes('/auth/refresh');
+            url.includes('/auth/register');
         
-        // Check if this is an OAuth provider error (not our JWT error)
-        const isOAuthProviderError = 
-            responseData?.errors?.[0]?.error_code === 'TOKEN_EXPIRED' ||
-            responseData?.errors?.[0]?.error_code === 'INVALID_TOKEN';
-        
-        if (
-            status === 401 &&
-            !config._retry &&
-            !isAuthEndpoint &&
-            !isOAuthProviderError
-        ) {
-            try {
-                const refreshToken = TokenManager.getRefreshToken();
-                if (refreshToken) {
-                    
-                    // Attempt token refresh
-                    const refreshResponse = await baseClient.post('/auth/refresh', {
-                        refresh_token: refreshToken,
-                    });
-
-                    const { access_token } = refreshResponse.data;
-                    TokenManager.setToken(access_token);
-
-                    // Retry original request with new token
-                    headers.Authorization = `Bearer ${access_token}`;
-                    return await baseClient[method](url, data, { ...config, headers, _retry: true });
-                }
-            } catch (refreshError) {
-                // Refresh failed - clear tokens and redirect to login
-                TokenManager.clearTokens();
-                //window.location.href = '/login';
-                throw refreshError;
+        if (status === 401 && !isAuthEndpoint) {
+            // Clear invalid session
+            SessionManager.clearSession();
+            
+            // Redirect to login page if not already there
+            if (!window.location.pathname.includes('/login')) {
+                window.location.href = '/login';
             }
         }
     
-        // For all other cases (403, auth endpoints with 401, or failed refresh), throw the error
         throw enhancedError;
     }
 };

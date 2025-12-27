@@ -86,14 +86,6 @@
                             {{ $t('posts.actions.cancel') }}
                         </v-btn>
                         <v-btn 
-                            v-if="isEditMode && formData.status === 'published'"
-                            color="grey"
-                            @click="handleSaveAsDraft"
-                            :loading="loading"
-                        >
-                            {{ $t('posts.actions.saveAsDraft') }}
-                        </v-btn>
-                        <v-btn 
                             color="primary"
                             type="submit"
                             :loading="loading"
@@ -171,13 +163,6 @@ const handleSubmit = async () => {
     if (!valid) return;
     
     emit('submit', { ...formData.value });
-};
-
-const handleSaveAsDraft = async () => {
-    const { valid } = await formRef.value.validate();
-    if (!valid) return;
-    
-    emit('submit', { ...formData.value, status: 'draft' });
 };
 
 // Initialize form data when post changes

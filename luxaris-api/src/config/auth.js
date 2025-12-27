@@ -1,9 +1,13 @@
 function get_auth_config() {
     
     return {
+        
         jwt_secret: process.env.JWT_SECRET,
         jwt_expiration: process.env.JWT_EXPIRATION || '24h',
         jwt_refresh_expiration: process.env.JWT_REFRESH_EXPIRATION || '7d',
+        
+        // Session configuration
+        session_ttl: parseInt(process.env.SESSION_TTL || '86400'), // 24 hours in seconds
         
         // Google OAuth (for user authentication)
         google_client_id: process.env.GOOGLE_CLIENT_ID,

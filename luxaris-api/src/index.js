@@ -8,6 +8,7 @@ const Server = require('./core/http/server');
 const { get_logger } = require('./core/infrastructure/system-logger');
 const EventRegistry = require('./core/events/event-registry');
 const { get_request_logger } = require('./core/http/middleware/request-logger');
+const create_auth_middleware = require('./core/http/middleware/auth-middleware');
 const error_handler = require('./core/http/middleware/error-handler-middleware');
 const not_found_handler = require('./core/http/middleware/not-found-handler-middleware');
 const origin_validation = require('./core/http/middleware/origin-validation-middleware');
@@ -33,13 +34,15 @@ const error_logger = winston.createLogger({
 const UserRepository = require('./contexts/system/infrastructure/repositories/user-repository');
 const FeatureFlagRepository = require('./contexts/system/infrastructure/repositories/feature-flag-repository');
 const PresetRepository = require('./contexts/system/infrastructure/repositories/preset-repository');
-const CacheService = require('./contexts/system/infrastructure/cache/cache-service');
+const CacheService = require('./core/infrastructure/services/cache-service');
+const SessionService = require('./core/infrastructure/services/session-service');
 const AuthService = require('./contexts/system/application/services/auth-service');
 const FeatureFlagService = require('./contexts/system/application/services/feature-flag-service');
 const HealthCheckService = require('./contexts/system/application/services/health-check-service');
 const GoogleOAuthService = require('./contexts/system/application/services/google-oauth-service');
 const PresetService = require('./contexts/system/application/services/preset-service');
 const UserService = require('./contexts/system/application/services/user-service');
+const AppDataService = require('./contexts/system/application/services/app-data-service');
 const RegisterUserUseCase = require('./contexts/system/application/use_cases/register-user');
 const LoginUserUseCase = require('./contexts/system/application/use_cases/login-user');
 const RefreshTokenUseCase = require('./contexts/system/application/use_cases/refresh-token');
@@ -47,7 +50,8 @@ const AuthHandler = require('./contexts/system/interface/http/handlers/auth-hand
 const OpsHandler = require('./contexts/system/interface/http/handlers/ops-handler');
 const PresetHandler = require('./contexts/system/interface/http/handlers/preset-handler');
 const UserHandler = require('./contexts/system/interface/http/handlers/user-handler');
-const { create_auth_routes, create_preset_routes, create_user_routes, create_ops_routes } = require('./contexts/system/interface/http/routes');
+const UserManagementHandler = require('./contexts/system/interface/http/handlers/user-management-handler');
+const { create_auth_routes, create_preset_routes, create_user_routes, create_user_management_routes, create_ops_routes } = require('./contexts/system/interface/http/routes');
 const { initialize_channels_domain } = require('./contexts/channels');
 const { initialize_posts_domain } = require('./contexts/posts');
 const { initialize_generation_domain } = require('./contexts/generation');
@@ -163,13 +167,15 @@ async function bootstrap() {
         const feature_flag_repository = new FeatureFlagRepository();
         const preset_repository = new PresetRepository();
         const cache_service = new CacheService(connection_manager.get_cache_client());
+        const session_service = new SessionService(connection_manager.get_redis_client());
     
-        const auth_service = new AuthService(user_repository, auth_config, system_logger, event_registry);
+        const auth_service = new AuthService(user_repository, auth_config, system_logger, event_registry, session_service);
         const feature_flag_service = new FeatureFlagService(feature_flag_repository, connection_manager.get_cache_client());
         const health_check_service = new HealthCheckService(connection_manager.get_db_pool(), connection_manager.get_cache_client(), connection_manager.get_queue_connection());
-        const google_oauth_service = new GoogleOAuthService(auth_config, cache_service, system_logger);
+        const google_oauth_service = new GoogleOAuthService(auth_config, session_service, system_logger);
         const preset_service = new PresetService(preset_repository, event_registry, system_logger);
-        const user_service = new UserService(user_repository);
+        const app_data_service = new AppDataService(system_logger);
+        const user_service = new UserService(user_repository, auth_service.acl_service, app_data_service);
     
         const register_user_use_case = new RegisterUserUseCase(auth_service);
         const login_user_use_case = new LoginUserUseCase(auth_service);
@@ -183,9 +189,10 @@ async function bootstrap() {
             auth_service,
             auth_config
         );
-        const ops_handler = new OpsHandler(health_check_service, feature_flag_service);
+        const ops_handler = new OpsHandler(health_check_service, feature_flag_service, app_data_service);
         const preset_handler = new PresetHandler(preset_service);
         const user_handler = new UserHandler(user_service);
+        const user_management_handler = new UserManagementHandler(user_service);
 
         // Initialize domains in correct order (respecting dependencies)
 		
@@ -222,61 +229,21 @@ async function bootstrap() {
             post_repository: posts_domain.post_repository
         });
 
-        // Create authentication middleware
-        const auth_middleware = (req, res, next) => {
-            const auth_header = req.headers.authorization;
-
-            if (!auth_header || !auth_header.startsWith('Bearer ')) {
-                return res.status(401).json({
-                    errors: [{
-                        error_code: 'UNAUTHORIZED',
-                        error_description: 'Missing or invalid authorization header',
-                        error_severity: 'error'
-                    }]
-                });
-            }
-
-            const token = auth_header.substring(7);
-
-            try {
-                const principal = auth_service.verify_token(token);
-                // Map JWT payload to expected format
-                req.user = {
-                    id: principal.sub,
-                    email: principal.email,
-                    name: principal.name,
-                    timezone: principal.timezone,
-                    is_root: principal.is_root,
-                    roles: principal.roles
-                };
-                // Add id property for convenience (JWT uses 'sub')
-                req.principal = {
-                    ...principal,
-                    id: principal.sub
-                };
-                next();
-            } catch (error) {
-                error_logger.error(`[Auth Middleware] Token verification failed: ${error.message} | URL: ${req.method} ${req.url}`);
-                return res.status(401).json({
-                    errors: [{
-                        error_code: 'INVALID_TOKEN',
-                        error_description: 'Token is invalid or expired',
-                        error_severity: 'error'
-                    }]
-                });
-            }
-        };
+        // Create authentication middleware (session-based)
+        const auth_middleware = create_auth_middleware(user_repository, session_service);
 
         // Register system context routes
         const auth_routes = create_auth_routes(auth_handler, auth_middleware);
         const ops_routes = create_ops_routes(ops_handler);
         const preset_routes = create_preset_routes(preset_handler, auth_middleware);
         const user_routes = create_user_routes(user_handler, auth_middleware);
+        const user_management_routes = create_user_management_routes(user_management_handler, auth_middleware, acl_middleware);
     
         server.register_routes(`/api/${app_config.api_version}/auth`, auth_routes);
         server.register_routes(`/api/${app_config.api_version}/ops`, ops_routes);
         server.register_routes(`/api/${app_config.api_version}/system`, preset_routes);
         server.register_routes(`/api/${app_config.api_version}/system`, user_routes);
+        server.register_routes(`/api/${app_config.api_version}/system`, user_management_routes);
 
         // Register channels domain routes
         const channel_routes = channels_domain.create_channel_routes({

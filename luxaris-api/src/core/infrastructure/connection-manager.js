@@ -2,6 +2,8 @@ const winston = require('winston');
 const { create_database_pool, test_database_connection } = require('../../connections/database');
 const { create_cache_client, test_cache_connection } = require('../../connections/cache');
 const { create_queue_connection, declare_queues } = require('../../connections/queue');
+const { create_mongodb_client, connect_mongodb, test_mongodb_connection, get_mongodb_database, get_mongodb_collection } = require('../../connections/mongodb');
+const { create_redis_client, connect_redis, test_redis_connection } = require('../../connections/redis');
 
 /**
  * Connection Manager
@@ -19,6 +21,8 @@ class ConnectionManager {
         this._cache_client = null;
         this._queue_connection = null;
         this._queue_channel = null;
+        this._mongodb_client = null;
+        this._redis_client = null;
         this._initialized = false;
         this._default_schema = 'luxaris'; // Current single-tenant schema
         
@@ -65,6 +69,16 @@ class ConnectionManager {
         this._queue_connection = queue_result.connection;
         this._queue_channel = queue_result.channel;
         await declare_queues(this._queue_channel);
+
+        // Initialize MongoDB client
+        this._mongodb_client = create_mongodb_client();
+        await connect_mongodb(this._mongodb_client);
+        await test_mongodb_connection(this._mongodb_client);
+
+        // Initialize Redis client
+        this._redis_client = create_redis_client();
+        await connect_redis(this._redis_client);
+        await test_redis_connection(this._redis_client);
 
         this._initialized = true;
     }
@@ -313,6 +327,53 @@ class ConnectionManager {
     }
 
     /**
+     * Get MongoDB client
+     * 
+     * @returns {MongoClient} MongoDB client
+     */
+    get_mongodb_client() {
+        if (!this._mongodb_client) {
+            throw new Error('MongoDB client not initialized. Call ConnectionManager.initialize() first.');
+        }
+        return this._mongodb_client;
+    }
+
+    /**
+     * Get MongoDB database
+     * 
+     * @param {string} database_name - Optional database name (defaults to env variable)
+     * @returns {Db} MongoDB database instance
+     */
+    get_mongodb_database(database_name = null) {
+        const client = this.get_mongodb_client();
+        return get_mongodb_database(client, database_name);
+    }
+
+    /**
+     * Get MongoDB collection
+     * 
+     * @param {string} collection_name - Collection name
+     * @param {string} database_name - Optional database name
+     * @returns {Collection} MongoDB collection instance
+     */
+    get_mongodb_collection(collection_name, database_name = null) {
+        const client = this.get_mongodb_client();
+        return get_mongodb_collection(client, collection_name, database_name);
+    }
+
+    /**
+     * Get Redis client
+     * 
+     * @returns {Object} Redis client
+     */
+    get_redis_client() {
+        if (!this._redis_client) {
+            throw new Error('Redis client not initialized. Call ConnectionManager.initialize() first.');
+        }
+        return this._redis_client;
+    }
+
+    /**
      * Check if connections are initialized
      * 
      * @returns {boolean} True if initialized
@@ -366,6 +427,26 @@ class ConnectionManager {
             }
         }
 
+        // Close MongoDB client
+        if (this._mongodb_client) {
+            try {
+                await this._mongodb_client.close();
+                this._mongodb_client = null;
+            } catch (error) {
+                errors.push({ connection: 'mongodb', error });
+            }
+        }
+
+        // Close Redis client
+        if (this._redis_client) {
+            try {
+                await this._redis_client.quit();
+                this._redis_client = null;
+            } catch (error) {
+                errors.push({ connection: 'redis', error });
+            }
+        }
+
         this._initialized = false;
 
         if (errors.length > 0) {
@@ -390,6 +471,8 @@ class ConnectionManager {
             database: this._db_pool !== null,
             cache: this._cache_client !== null,
             queue: this._queue_connection !== null,
+            mongodb: this._mongodb_client !== null,
+            redis: this._redis_client !== null && this._redis_client.isOpen,
             initialized: this._initialized
         };
     }

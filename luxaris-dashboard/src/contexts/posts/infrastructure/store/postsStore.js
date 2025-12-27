@@ -26,6 +26,7 @@ export const usePostsStore = defineStore('posts', {
     }),
 
     getters: AbstractStore.mergeGetters({
+        
         /**
          * Get post by ID
          */

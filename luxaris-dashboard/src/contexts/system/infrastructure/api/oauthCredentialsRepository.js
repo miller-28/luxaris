@@ -1,27 +1,27 @@
 /**
- * Channels Repository
+ * OAuth Credentials Repository
  * Handles OAuth credentials management API calls
  */
 import ApiClient from '@/core/http/ApiClient';
 
-export const channelsRepository = {
+export const oauthCredentialsRepository = {
 
     /**
      * Get OAuth credentials configuration status for a channel
-     * @param {number} channelId - Channel ID
+     * @param {string} channelKey - Channel key (e.g., 'linkedin', 'x', 'google')
      * @param {boolean} includeSecrets - Whether to include decrypted secrets (for editing)
      */
-    async getOAuthCredentials(channelId, includeSecrets = false) {
+    async getOAuthCredentials(channelKey, includeSecrets = false) {
         const params = includeSecrets ? { include_secrets: 'true' } : {};
-        const response = await ApiClient.get(`/channels/${channelId}/oauth-credentials`, { params });
+        const response = await ApiClient.get(`/channels/${channelKey}/oauth-credentials`, { params });
         return response; // Return full response, component will access response.data.data
     },
 
     /**
      * Save or update OAuth credentials for a channel
      */
-    async saveOAuthCredentials(channelId, clientId, clientSecret) {
-        const response = await ApiClient.put(`/channels/${channelId}/oauth-credentials`, {
+    async saveOAuthCredentials(channelKey, clientId, clientSecret) {
+        const response = await ApiClient.put(`/channels/${channelKey}/oauth-credentials`, {
             client_id: clientId,
             client_secret: clientSecret,
         });
@@ -31,8 +31,8 @@ export const channelsRepository = {
     /**
      * Delete OAuth credentials for a channel
      */
-    async deleteOAuthCredentials(channelId) {
-        const response = await ApiClient.delete(`/channels/${channelId}/oauth-credentials`);
+    async deleteOAuthCredentials(channelKey) {
+        const response = await ApiClient.delete(`/channels/${channelKey}/oauth-credentials`);
         return response; // Return full response
     },
 };

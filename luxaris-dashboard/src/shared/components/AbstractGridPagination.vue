@@ -5,6 +5,14 @@
                 <!-- Pagination Controls -->
                 <v-col cols="auto" md="6" class="d-flex align-center justify-center justify-md-start gap-1 pagination-controls">
                     <v-btn
+                        icon="mdi-chevron-double-left"
+                        variant="text"
+                        size="small"
+                        :disabled="currentPage === 1"
+                        @click="handleFirst"
+                    />
+                    
+                    <v-btn
                         icon="mdi-chevron-left"
                         variant="text"
                         size="small"
@@ -33,7 +41,7 @@
                     />
                     
                     <span v-if="totalPages > 5" class="text-body-2 ml-2 out-of-pages-label">
-                        out of <strong class="clickable-page" @click="handlePageClick(totalPages)">{{ totalPages }}</strong> pages
+                        out of <strong class="clickable-page" @click="handlePageClick(totalPages)">{{ formattedTotalPages }}</strong> pages
                     </span>
                 </v-col>
                 
@@ -41,7 +49,7 @@
                 <v-col cols="auto" md="6" class="d-flex align-center justify-center justify-md-end pagination-info">
                     <div class="d-flex align-center">
                         <span class="text-body-2 mr-3">
-                            <strong>{{ totalRecords }}</strong> Records
+                            <strong>{{ formattedTotalRecords }}</strong> Records
                         </span>
                         <v-select
                             :model-value="itemsPerPage"
@@ -64,6 +72,7 @@
 <script setup>
 import { computed, ref, onMounted, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
+import numbro from 'numbro';
 
 const props = defineProps({
     currentPage: {
@@ -97,6 +106,21 @@ const isMobile = ref(false);
 const updateIsMobile = () => {
     isMobile.value = window.innerWidth <= 960;
 };
+
+// Format numbers with thousand separators
+const formattedTotalPages = computed(() => {
+    return numbro(props.totalPages).format({
+        thousandSeparated: true,
+        mantissa: 0
+    });
+});
+
+const formattedTotalRecords = computed(() => {
+    return numbro(props.totalRecords).format({
+        thousandSeparated: true,
+        mantissa: 0
+    });
+});
 
 onMounted(() => {
     updateIsMobile();
@@ -153,6 +177,12 @@ const visiblePages = computed(() => {
 const handlePageClick = (page) => {
     if (page !== '...' && page !== props.currentPage) {
         emit('page-change', page);
+    }
+};
+
+const handleFirst = () => {
+    if (props.currentPage > 1) {
+        emit('page-change', 1);
     }
 };
 

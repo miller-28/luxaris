@@ -74,7 +74,7 @@ class TestServer {
         const user_repository = new UserRepository();
         const feature_flag_repository = new FeatureFlagRepository();
         const preset_repository = new PresetRepository();
-        const CacheService = require('../../src/contexts/system/infrastructure/cache/cache-service');
+        const CacheService = require('../../src/core/infrastructure/services/cache-service');
         const cache_service = new CacheService(connection_manager.get_cache_client());
 		
         const auth_service = new AuthService(user_repository, auth_config, system_logger, event_registry);

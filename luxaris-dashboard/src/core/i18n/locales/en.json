@@ -296,6 +296,127 @@
     }
   },
   "admin": {
+    "users": {
+      "title": "User Management",
+      "subtitle": "Manage user accounts and permissions",
+      "noUsersFound": "No users found",
+      "emptyMessage": "No users match your current filters",
+      "searchUsers": "Search users by name or email",
+      "search": "Search",
+      "clearFilters": "Clear Filters",
+      "rootAdmin": "Root Admin",
+      "allPermissions": "All Permissions",
+      "editUser": "Edit User",
+      "viewUser": "View User",
+      "fields": {
+        "name": "Name",
+        "email": "Email",
+        "authMethod": "Auth Method",
+        "status": "Status",
+        "role": "Role",
+        "createdAt": "Created At"
+      },
+      "authMethod": {
+        "all": "All Methods",
+        "password": "Password",
+        "google": "Google"
+      },
+      "status": {
+        "all": "All Statuses",
+        "active": "Active",
+        "pending_approval": "Pending Approval",
+        "disabled": "Disabled"
+      },
+      "actions": {
+        "actions": "Actions",
+        "approve": "Approve User",
+        "disable": "Disable User",
+        "enable": "Enable User",
+        "delete": "Delete User",
+        "editPermissions": "Edit Permissions"
+      },
+      "approve": {
+        "title": "Approve User",
+        "message": "Are you sure you want to approve {name}? They will be able to log in immediately.",
+        "confirm": "Approve",
+        "success": "User approved successfully",
+        "failed": "Failed to approve user"
+      },
+      "disable": {
+        "title": "Disable User",
+        "message": "Are you sure you want to disable {name}? They will no longer be able to log in.",
+        "confirm": "Disable",
+        "success": "User disabled successfully",
+        "failed": "Failed to disable user"
+      },
+      "enable": {
+        "title": "Enable User",
+        "message": "Are you sure you want to enable {name}? They will be able to log in again.",
+        "confirm": "Enable",
+        "success": "User enabled successfully",
+        "failed": "Failed to enable user"
+      },
+      "delete": {
+        "title": "Delete User",
+        "message": "Are you sure you want to delete {name}? This action cannot be undone.",
+        "confirm": "Delete",
+        "success": "User deleted successfully",
+        "failed": "Failed to delete user"
+      },
+      "edit": {
+        "title": "Edit User",
+        "success": "User updated successfully",
+        "failed": "Failed to update user",
+        "pendingApprovalBanner": "This user account is pending approval. Approve the account to grant access.",
+        "accountActive": "This user account is active and can log in.",
+        "accountDisabled": "This user account is disabled and cannot log in.",
+        "sections": {
+          "userInfo": "User Information",
+          "password": "Change Password",
+          "preferences": "Preferences",
+          "permissions": "Permissions",
+          "activity": "Activity"
+        },
+        "fields": {
+          "name": "Full Name",
+          "email": "Email Address",
+          "status": "Account Status",
+          "authMethod": "Authentication Method",
+          "newPassword": "New Password",
+          "confirmPassword": "Confirm Password",
+          "timezone": "Timezone",
+          "locale": "Language",
+          "createdAt": "Created At",
+          "updatedAt": "Updated At",
+          "lastLoginAt": "Last Login At"
+        },
+        "hints": {
+          "nameReadonly": "Email and authentication method cannot be changed",
+          "passwordAuth": "This user authenticates with a password",
+          "passwordOptional": "Leave blank to keep current password",
+          "oauthAuth": "This user authenticates via {provider}",
+          "rootUser": "Root users cannot be edited or deleted",
+          "permissionsFeature": "Configure granular permissions (coming soon)"
+        },
+        "validation": {
+          "nameRequired": "Name is required",
+          "passwordRequired": "Password is required",
+          "passwordMinLength": "Password must be at least 8 characters",
+          "passwordsMatch": "Passwords must match"
+        },
+        "permissionsModal": {
+          "title": "Manage User Permissions",
+          "description": "Configure granular permissions for this user",
+          "comingSoon": "Permissions management coming soon",
+          "close": "Close"
+        },
+        "permissionsCount": "{count} permissions"
+      },
+      "errors": {
+        "invalidUserId": "Invalid user ID",
+        "loadFailed": "Failed to load user"
+      }
+    },
     "channels": {
       "title": "Channel Settings",
       "description": "Configure OAuth credentials for social media channels. These credentials are required for channel connection creation.",
@@ -321,7 +442,8 @@
     }
   },
   "validation": {
-    "required": "This field is required"
+    "required": "This field is required",
+    "email": "Invalid email address"
   },
   "pagination": {
     "records": "Records",

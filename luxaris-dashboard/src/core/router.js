@@ -1,9 +1,11 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import { systemRoutes } from '@/contexts/system/routes';
-import { postsRoutes } from '@/contexts/posts/routes';
-import { channelsRoutes } from '@/contexts/channels/routes';
+import systemRoutes from '@/contexts/system/routes';
+import postsRoutes from '@/contexts/posts/routes';
+import channelsRoutes from '@/contexts/channels/routes';
+import adminRoutes from '@/contexts/admin/routes';
 import { useAuthStore } from '@/contexts/system/infrastructure/store/authStore';
-import { TokenManager } from '@/contexts/system/application/tokenManager';
+import { useAppDataStore } from '@/contexts/system/infrastructure/store/appDataStore';
+import { SessionManager } from '@/core/sessionManager';
 
 const routes = [
     {
@@ -19,6 +21,7 @@ const routes = [
     ...systemRoutes,
     ...postsRoutes,
     ...channelsRoutes,
+    ...adminRoutes,
 ];
 
 export const router = createRouter({
@@ -30,15 +33,32 @@ export const router = createRouter({
 router.beforeEach(async (to, from, next) => {
 
     const authStore = useAuthStore();
-    const token = TokenManager.getToken();
-    const isAuthenticated = !!token;
+    const appDataStore = useAppDataStore();
+    const sessionId = SessionManager.getSessionId();
+    const isAuthenticated = !!sessionId;
+
+    // Load application reference data (timezones, countries) once
+    // This is public data cached on server (Redis, 1-hour TTL)
+    if (!appDataStore.isLoaded && !appDataStore.isLoading) {
+        console.log('[Router Guard] Loading app data (timezones, countries)...');
+        try {
+            await appDataStore.loadAppData();
+            console.log('[Router Guard] App data loaded:', {
+                timezones: appDataStore.timezones.length,
+                countries: appDataStore.countries.length
+            });
+        } catch (error) {
+            console.error('[Router Guard] Failed to load app data:', error);
+            // Non-blocking error - app can still work without this data
+        }
+    }
 
     console.log('[Router Guard]', {
         to: to.path,
         from: from.path,
         isAuthenticated,
-        token: token ? token.substring(0, 20) + '...' : 'null',
-        tokenInStorage: localStorage.getItem('auth_token') ? 'exists' : 'null',
+        sessionId: sessionId ? sessionId.substring(0, 20) + '...' : 'null',
+        sessionInStorage: localStorage.getItem('session_id') ? 'exists' : 'null',
         hasUser: !!authStore.currentUser,
         userName: authStore.currentUser?.name,
         userEmail: authStore.currentUser?.email,
@@ -60,7 +80,7 @@ router.beforeEach(async (to, from, next) => {
             });
         } catch (error) {
             console.error('[Router Guard] Failed to load user:', error);
-            // Failed to load user, token might be invalid
+            // Failed to load user, session might be invalid
             authStore.logout();
             if (to.meta.requiresAuth) {
                 next({ name: 'Login', query: { redirect: to.fullPath } });

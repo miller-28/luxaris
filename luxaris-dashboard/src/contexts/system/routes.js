@@ -7,7 +7,7 @@ import RegisterView from './presentation/views/RegisterView.vue';
 import GoogleOAuthCallback from './presentation/views/GoogleOAuthCallback.vue';
 import ChannelSettingsView from './presentation/views/ChannelSettingsView.vue';
 
-export const systemRoutes = [
+export default [
     {
         path: '/login',
         name: 'Login',

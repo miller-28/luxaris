@@ -7,11 +7,12 @@ const OAuthProviderRepository = require('../../infrastructure/repositories/oauth
 const OAuthAccountRepository = require('../../infrastructure/repositories/oauth-account-repository');
 
 class AuthService {
-    constructor(user_repository, config, system_logger, event_registry) {
+    constructor(user_repository, config, system_logger, event_registry, session_service) {
         this.user_repository = user_repository;
         this.config = config;
         this.system_logger = system_logger;
         this.event_registry = event_registry;
+        this.session_service = session_service;
         this.role_repository = new RoleRepository();
         this.acl_repository = new AclRepository();
         this.oauth_provider_repository = new OAuthProviderRepository();
@@ -338,12 +339,15 @@ class AuthService {
             const role_assignments = await this.acl_repository.get_principal_roles(user.id, 'user');
             const roles = role_assignments.map(ra => ra.role);
 
+            // Create session instead of JWT tokens
+            let session_id = null;
+            if (!needs_approval) {
+                session_id = await this.create_session(user, roles, oauth_data.metadata || {});
+            }
+
             return {
                 user,
-                tokens: needs_approval ? null : {
-                    access_token: this.generate_jwt(user, roles),
-                    refresh_token: this.generate_refresh_token(user)
-                },
+                session_id,
                 needs_approval
             };
         }
@@ -404,12 +408,15 @@ class AuthService {
             const role_assignments = await this.acl_repository.get_principal_roles(existing_user.id, 'user');
             const roles = role_assignments.map(ra => ra.role);
 
+            // Create session instead of JWT tokens
+            let session_id = null;
+            if (!needs_approval) {
+                session_id = await this.create_session(existing_user, roles, oauth_data.metadata || {});
+            }
+
             return {
                 user: existing_user,
-                tokens: needs_approval ? null : {
-                    access_token: this.generate_jwt(existing_user, roles),
-                    refresh_token: this.generate_refresh_token(existing_user)
-                },
+                session_id,
                 needs_approval
             };
         }
@@ -484,12 +491,15 @@ class AuthService {
         const role_assignments = await this.acl_repository.get_principal_roles(user.id, 'user');
         const roles = role_assignments.map(ra => ra.role);
 
+        // Create session instead of JWT tokens
+        let session_id = null;
+        if (!needs_approval) {
+            session_id = await this.create_session(user, roles, oauth_data.metadata || {});
+        }
+
         return {
             user,
-            tokens: needs_approval ? null : {
-                access_token: this.generate_jwt(user, roles),
-                refresh_token: this.generate_refresh_token(user)
-            },
+            session_id,
             needs_approval
         };
     }
@@ -511,6 +521,89 @@ class AuthService {
             default:
                 return 86400; // Default 24 hours
         }
+    }
+
+    /**
+     * Create a new session for user
+     * @param {object} user - User object
+     * @param {object} roles - User roles
+     * @param {object} metadata - Additional session metadata (ip_address, user_agent)
+     * @returns {Promise<string>} session_id
+     */
+    async create_session(user, roles = [], metadata = {}) {
+        const crypto = require('crypto');
+        const session_id = crypto.randomBytes(32).toString('hex');
+        
+        const session_data = {
+            user_id: user.id,
+            username: user.name,
+            email: user.email,
+            roles: roles.map(r => r.slug || r),
+            permissions: [], // Permissions will be loaded on each request
+            created_at: Date.now(),
+            ip_address: metadata.ip_address || '',
+            user_agent: metadata.user_agent || ''
+        };
+
+        // Store session in Redis with configurable TTL
+        const session_ttl = this.config.session_ttl || 86400; // Fallback to 24 hours
+        await this.session_service.set(session_id, session_data, session_ttl);
+
+        await this.system_logger.info(
+            'AuthService',
+            'Session created',
+            { user_id: user.id, session_id, ttl: session_ttl }
+        );
+
+        return session_id;
+    }
+
+    /**
+     * Get session data from Redis
+     * @param {string} session_id - Session ID
+     * @returns {Promise<object|null>} Session data or null
+     */
+    async get_session(session_id) {
+        return await this.session_service.get(session_id);
+    }
+
+    /**
+     * Delete a session
+     * @param {string} session_id - Session ID
+     * @returns {Promise<boolean>} Success status
+     */
+    async delete_session(session_id) {
+        await this.session_service.delete(session_id);
+        await this.system_logger.info(
+            'AuthService',
+            'Session deleted',
+            { session_id }
+        );
+        return true;
+    }
+
+    /**
+     * Delete all sessions for a user (logout from all devices)
+     * @param {number} user_id - User ID
+     * @returns {Promise<boolean>} Success status
+     */
+    async delete_all_user_sessions(user_id) {
+        await this.session_service.delete_all_for_user(user_id);
+        await this.system_logger.info(
+            'AuthService',
+            'All user sessions deleted',
+            { user_id }
+        );
+        return true;
+    }
+
+    /**
+     * Touch session to extend TTL
+     * @param {string} session_id - Session ID
+     * @returns {Promise<boolean>} Success status
+     */
+    async touch_session(session_id) {
+        return await this.session_service.touch(session_id);
     }
 }
 

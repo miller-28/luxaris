@@ -64,10 +64,12 @@
 <script setup>
 import { computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import numbro from 'numbro';
 import DashboardLayout from '@/layouts/DashboardLayout.vue';
 import AbstractPageHeader from '@/shared/components/AbstractPageHeader.vue';
 import AbstractDashboardTotalContainer from '@/shared/components/AbstractDashboardTotalContainer.vue';
 import { usePosts } from '@/contexts/posts/application/composables/usePosts';
+import { usePostsStore } from '@/contexts/posts/infrastructure/store/postsStore';
 import { useChannels } from '@/contexts/channels/application/composables/useChannels';
 import { useConnections } from '@/contexts/channels/application/composables/useConnections';
 
@@ -76,19 +78,31 @@ const { posts, loadPosts } = usePosts();
 const { channels, loadChannels } = useChannels();
 const { activeConnections, loadConnections } = useConnections();
 
-// Total posts count
-const totalPosts = computed(() => posts.value.length);
+// Import posts store to access pagination total
+const postsStore = usePostsStore();
 
-// Draft posts count
+// Format number helper
+const formatNumber = (value) => {
+    return numbro(value).format({
+        thousandSeparated: true,
+        mantissa: 0
+    });
+};
+
+// Total posts count from pagination (not just loaded posts)
+const totalPosts = computed(() => formatNumber(postsStore.pagination.total));
+
+// Draft posts count (from loaded posts)
 const draftPosts = computed(() => {
-    return posts.value.filter(post => post.status === 'draft').length;
+    const count = posts.value.filter(post => post.status === 'draft').length;
+    return formatNumber(count);
 });
 
 // Total channels count
-const totalChannels = computed(() => channels.value.length);
+const totalChannels = computed(() => formatNumber(channels.value.length));
 
 // Connected channels count
-const connectedChannels = computed(() => activeConnections.value.length);
+const connectedChannels = computed(() => formatNumber(activeConnections.value.length));
 
 // Navigation methods
 const navigateToPosts = () => {

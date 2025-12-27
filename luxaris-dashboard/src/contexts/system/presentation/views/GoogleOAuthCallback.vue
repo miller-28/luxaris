@@ -51,29 +51,29 @@
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
-import { TokenManager } from '@/contexts/system/application/tokenManager';
+import { SessionManager } from '@/core/sessionManager';
 import { useAuthStore } from '@/contexts/system/infrastructure/store/authStore';
+import { usePresetStore } from '@/contexts/system/infrastructure/store/presetStore';
 import AuthLayout from '@/layouts/AuthLayout.vue';
 
 const route = useRoute();
 const router = useRouter();
 const { t } = useI18n();
 const authStore = useAuthStore();
+const presetStore = usePresetStore();
 
 const loading = ref(true);
 const error = ref(null);
 const isPending = ref(false);
 
 onMounted(async () => {
-    // Check if we have direct tokens from the API (OAuth already processed server-side)
-    const token = route.query.token;
-    const refreshToken = route.query.refresh_token;
+    // Check if we have session_id from the API (OAuth already processed server-side)
+    const sessionId = route.query.session_id;
     const success = route.query.success;
     const errorParam = route.query.error;
 
     console.log('[OAuth Callback] Parameters received:', {
-        hasToken: !!token,
-        hasRefreshToken: !!refreshToken,
+        hasSessionId: !!sessionId,
         success,
         error: errorParam
     });
@@ -85,23 +85,17 @@ onMounted(async () => {
         return;
     }
 
-    // Validate we have the required tokens
-    if (!token || !refreshToken) {
+    // Validate we have the required session ID
+    if (!sessionId) {
         error.value = t('auth.oauth.invalidOAuthParameters');
         loading.value = false;
         return;
     }
 
-    // Store tokens and load user
+    // Store session ID and load user
     try {
-        TokenManager.setToken(token);
-        TokenManager.setRefreshToken(refreshToken);
-        
-        // Update authStore state with tokens
-        authStore.token = token;
-        authStore.refreshToken = refreshToken;
-        
-        console.log('[OAuth Callback] Tokens stored, loading user with permissions...');
+        SessionManager.setSessionId(sessionId);
+        console.log('[OAuth Callback] Session ID stored, loading user with permissions...');
         
         // Load user data including permissions before redirecting
         await authStore.loadUser();
@@ -115,22 +109,39 @@ onMounted(async () => {
             isAdmin: authStore.currentUser?.is_root
         });
         
+        // Load preset data for UI settings (required for menu display)
+        if (authStore.currentUser?.id) {
+            console.log('[OAuth Callback] Loading user preset...');
+            try {
+                await presetStore.loadPreset(authStore.currentUser.id);
+                console.log('[OAuth Callback] Preset loaded successfully, preset state:', {
+                    loaded: presetStore.isLoaded,
+                    loading: presetStore.isLoading,
+                    presetId: presetStore.presetId
+                });
+            } catch (presetError) {
+                console.error('[OAuth Callback] Failed to load preset:', presetError);
+                // Continue anyway - preset is not critical for initial login
+            }
+        }
+        
         // Ensure permissions are fully loaded before navigating
         if (!authStore.currentUser?.permissions || authStore.currentUser.permissions.length === 0) {
             console.warn('[OAuth Callback] No permissions loaded, this may cause menu issues');
         }
         
-        // Wait a moment for UI to update, then redirect
+        // Set loading to false to show success message
         loading.value = false;
+        
+        // Small delay to show success message, then do a full page reload
+        // This ensures all stores are properly initialized
         await new Promise(resolve => setTimeout(resolve, 800));
         
-        console.log('[OAuth Callback] Redirecting to dashboard with user:', {
-            hasUser: !!authStore.currentUser,
-            permissions: authStore.currentUser?.permissions?.length
-        });
+        console.log('[OAuth Callback] Performing full page reload to ensure all stores are initialized');
         
-        // Use replace instead of push to avoid back button issues
-        await router.replace('/dashboard');
+        // Use window.location to do a full page reload to /dashboard
+        // This ensures all stores are properly initialized on fresh page load
+        window.location.href = '/dashboard';
     } catch (err) {
         console.error('[OAuth Callback] Error loading user:', err);
         error.value = err.message || t('auth.oauth.authenticationFailedGeneric');

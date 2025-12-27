@@ -4,7 +4,7 @@
 import PostsView from './presentation/views/PostsView.vue';
 import PostDetailView from './presentation/views/PostDetailView.vue';
 
-export const postsRoutes = [
+export default [
     {
         path: '/dashboard/posts',
         name: 'Posts',

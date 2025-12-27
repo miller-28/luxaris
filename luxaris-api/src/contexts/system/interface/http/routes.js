@@ -65,6 +65,49 @@ function create_user_routes(user_handler, auth_middleware) {
     return router;
 }
 
+function create_user_management_routes(user_management_handler, auth_middleware, acl_middleware) {
+    
+    const router = express.Router();
+
+    // User management (requires admin permission)
+    router.get('/users', 
+        auth_middleware, 
+        acl_middleware({ resource: 'users', action: 'read' }), 
+        (req, res) => user_management_handler.list_users(req, res));
+    
+    router.get('/users/:user_id', 
+        auth_middleware, 
+        acl_middleware({ resource: 'users', action: 'read' }), 
+        (req, res) => user_management_handler.get_user(req, res));
+    
+    router.post('/users/:user_id/approve', 
+        auth_middleware, 
+        acl_middleware({ resource: 'users', action: 'approve' }), 
+        (req, res) => user_management_handler.approve_user(req, res));
+    
+    router.post('/users/:user_id/disable', 
+        auth_middleware, 
+        acl_middleware({ resource: 'users', action: 'update' }), 
+        (req, res) => user_management_handler.disable_user(req, res));
+    
+    router.post('/users/:user_id/enable', 
+        auth_middleware, 
+        acl_middleware({ resource: 'users', action: 'update' }), 
+        (req, res) => user_management_handler.enable_user(req, res));
+    
+    router.patch('/users/:user_id', 
+        auth_middleware, 
+        acl_middleware({ resource: 'users', action: 'update' }), 
+        (req, res) => user_management_handler.update_user(req, res));
+    
+    router.delete('/users/:user_id', 
+        auth_middleware, 
+        acl_middleware({ resource: 'users', action: 'delete' }), 
+        (req, res) => user_management_handler.delete_user(req, res));
+
+    return router;
+}
+
 function create_ops_routes(ops_handler) {
     
     const router = express.Router();
@@ -78,6 +121,9 @@ function create_ops_routes(ops_handler) {
     router.get('/flags/:key', (req, res, next) => ops_handler.get_feature_flag(req, res, next));
     router.get('/flags/:key/check', (req, res, next) => ops_handler.check_feature_flag(req, res, next));
 
+    // App data endpoint (public - timezones and countries)
+    router.get('/app-data', (req, res, next) => ops_handler.get_app_data(req, res, next));
+
     return router;
 }
 
@@ -85,5 +131,6 @@ module.exports = {
     create_auth_routes,
     create_preset_routes,
     create_user_routes,
+    create_user_management_routes,
     create_ops_routes
 };

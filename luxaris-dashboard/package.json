@@ -20,6 +20,7 @@
     "date-fns": "^4.1.0",
     "lodash": "^4.17.21",
     "luminara": "^1.2.4",
+    "numbro": "^2.5.0",
     "pinia": "^3.0.4",
     "vite-plugin-vuetify": "^2.1.2",
     "vue": "^3.5.24",

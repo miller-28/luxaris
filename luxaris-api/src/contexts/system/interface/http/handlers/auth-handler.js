@@ -26,7 +26,14 @@ class AuthHandler {
 
     async login(req, res, next) {
         try {
-            const result = await this.login_user_use_case.execute(req.body);
+            // Extract request metadata for session
+            const metadata = {
+                ip_address: req.ip || req.connection.remoteAddress,
+                user_agent: req.headers['user-agent'] || '',
+                client_type_header: req.headers['x-client-type'] || '' // Custom header for site detection
+            };
+            
+            const result = await this.login_user_use_case.execute(req.body, metadata);
             res.status(200).json(result);
         } catch (error) {
             next(error);
@@ -46,10 +53,14 @@ class AuthHandler {
         try {
             console.log('[AuthHandler] Logout request received', {
                 userId: req.user?.id,
-                hasUser: !!req.user
+                sessionId: req.session_id
             });
-            // In a stateless JWT system, logout is client-side (clear tokens)
-            // But we can track logout events or invalidate refresh tokens if needed
+            
+            // Delete session from Redis
+            if (req.session_id) {
+                await this.auth_service.delete_session(req.session_id);
+            }
+            
             return res.status(200).json({
                 message: 'Logged out successfully'
             });
@@ -153,7 +164,12 @@ class AuthHandler {
                 email: user_info.email,
                 name: user_info.name,
                 avatar_url: user_info.avatar_url,
-                token_data: token_data
+                token_data: token_data,
+                metadata: {
+                    ip_address: req.ip || req.connection.remoteAddress,
+                    user_agent: req.headers['user-agent'] || '',
+                    client_type_header: req.headers['x-client-type'] || '' // Custom header for site detection
+                }
             });
 
             // Build redirect URL based on approval status
@@ -165,8 +181,8 @@ class AuthHandler {
                 return res.redirect(redirect_url);
             }
 
-            // Redirect to callback with tokens
-            const redirect_url = `${frontend_url}/auth/google/callback?success=true&token=${result.tokens.access_token}&refresh_token=${result.tokens.refresh_token}`;
+            // Redirect to callback with session_id
+            const redirect_url = `${frontend_url}/auth/google/callback?success=true&session_id=${result.session_id}`;
             res.redirect(redirect_url);
 
         } catch (error) {

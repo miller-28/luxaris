@@ -148,6 +148,12 @@ class UserRepository {
         const values = [];
         let param_count = 1;
 
+        if (filters.search) {
+            query += ` AND (name ILIKE $${param_count} OR email ILIKE $${param_count})`;
+            values.push(`%${filters.search}%`);
+            param_count++;
+        }
+
         if (filters.status) {
             query += ` AND status = $${param_count++}`;
             values.push(filters.status);
@@ -177,6 +183,90 @@ class UserRepository {
 
         const result = await connection_manager.get_db_pool().query(query, values);
         return result.rows.map(row => new User(row));
+    }
+
+    async count_all(filters = {}) {
+        let query = 'SELECT COUNT(*) as count FROM users WHERE is_deleted = false';
+        const values = [];
+        let param_count = 1;
+
+        if (filters.search) {
+            query += ` AND (name ILIKE $${param_count} OR email ILIKE $${param_count})`;
+            values.push(`%${filters.search}%`);
+            param_count++;
+        }
+
+        if (filters.status) {
+            query += ` AND status = $${param_count++}`;
+            values.push(filters.status);
+        }
+
+        if (filters.auth_method) {
+            query += ` AND auth_method = $${param_count++}`;
+            values.push(filters.auth_method);
+        }
+
+        if (filters.is_root !== undefined) {
+            query += ` AND is_root = $${param_count++}`;
+            values.push(filters.is_root);
+        }
+
+        const result = await connection_manager.get_db_pool().query(query, values);
+        return parseInt(result.rows[0].count);
+    }
+
+    async approve_user(user_id, approved_by_user_id) {
+        const query = `
+            UPDATE users 
+            SET status = $1, 
+                approved_by_user_id = $2, 
+                approved_at = NOW(), 
+                updated_at = NOW()
+            WHERE id = $3 AND is_deleted = false
+            RETURNING *
+        `;
+        const values = [UserStatus.ACTIVE, approved_by_user_id, user_id];
+        const result = await connection_manager.get_db_pool().query(query, values);
+        
+        if (result.rows.length === 0) {
+            return null;
+        }
+
+        return new User(result.rows[0]);
+    }
+
+    async disable_user(user_id) {
+        const query = `
+            UPDATE users 
+            SET status = $1, updated_at = NOW()
+            WHERE id = $2 AND is_deleted = false
+            RETURNING *
+        `;
+        const values = [UserStatus.DISABLED, user_id];
+        const result = await connection_manager.get_db_pool().query(query, values);
+        
+        if (result.rows.length === 0) {
+            return null;
+        }
+
+        return new User(result.rows[0]);
+    }
+
+    async enable_user(user_id) {
+        const query = `
+            UPDATE users 
+            SET status = $1, updated_at = NOW()
+            WHERE id = $2 AND is_deleted = false
+            RETURNING *
+        `;
+        const values = [UserStatus.ACTIVE, user_id];
+        const result = await connection_manager.get_db_pool().query(query, values);
+        
+        if (result.rows.length === 0) {
+            return null;
+        }
+
+        return new User(result.rows[0]);
     }
 }
 

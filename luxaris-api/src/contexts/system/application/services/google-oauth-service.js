@@ -2,9 +2,9 @@ const { createLuminara } = require('luminara');
 const crypto = require('crypto');
 
 class GoogleOAuthService {
-    constructor(config, cache_service, system_logger) {
+    constructor(config, session_service, system_logger) {
         this.config = config;
-        this.cache_service = cache_service;
+        this.session_service = session_service;
         this.system_logger = system_logger;
 
         // Google OAuth 2.0 endpoints
@@ -31,9 +31,9 @@ class GoogleOAuthService {
         // Generate random state for CSRF protection
         const state = crypto.randomBytes(32).toString('hex');
 
-        // Store state in cache with 5min TTL
-        await this.cache_service.set(
-            `oauth:state:${state}`,
+        // Store state in Redis with 5min TTL
+        await this.session_service.set_oauth_state(
+            state,
             { created_at: Date.now() },
             300 // 5 minutes
         );
@@ -70,7 +70,7 @@ class GoogleOAuthService {
             return false;
         }
 
-        const cached_state = await this.cache_service.get(`oauth:state:${state}`);
+        const cached_state = await this.session_service.get_oauth_state(state);
         
         if (!cached_state) {
             await this.system_logger.warning(
@@ -82,7 +82,7 @@ class GoogleOAuthService {
         }
 
         // Delete state after validation (one-time use)
-        await this.cache_service.delete(`oauth:state:${state}`);
+        await this.session_service.delete_oauth_state(state);
 
         return true;
     }

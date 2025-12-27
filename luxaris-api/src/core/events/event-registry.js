@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const SystemEventRepository = require('./system_event_repository');
 
 class EventRegistry {
+    
     constructor(db_pool, system_logger) {
         this.db_pool = db_pool;
         this.system_logger = system_logger;

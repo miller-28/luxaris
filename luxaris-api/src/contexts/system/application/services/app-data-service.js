@@ -7,6 +7,7 @@ const connection_manager = require('../../../../core/infrastructure/connection-m
  * Provides timezones and countries data with Redis caching
  */
 class AppDataService {
+    
     constructor(system_logger) {
         this.system_logger = system_logger;
         this.timezone_repository = new TimezoneRepository();

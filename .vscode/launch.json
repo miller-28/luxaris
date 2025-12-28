@@ -126,6 +126,66 @@
             "skipFiles": ["<node_internals>/**"]
         },
         {
+            "name": "Luxaris - API - Seed Database",
+            "type": "node",
+            "request": "launch",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": ["run", "seed"],
+            "cwd": "${workspaceFolder}/luxaris-api",
+            "console": "integratedTerminal",
+            "skipFiles": ["<node_internals>/**"]
+        },
+        {
+            "name": "Luxaris - API - Seed Posts (Force)",
+            "type": "node",
+            "request": "launch",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": ["run", "seed:force:posts"],
+            "cwd": "${workspaceFolder}/luxaris-api",
+            "console": "integratedTerminal",
+            "skipFiles": ["<node_internals>/**"]
+        },
+        {
+            "name": "Luxaris - API - Seed Users (Force)",
+            "type": "node",
+            "request": "launch",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": ["run", "seed:force:users"],
+            "cwd": "${workspaceFolder}/luxaris-api",
+            "console": "integratedTerminal",
+            "skipFiles": ["<node_internals>/**"]
+        },
+        {
+            "name": "Luxaris - API - Seed List",
+            "type": "node",
+            "request": "launch",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": ["run", "seed:list"],
+            "cwd": "${workspaceFolder}/luxaris-api",
+            "console": "integratedTerminal",
+            "skipFiles": ["<node_internals>/**"]
+        },
+        {
+            "name": "Luxaris - API - Seed Rollback",
+            "type": "node",
+            "request": "launch",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": ["run", "seed:rollback"],
+            "cwd": "${workspaceFolder}/luxaris-api",
+            "console": "integratedTerminal",
+            "skipFiles": ["<node_internals>/**"]
+        },
+        {
+            "name": "Luxaris - API - Seed Reset",
+            "type": "node",
+            "request": "launch",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": ["run", "seed:reset"],
+            "cwd": "${workspaceFolder}/luxaris-api",
+            "console": "integratedTerminal",
+            "skipFiles": ["<node_internals>/**"]
+        },
+        {
             "name": "Luxaris - Dashboard - Run Dev Server",
             "type": "node",
             "request": "launch",

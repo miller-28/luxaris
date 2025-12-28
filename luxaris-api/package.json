@@ -22,7 +22,13 @@
     "migrate:down": "db-migrate down",
     "migrate:reset": "db-migrate reset",
     "migrate:reset:up": "npm run migrate:reset && npm run migrate:up",
-    "migrate:create": "db-migrate create"
+    "migrate:create": "db-migrate create",
+    "seed:list": "node seeds/seed.js list",
+    "seed": "node seeds/seed.js",
+    "seed:force:users": "node seeds/seed.js --force --name=20251228000001-seed-users-100",
+    "seed:force:posts": "node seeds/seed.js --force --name=20251228000002-seed-posts-50k",
+    "seed:rollback": "node seeds/seed.js rollback",
+    "seed:reset": "node seeds/seed.js reset"
   },
   "keywords": [
     "social-media",

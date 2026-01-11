@@ -4,6 +4,7 @@ const connection_manager = require('../infrastructure/connection-manager');
 
 class SystemLogger {
     constructor() {
+
         this.repository = connection_manager.is_initialized() ? new SystemLogRepository() : null;
 		
         // Winston logger for console output
@@ -27,8 +28,21 @@ class SystemLogger {
     }
 
     async _log(level, logger, message, context = {}) {
-        // Ensure message is a string
-        const message_str = typeof message === 'string' ? message : String(message);
+        
+        // Validate and normalize logger parameter
+        const logger_str = typeof logger === 'string' ? logger : 'Unknown';
+        
+        // Ensure message is a string and handle undefined/null
+        let message_str;
+        if (message === undefined || message === null) {
+            message_str = '[No message provided]';
+        } else if (typeof message === 'string') {
+            message_str = message;
+        } else if (typeof message === 'object') {
+            message_str = JSON.stringify(message);
+        } else {
+            message_str = String(message);
+        }
 		
         // Map our log levels to Winston levels
         const winston_level_map = {
@@ -40,13 +54,13 @@ class SystemLogger {
         };
 		
         // Always log to console via Winston
-        this.winston.log(winston_level_map[level], message_str, { ...context, logger });
+        this.winston.log(winston_level_map[level], message_str, { ...context, logger: logger_str });
 
         // Persist to database if repository available and not DEBUG in production
         if (this.repository && !(level === 'DEBUG' && process.env.NODE_ENV === 'production')) {
             await this.repository.create({
                 level,
-                logger,
+                logger: logger_str,
                 message: message_str,
                 timestamp: new Date(),
                 request_id: context.request_id || null,

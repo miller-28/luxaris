@@ -17,14 +17,5 @@ export default [
             permission: 'channels:read',
             title: 'Channels'
         }
-    },
-    // Legacy redirects for backwards compatibility
-    {
-        path: '/dashboard/channels/available',
-        redirect: '/dashboard/channels/all'
-    },
-    {
-        path: '/dashboard/channels/connections',
-        redirect: '/dashboard/channels/all'
     }
 ];

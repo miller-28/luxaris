@@ -7,9 +7,17 @@
         scrim="rgba(0, 0, 0, 0.92)"
     >
         <v-card style="background: #1A1A1A; border: 1px solid #262626;">
-            <v-card-title class="text-h5 pa-6">
-                <v-icon v-if="icon" :color="iconColor" size="32" class="mr-2">{{ icon }}</v-icon>
-                {{ title }}
+            <v-card-title class="text-h5 pa-6 d-flex align-center justify-space-between">
+                <div class="d-flex align-center">
+                    <v-icon v-if="icon" :color="iconColor" size="32" class="mr-2">{{ icon }}</v-icon>
+                    {{ title }}
+                </div>
+                <v-btn
+                    icon="mdi-close"
+                    variant="text"
+                    size="small"
+                    @click="handleCancel"
+                />
             </v-card-title>
             <v-card-text class="pa-6" style="color: #A3A3A3;">
                 <slot>
@@ -94,6 +102,7 @@ const handleConfirm = () => {
 };
 
 const handleCancel = () => {
+    emit('update:modelValue', false);
     emit('cancel');
 };
 </script>

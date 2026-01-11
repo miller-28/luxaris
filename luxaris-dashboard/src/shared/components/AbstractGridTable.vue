@@ -1,6 +1,7 @@
 <template>
     <div class="">
         <div class="grid-wrapper d-flex">
+            
             <!-- Pagination Top -->
             <AbstractGridPagination
                 v-if="totalRecords > 0 && !hidePagination"

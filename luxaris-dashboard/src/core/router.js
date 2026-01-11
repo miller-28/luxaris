@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import systemRoutes from '@/contexts/system/routes';
 import postsRoutes from '@/contexts/posts/routes';
 import channelsRoutes from '@/contexts/channels/routes';
+import generationRoutes from '@/contexts/generation/routes';
 import adminRoutes from '@/contexts/admin/routes';
 import { useAuthStore } from '@/contexts/system/infrastructure/store/authStore';
 import { useAppDataStore } from '@/contexts/system/infrastructure/store/appDataStore';
@@ -18,10 +19,11 @@ const routes = [
         component: () => import('@/contexts/system/presentation/views/DashboardHome.vue'),
         meta: { requiresAuth: true },
     },
+    ...adminRoutes,
     ...systemRoutes,
     ...postsRoutes,
     ...channelsRoutes,
-    ...adminRoutes,
+    ...generationRoutes,
 ];
 
 export const router = createRouter({

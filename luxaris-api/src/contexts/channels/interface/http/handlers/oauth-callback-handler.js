@@ -28,7 +28,7 @@ class OAuthCallbackHandler {
             // Handle OAuth errors from LinkedIn
             if (oauth_error) {
                 return res.redirect(
-                    `${this.config.cors_origin}/dashboard/channels/connections?error=oauth_denied`
+                    `${this.config.cors_origin}/dashboard/channels/all?error=oauth_denied`
                 );
             }
 
@@ -42,7 +42,7 @@ class OAuthCallbackHandler {
             const state_data = await this.linkedin_oauth_service.validate_state(state);
             if (!state_data) {
                 return res.redirect(
-                    `${this.config.cors_origin}/dashboard/channels/connections?error=invalid_state`
+                    `${this.config.cors_origin}/dashboard/channels/all?error=invalid_state`
                 );
             }
 
@@ -76,7 +76,7 @@ class OAuthCallbackHandler {
 
             // Redirect back to dashboard with success
             res.redirect(
-                `${this.config.cors_origin}/dashboard/channels/connections?success=connected&connection_id=${connection.id}`
+                `${this.config.cors_origin}/dashboard/channels/all?success=connected&connection_id=${connection.id}`
             );
         } catch (error) {
             next(error);
@@ -94,13 +94,13 @@ class OAuthCallbackHandler {
             // Handle OAuth errors from X
             if (oauth_error) {
                 return res.redirect(
-                    `${this.config.cors_origin}/dashboard/channels/connections?error=oauth_denied`
+                    `${this.config.cors_origin}/dashboard/channels/all?error=oauth_denied`
                 );
             }
 
             if (!code || !state) {
                 return res.redirect(
-                    `${this.config.cors_origin}/dashboard/channels/connections?error=invalid_callback`
+                    `${this.config.cors_origin}/dashboard/channels/all?error=invalid_callback`
                 );
             }
 
@@ -108,7 +108,7 @@ class OAuthCallbackHandler {
             const state_data = await this.x_oauth_service.validate_state(state);
             if (!state_data) {
                 return res.redirect(
-                    `${this.config.cors_origin}/dashboard/channels/connections?error=invalid_state`
+                    `${this.config.cors_origin}/dashboard/channels/all?error=invalid_state`
                 );
             }
 
@@ -143,7 +143,7 @@ class OAuthCallbackHandler {
 
             // Redirect back to dashboard with success
             res.redirect(
-                `${this.config.cors_origin}/dashboard/channels/connections?success=connected&connection_id=${connection.id}`
+                `${this.config.cors_origin}/dashboard/channels/all?success=connected&connection_id=${connection.id}`
             );
         } catch (error) {
             next(error);

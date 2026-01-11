@@ -4,11 +4,23 @@
     height: 100%;
     min-height: 0;
 }
+.flex-1 {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
 
 @media (max-width: 960px) {
     .page-content {
         overflow-y: auto;
         height: auto;
         min-height: 100%;
+    }
+    .flex-1 {
+        overflow: visible;
+        height: auto;
+        min-height: auto;
+        flex: none;
+        margin-bottom: 70px;
     }
 }

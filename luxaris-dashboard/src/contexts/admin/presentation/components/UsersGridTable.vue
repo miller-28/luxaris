@@ -23,9 +23,6 @@
         <!-- Name Column -->
         <template #item.name="{ item }">
             <div class="d-flex align-center gap-2">
-                <v-avatar size="32" color="primary">
-                    <span class="text-caption">{{ getInitials(item.name) }}</span>
-                </v-avatar>
                 <div>
                     <div class="font-weight-medium">{{ item.name }}</div>
                     <div class="text-caption text-grey">{{ item.email }}</div>

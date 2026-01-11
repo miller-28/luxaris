@@ -99,6 +99,7 @@
     "edit": "Edit",
     "create": "Create",
     "search": "Search",
+    "clearFilters": "Clear Filters",
     "searchPlaceholder": "Search... (Ctrl+K)",
     "searchDetailedPlaceholder": "Search posts, schedules, templates...",
     "noResultsFound": "No results found",
@@ -111,7 +112,9 @@
     "never": "Never",
     "key": "Key",
     "status": "Status",
-    "actions": "Actions"
+    "actions": "Actions",
+    "createdAt": "Created At",
+    "updatedAt": "Updated At"
   },
   "dashboard": {
     "totalPosts": "Total Posts",
@@ -439,6 +442,67 @@
       "deleteConfirmTitle": "Delete OAuth Credentials",
       "deleteConfirmMessage": "Are you sure you want to delete {channel} OAuth credentials? Users will not be able to connect new channels until credentials are reconfigured.",
       "loadError": "Failed to load channel status"
+    }
+  },
+  "templates": {
+    "title": "Templates",
+    "subtitle": "Create and manage reusable post templates with AI generation support",
+    "searchTemplates": "Search templates...",
+    "total": "templates",
+    "noTemplatesFound": "No templates found",
+    "emptyMessage": "Create templates with placeholders for quick content generation",
+    "createYourFirstTemplate": "Create Your First Template",
+    "createTemplate": "Create Template",
+    "editTemplate": "Edit Template",
+    "placeholdersDetected": "Placeholders detected",
+    "advancedSettings": "Advanced Settings",
+    "sections": {
+      "basicInfo": "Basic Information",
+      "templateBody": "Template Content"
+    },
+    "fields": {
+      "name": "Template Name",
+      "description": "Description",
+      "templateBody": "Template Body",
+      "maxLength": "Maximum Length",
+      "callToAction": "Call to Action",
+      "includeEmoji": "Include Emojis",
+      "includeHashtags": "Include Hashtags"
+    },
+    "hints": {
+      "templateBody": "Use {'{{'}placeholder{'}}'} syntax for variables (e.g., {'{{'}product_name{'}}'})",
+      "maxLength": "Suggested maximum character count for generated content"
+    },
+    "stats": {
+      "characters": "Characters",
+      "placeholders": "Placeholders"
+    },
+    "actions": {
+      "createTemplate": "Create Template",
+      "cancel": "Cancel",
+      "create": "Create",
+      "update": "Update"
+    },
+    "delete": {
+      "title": "Delete Template",
+      "message": "Are you sure you want to delete the template \"{name}\"? This action cannot be undone.",
+      "confirm": "Delete",
+      "cancel": "Cancel"
+    },
+    "messages": {
+      "createSuccess": "Template created successfully",
+      "updateSuccess": "Template updated successfully",
+      "deleteSuccess": "Template deleted successfully"
+    },
+    "errors": {
+      "loadFailed": "Failed to load templates",
+      "createFailed": "Failed to create template",
+      "updateFailed": "Failed to update template",
+      "deleteFailed": "Failed to delete template"
+    },
+    "validation": {
+      "required": "This field is required",
+      "maxLength": "Maximum {max} characters allowed"
     }
   },
   "validation": {

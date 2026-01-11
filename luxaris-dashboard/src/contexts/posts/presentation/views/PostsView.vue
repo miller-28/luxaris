@@ -1,6 +1,7 @@
 <template>
     <DashboardLayout>
         <div class="page-content">
+
             <!-- Header -->
             <AbstractPageHeader
                 :title="$t('posts.title')"
@@ -78,7 +79,7 @@ import AbstractPageHeader from '@/shared/components/AbstractPageHeader.vue';
 import AbstractGridTableFilter from '@/shared/components/AbstractGridTableFilter.vue';
 import PostsGridTable from '../components/PostsGridTable.vue';
 import PostEditPanel from '../components/PostEditPanel.vue';
-import DeleteConfirmModal from '../components/DeleteConfirmModal.vue';
+import DeleteConfirmModal from '@/shared/components/DeleteConfirmModal.vue';
 import { usePosts } from '../../application/composables/usePosts';
 import { usePostsStore } from '../../infrastructure/store/postsStore';
 import { useToast } from '@/shared/composables/useToast';
@@ -379,24 +380,3 @@ onMounted(async () => {
     await loadPostsWithFilters();
 });
 </script>
-
-<style scoped>
-
-.flex-1 {
-    flex: 1;
-    min-height: 0;
-    overflow: hidden;
-}
-
-/* Mobile: allow scrolling and remove fixed constraints */
-@media (max-width: 960px) {
-   
-     .flex-1 {
-        overflow: visible;
-        height: auto;
-        min-height: auto;
-        flex: none;
-        margin-bottom: 70px;
-    }
-}
-</style>

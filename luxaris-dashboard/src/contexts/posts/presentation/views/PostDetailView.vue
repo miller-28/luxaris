@@ -166,7 +166,7 @@ import AbstractPageHeader from '@/shared/components/AbstractPageHeader.vue';
 import PostEditPanel from '../components/PostEditPanel.vue';
 import VariantsGrid from '../components/VariantsGrid.vue';
 import VariantEditPanel from '../components/VariantEditPanel.vue';
-import DeleteConfirmModal from '../components/DeleteConfirmModal.vue';
+import DeleteConfirmModal from '@/shared/components/DeleteConfirmModal.vue';
 import { usePosts } from '../../application/composables/usePosts';
 import { usePostVariants } from '../../application/composables/usePostVariants';
 import { useToast } from '@/shared/composables/useToast';

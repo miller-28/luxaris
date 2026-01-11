@@ -1,6 +1,8 @@
 <template>
     <DashboardLayout>
+        
         <div class="page-content">
+
             <!-- Header -->
             <AbstractPageHeader
                 :title="$t('admin.users.title')"
@@ -379,11 +381,3 @@ onMounted(async () => {
     await loadUsersWithFilters();
 });
 </script>
-
-<style scoped>
-.page-content {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-}
-</style>

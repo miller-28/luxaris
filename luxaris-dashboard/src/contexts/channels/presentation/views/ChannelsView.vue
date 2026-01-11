@@ -250,28 +250,3 @@ onMounted(async () => {
     handleOAuthCallback();
 });
 </script>
-
-<style scoped>
-
-.flex-1 {
-    flex: 1;
-    min-height: 0;
-    overflow: hidden;
-}
-
-/* Mobile: adjust table container */
-@media (max-width: 960px) {
-    
-    .flex-1 {
-        overflow: visible;
-        height: auto;
-        min-height: auto;
-        flex: none;
-        margin-bottom: 70px;
-    }
-
-    .filter-tabs-card {
-        margin-top: 12px;
-    }
-}
-</style>

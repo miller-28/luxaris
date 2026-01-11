@@ -1,5 +1,5 @@
 <template>
-  <!-- Vue3-toastify container is automatically handled by the library -->
+    <!-- Vue3-toastify container is automatically handled by the library -->
 </template>
 
 <script setup>

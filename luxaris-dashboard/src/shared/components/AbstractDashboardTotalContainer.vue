@@ -12,7 +12,6 @@
                     </div>
                     
                     <div class="dashboard-total-body">
-
                         <div class="dashboard-total-main">
                             <div class="text-h4 font-weight-bold">{{ count }}</div>
                         </div>

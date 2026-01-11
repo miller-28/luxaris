@@ -44,88 +44,88 @@
             <!-- Configure OAuth Dialog -->
             <v-dialog v-model="configureDialog" max-width="600">
                 <v-card>
-                <v-card-title class="text-h5">
-                    {{ $t('admin.channels.configureOAuth', { channel: selectedChannelName }) }}
-                </v-card-title>
-                <v-card-text>
-                    <v-form ref="formRef" @submit.prevent="saveConfiguration">
-                        <v-alert type="info" variant="tonal" class="mb-4">
-                            <p class="text-body-2 mb-2">
-                                {{ $t('admin.channels.configureInstructions') }}
-                            </p>
-                            <v-btn
-                                :href="
-                                    selectedChannel === 'linkedin'
-                                        ? 'https://www.linkedin.com/developers/'
-                                        : 'https://developer.twitter.com/en/portal/dashboard'
-                                "
-                                target="_blank"
-                                size="small"
-                                variant="text"
-                                color="primary"
-                            >
-                                {{ $t('admin.channels.openDeveloperPortal') }}
-                                <v-icon icon="mdi-open-in-new" end />
-                            </v-btn>
-                        </v-alert>
+                    <v-card-title class="text-h5">
+                        {{ $t('admin.channels.configureOAuth', { channel: selectedChannelName }) }}
+                    </v-card-title>
+                    <v-card-text>
+                        <v-form ref="formRef" @submit.prevent="saveConfiguration">
+                            <v-alert type="info" variant="tonal" class="mb-4">
+                                <p class="text-body-2 mb-2">
+                                    {{ $t('admin.channels.configureInstructions') }}
+                                </p>
+                                <v-btn
+                                    :href="
+                                        selectedChannel === 'linkedin'
+                                            ? 'https://www.linkedin.com/developers/'
+                                            : 'https://developer.twitter.com/en/portal/dashboard'
+                                    "
+                                    target="_blank"
+                                    size="small"
+                                    variant="text"
+                                    color="primary"
+                                >
+                                    {{ $t('admin.channels.openDeveloperPortal') }}
+                                    <v-icon icon="mdi-open-in-new" end />
+                                </v-btn>
+                            </v-alert>
 
-                        <v-text-field
-                            v-model="formData.clientId"
-                            :label="$t('admin.channels.clientId')"
-                            :rules="[rules.required]"
-                            variant="outlined"
-                            class="mb-3"
-                            :disabled="saving"
-                            autocomplete="off"
-                            name="oauth-client-id"
-                        />
+                            <v-text-field
+                                v-model="formData.clientId"
+                                :label="$t('admin.channels.clientId')"
+                                :rules="[rules.required]"
+                                variant="outlined"
+                                class="mb-3"
+                                :disabled="saving"
+                                autocomplete="off"
+                                name="oauth-client-id"
+                            />
 
-                        <v-text-field
-                            v-model="formData.clientSecret"
-                            :label="$t('admin.channels.clientSecret')"
-                            :rules="[rules.required]"
-                            :type="showSecret ? 'text' : 'password'"
-                            :append-inner-icon="showSecret ? 'mdi-eye-off' : 'mdi-eye'"
-                            @click:append-inner="showSecret = !showSecret"
-                            variant="outlined"
-                            :disabled="saving"
-                            autocomplete="new-password"
-                            name="oauth-client-secret"
-                        />
-                    </v-form>
-                </v-card-text>
-                <v-card-actions>
-                    <v-spacer />
-                    <v-btn color="grey" variant="text" @click="closeConfigureDialog" :disabled="saving">
-                        {{ $t('common.cancel') }}
-                    </v-btn>
-                    <v-btn color="primary" variant="flat" @click="saveConfiguration" :loading="saving">
-                        {{ $t('common.save') }}
-                    </v-btn>
-                </v-card-actions>
-            </v-card>
-        </v-dialog>
+                            <v-text-field
+                                v-model="formData.clientSecret"
+                                :label="$t('admin.channels.clientSecret')"
+                                :rules="[rules.required]"
+                                :type="showSecret ? 'text' : 'password'"
+                                :append-inner-icon="showSecret ? 'mdi-eye-off' : 'mdi-eye'"
+                                @click:append-inner="showSecret = !showSecret"
+                                variant="outlined"
+                                :disabled="saving"
+                                autocomplete="new-password"
+                                name="oauth-client-secret"
+                            />
+                        </v-form>
+                    </v-card-text>
+                    <v-card-actions>
+                        <v-spacer />
+                        <v-btn color="grey" variant="text" @click="closeConfigureDialog" :disabled="saving">
+                            {{ $t('common.cancel') }}
+                        </v-btn>
+                        <v-btn color="primary" variant="flat" @click="saveConfiguration" :loading="saving">
+                            {{ $t('common.save') }}
+                        </v-btn>
+                    </v-card-actions>
+                </v-card>
+            </v-dialog>
 
-        <!-- Delete Confirmation Dialog -->
-        <v-dialog v-model="deleteDialog" max-width="500">
-            <v-card>
-                <v-card-title class="text-h5">
-                    {{ $t('admin.channels.deleteConfirmTitle') }}
-                </v-card-title>
-                <v-card-text>
-                    {{ $t('admin.channels.deleteConfirmMessage', { channel: deleteChannelName }) }}
-                </v-card-text>
-                <v-card-actions>
-                    <v-spacer />
-                    <v-btn color="grey" variant="text" @click="deleteDialog = false" :disabled="deleting">
-                        {{ $t('common.cancel') }}
-                    </v-btn>
-                    <v-btn color="error" variant="flat" @click="deleteConfiguration" :loading="deleting">
-                        {{ $t('common.delete') }}
-                    </v-btn>
-                </v-card-actions>
-            </v-card>
-        </v-dialog>
+            <!-- Delete Confirmation Dialog -->
+            <v-dialog v-model="deleteDialog" max-width="500">
+                <v-card>
+                    <v-card-title class="text-h5">
+                        {{ $t('admin.channels.deleteConfirmTitle') }}
+                    </v-card-title>
+                    <v-card-text>
+                        {{ $t('admin.channels.deleteConfirmMessage', { channel: deleteChannelName }) }}
+                    </v-card-text>
+                    <v-card-actions>
+                        <v-spacer />
+                        <v-btn color="grey" variant="text" @click="deleteDialog = false" :disabled="deleting">
+                            {{ $t('common.cancel') }}
+                        </v-btn>
+                        <v-btn color="error" variant="flat" @click="deleteConfiguration" :loading="deleting">
+                            {{ $t('common.delete') }}
+                        </v-btn>
+                    </v-card-actions>
+                </v-card>
+            </v-dialog>
         </div>
     </DashboardLayout>
 </template>
@@ -257,7 +257,7 @@ const openConfigureDialog = async (channelKey, channelName) => {
     
     // Check if channel is already configured and load existing credentials
     const isConfigured = (channelKey === 'linkedin' && linkedinStatus.value.configured) || 
-                         (channelKey === 'x' && xStatus.value.configured);
+        (channelKey === 'x' && xStatus.value.configured);
     
     if (isConfigured) {
         // Show dialog with loading state
@@ -310,7 +310,9 @@ const closeConfigureDialog = () => {
 const saveConfiguration = async () => {
     // Validate form
     const { valid } = await formRef.value.validate();
-    if (!valid) return;
+    if (!valid) {
+        return;
+    }
 
     saving.value = true;
     error.value = null;

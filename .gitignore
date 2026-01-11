@@ -13,3 +13,5 @@ docker-services/backups/postgres
 **/*.log
 **/.vite
 **/eslint-report.txt
+**/.idea
+.idea/

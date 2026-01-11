@@ -1,6 +1,5 @@
 <template>
     <v-card>
-
         <v-card-title class="d-flex align-center">
             <span>{{ isEditMode ? $t('posts.variants.editVariant') : $t('posts.variants.createVariant') }}</span>
             <v-spacer />
@@ -13,7 +12,6 @@
         
         <v-card-text>
             <v-form ref="formRef" @submit.prevent="handleSubmit">
-
                 <v-autocomplete
                     v-model="formData.channel_id"
                     :label="$t('posts.variants.fields.channel')"
@@ -141,11 +139,15 @@ const isEditMode = computed(() => !!props.variant);
 const rules = {
     required: (value) => !!value || $t('posts.validation.required'),
     maxLength: (max) => (value) => {
-        if (!value) return true;
+        if (!value) {
+            return true;
+        }
         return value.length <= max || $t('posts.validation.maxLength', { max });
     },
     maxMedia: (value) => {
-        if (!value || !Array.isArray(value)) return true;
+        if (!value || !Array.isArray(value)) {
+            return true;
+        }
         return value.length <= 10 || $t('posts.variants.validation.maxMedia');
     }
 };
@@ -167,7 +169,9 @@ const getFieldError = (field) => {
 
 const handleSubmit = async () => {
     const { valid } = await formRef.value.validate();
-    if (!valid) return;
+    if (!valid) {
+        return;
+    }
     emit('submit', formData.value);
 };
 

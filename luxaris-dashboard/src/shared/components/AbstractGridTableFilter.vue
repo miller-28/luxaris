@@ -101,8 +101,7 @@ const props = defineProps({
             return fields.every(field => 
                 field.key && 
                 field.type && 
-                ['text', 'select', 'combobox', 'date', 'search-button', 'clear-button'].includes(field.type)
-            );
+                ['text', 'select', 'combobox', 'date', 'search-button', 'clear-button'].includes(field.type));
         }
     },
     modelValue: {

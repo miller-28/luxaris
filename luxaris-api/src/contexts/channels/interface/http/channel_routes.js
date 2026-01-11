@@ -54,8 +54,7 @@ function create_channel_routes(dependencies) {
      */
     router.get('/', 
         auth_middleware, 
-        (req, res, next) => catalog_handler.list_channels(req, res, next)
-    );
+        (req, res, next) => catalog_handler.list_channels(req, res, next));
 
     // ===== OAuth Credentials Management Routes (Admin) =====
     
@@ -66,8 +65,7 @@ function create_channel_routes(dependencies) {
     router.get('/:channel_key/oauth-credentials', 
         auth_middleware, 
         acl_middleware({ resource: 'channels', action: 'configure' }),
-        (req, res, next) => oauth_credentials_handler.get_credentials(req, res, next)
-    );
+        (req, res, next) => oauth_credentials_handler.get_credentials(req, res, next));
 
     /**
      * PUT /api/v1/channels/:channel_key/oauth-credentials
@@ -76,8 +74,7 @@ function create_channel_routes(dependencies) {
     router.put('/:channel_key/oauth-credentials',
         auth_middleware,
         acl_middleware({ resource: 'channels', action: 'configure' }),
-        (req, res, next) => oauth_credentials_handler.save_credentials(req, res, next)
-    );
+        (req, res, next) => oauth_credentials_handler.save_credentials(req, res, next));
 
     /**
      * DELETE /api/v1/channels/:channel_key/oauth-credentials
@@ -86,8 +83,7 @@ function create_channel_routes(dependencies) {
     router.delete('/:channel_key/oauth-credentials',
         auth_middleware,
         acl_middleware({ resource: 'channels', action: 'configure' }),
-        (req, res, next) => oauth_credentials_handler.delete_credentials(req, res, next)
-    );
+        (req, res, next) => oauth_credentials_handler.delete_credentials(req, res, next));
 
     // ===== Channel Connection Routes (User) =====
     
@@ -97,8 +93,7 @@ function create_channel_routes(dependencies) {
      */
     router.get('/connections', 
         auth_middleware, 
-        (req, res, next) => connection_handler.list_connections(req, res, next)
-    );
+        (req, res, next) => connection_handler.list_connections(req, res, next));
 
     /**
      * GET /api/v1/channels/:channel_key/auth-url
@@ -106,8 +101,7 @@ function create_channel_routes(dependencies) {
      */
     router.get('/:channel_key/auth-url', 
         auth_middleware, 
-        (req, res, next) => connection_handler.get_auth_url(req, res, next)
-    );
+        (req, res, next) => connection_handler.get_auth_url(req, res, next));
 
     /**
      * POST /api/v1/channels/connections/:id/test
@@ -115,8 +109,7 @@ function create_channel_routes(dependencies) {
      */
     router.post('/connections/:id/test', 
         auth_middleware, 
-        (req, res, next) => connection_handler.test_connection(req, res, next)
-    );
+        (req, res, next) => connection_handler.test_connection(req, res, next));
 
     /**
      * DELETE /api/v1/channels/connections/:id
@@ -124,8 +117,7 @@ function create_channel_routes(dependencies) {
      */
     router.delete('/connections/:id', 
         auth_middleware, 
-        (req, res, next) => connection_handler.disconnect_connection(req, res, next)
-    );
+        (req, res, next) => connection_handler.disconnect_connection(req, res, next));
 
     // ===== OAuth Callback Routes =====
     
@@ -134,16 +126,14 @@ function create_channel_routes(dependencies) {
      * LinkedIn OAuth callback
      */
     router.get('/oauth/linkedin/callback', 
-        (req, res, next) => oauth_callback_handler.linkedin_callback(req, res, next)
-    );
+        (req, res, next) => oauth_callback_handler.linkedin_callback(req, res, next));
 
     /**
      * GET /api/v1/channels/oauth/x/callback
      * X (Twitter) OAuth callback
      */
     router.get('/oauth/x/callback', 
-        (req, res, next) => oauth_callback_handler.x_callback(req, res, next)
-    );
+        (req, res, next) => oauth_callback_handler.x_callback(req, res, next));
 
     // Register error handler if provided
     if (error_handler) {

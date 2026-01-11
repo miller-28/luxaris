@@ -15,10 +15,18 @@ class UserManagementHandler {
             const { status, auth_method, is_root, search, page = 1, per_page = 10 } = req.query;
 
             const filters = {};
-            if (search) filters.search = search;
-            if (status) filters.status = status;
-            if (auth_method) filters.auth_method = auth_method;
-            if (is_root !== undefined) filters.is_root = is_root === 'true';
+            if (search) {
+                filters.search = search;
+            }
+            if (status) {
+                filters.status = status;
+            }
+            if (auth_method) {
+                filters.auth_method = auth_method;
+            }
+            if (is_root !== undefined) {
+                filters.is_root = is_root === 'true';
+            }
 
             const result = await this.user_service.list_users(filters, {
                 page: parseInt(page),

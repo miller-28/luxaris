@@ -94,7 +94,9 @@ const props = defineProps({
 const emit = defineEmits(['click', 'edit', 'delete', 'publish', 'unpublish']);
 
 const excerpt = computed(() => {
-    if (!props.post.description) return '';
+    if (!props.post.description) {
+        return '';
+    }
     return props.post.description.length > 150 
         ? props.post.description.substring(0, 150) + '...' 
         : props.post.description;
@@ -109,10 +111,18 @@ const formattedDate = computed(() => {
     const hours = Math.floor(diff / 3600000);
     const days = Math.floor(diff / 86400000);
     
-    if (minutes < 1) return $t('posts.time.justNow');
-    if (minutes < 60) return $t('posts.time.minutesAgo', { count: minutes });
-    if (hours < 24) return $t('posts.time.hoursAgo', { count: hours });
-    if (days < 7) return $t('posts.time.daysAgo', { count: days });
+    if (minutes < 1) {
+        return $t('posts.time.justNow');
+    }
+    if (minutes < 60) {
+        return $t('posts.time.minutesAgo', { count: minutes });
+    }
+    if (hours < 24) {
+        return $t('posts.time.hoursAgo', { count: hours });
+    }
+    if (days < 7) {
+        return $t('posts.time.daysAgo', { count: days });
+    }
     
     return date.toLocaleDateString();
 });

@@ -1,7 +1,6 @@
 <template>
     <DashboardLayout>
         <div class="page-content">
-
             <!-- Header -->
             <AbstractPageHeader
                 :title="$t('admin.users.title')"

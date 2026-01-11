@@ -8,7 +8,6 @@
     >
         <template #content>
             <v-form ref="formRef" @submit.prevent="handleSubmit">
-                
                 <!-- Status Banner for Pending Users -->
                 <v-alert 
                     v-if="user?.status === 'pending_approval'"
@@ -248,7 +247,6 @@
                         </v-row>
                     </v-card-text>
                 </v-card>
-
             </v-form>
         </template>
 
@@ -375,7 +373,9 @@ watch(() => props.user, (newUser) => {
 }, { immediate: true });
 
 const formatDateTime = (dateString) => {
-    if (!dateString) return $t('common.never');
+    if (!dateString) {
+        return $t('common.never');
+    }
     const date = new Date(dateString);
     return date.toLocaleString();
 };

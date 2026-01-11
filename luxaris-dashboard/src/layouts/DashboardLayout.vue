@@ -1,13 +1,11 @@
 <template>
     <v-layout>
-        
         <!-- App Bar -->
         <v-app-bar 
             color="surface" 
             elevation="0" 
             border="b"
         >
-
             <!-- Mobile Menu Toggle -->
             <v-app-bar-nav-icon
                 class="d-md-none"
@@ -37,7 +35,6 @@
 
             <!-- User Menu -->
             <UserMenu />
-            
         </v-app-bar>
 
         <!-- Desktop Navigation Drawer -->
@@ -47,7 +44,6 @@
             :rail="rail"
             permanent
         >
-
             <SidebarNav />
 
             <template v-slot:append>
@@ -102,7 +98,6 @@
                 <slot />
             </v-container>
         </v-main>
-
     </v-layout>
 </template>
 
@@ -168,7 +163,9 @@ const openMobileNav = () => {
 // Lock body scroll when mobile menu is open
 watch(mobileMenuOpen, (open) => {
     const body = document.body;
-    if (!body) return;
+    if (!body) {
+        return;
+    }
     if (open) {
         body.dataset.prevOverflow = body.style.overflow || '';
         body.style.overflow = 'hidden';

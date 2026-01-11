@@ -1,7 +1,6 @@
 <template>
     <AuthLayout>
         <v-card elevation="0" class="mx-auto auth-card" max-width="500">
-            
             <v-card-title class="text-h4 font-weight-bold pa-6 text-center">
                 <div class="d-flex align-center justify-center">
                     <span>{{ $t('app.title') }}</span>

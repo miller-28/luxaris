@@ -1,6 +1,5 @@
 <template>
     <v-card>
-
         <v-card-title class="d-flex align-center">
             <span>{{ isEditMode ? $t('posts.editPost') : $t('posts.createPost') }}</span>
             <v-spacer />
@@ -144,11 +143,15 @@ const statusOptions = [
 const rules = {
     required: (value) => !!value || $t('posts.validation.required'),
     maxLength: (max) => (value) => {
-        if (!value) return true;
+        if (!value) {
+            return true;
+        }
         return value.length <= max || $t('posts.validation.maxLength', { max });
     },
     maxTags: (value) => {
-        if (!value || !Array.isArray(value)) return true;
+        if (!value || !Array.isArray(value)) {
+            return true;
+        }
         return value.length <= 10 || $t('posts.validation.maxTags');
     }
 };
@@ -160,7 +163,9 @@ const getFieldError = (field) => {
 
 const handleSubmit = async () => {
     const { valid } = await formRef.value.validate();
-    if (!valid) return;
+    if (!valid) {
+        return;
+    }
     
     emit('submit', { ...formData.value });
 };

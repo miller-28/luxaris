@@ -31,9 +31,9 @@ exports.up = async function(db) {
             ALTER COLUMN updated_at TYPE TIMESTAMP WITH TIME ZONE,
             ALTER COLUMN last_login_at TYPE TIMESTAMP WITH TIME ZONE;
         `);
-        } catch (err) {
-            console.log('✗ Skipping users table:', err.message);
-        }
+    } catch (err) {
+        console.log('✗ Skipping users table:', err.message);
+    }
   
     // OAuth Providers
     try {

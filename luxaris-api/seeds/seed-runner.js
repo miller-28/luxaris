@@ -237,14 +237,14 @@ class SeedRunner {
                 query = 'SELECT id, name, metadata, executed_at FROM public.seeds WHERE name = $1 ORDER BY executed_at DESC LIMIT 1';
                 params = [full_seed_name];
             } else {
-                console.log(`[SeedRunner] Rolling back latest seed execution...`);
+                console.log('[SeedRunner] Rolling back latest seed execution...');
                 query = 'SELECT id, name, metadata, executed_at FROM public.seeds ORDER BY executed_at DESC LIMIT 1';
             }
             
             const result = await client.query(query, params);
             
             if (result.rows.length === 0) {
-                console.log(`[SeedRunner] ⏭️  No seed executions found. Nothing to rollback.`);
+                console.log('[SeedRunner] ⏭️  No seed executions found. Nothing to rollback.');
                 return;
             }
             

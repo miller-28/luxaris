@@ -1,7 +1,6 @@
 <template>
     <v-form @submit.prevent="handleSubmit" ref="formRef">
         <v-card-text>
-            
             <!-- Name Field -->
             <v-text-field
                 v-model="form.name"

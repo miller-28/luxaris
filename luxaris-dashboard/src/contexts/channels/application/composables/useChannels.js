@@ -7,37 +7,37 @@ import { useChannelsStore } from '../../infrastructure/store/channelsStore';
  */
 export function useChannels() {
 
-  const store = useChannelsStore();
+    const store = useChannelsStore();
 
-  const channels = computed(() => store.channels);
-  const activeChannels = computed(() => store.activeChannels);
-  const loading = computed(() => store.loading);
-  const error = computed(() => store.error);
+    const channels = computed(() => store.channels);
+    const activeChannels = computed(() => store.activeChannels);
+    const loading = computed(() => store.loading);
+    const error = computed(() => store.error);
 
-  const loadChannels = async () => {
-    return await store.loadChannels();
-  };
+    const loadChannels = async () => {
+        return await store.loadChannels();
+    };
 
-  const getAuthUrl = async (channelKey) => {
-    return await store.getAuthUrl(channelKey);
-  };
+    const getAuthUrl = async (channelKey) => {
+        return await store.getAuthUrl(channelKey);
+    };
 
-  const isChannelConnected = (channelId) => {
-    return store.isChannelConnected(channelId);
-  };
+    const isChannelConnected = (channelId) => {
+        return store.isChannelConnected(channelId);
+    };
 
-  const clearError = () => {
-    store.clearError();
-  };
+    const clearError = () => {
+        store.clearError();
+    };
 
-  return {
-    channels,
-    activeChannels,
-    loading,
-    error,
-    loadChannels,
-    getAuthUrl,
-    isChannelConnected,
-    clearError
-  };
+    return {
+        channels,
+        activeChannels,
+        loading,
+        error,
+        loadChannels,
+        getAuthUrl,
+        isChannelConnected,
+        clearError
+    };
 }

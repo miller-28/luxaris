@@ -111,8 +111,7 @@ class ChannelService {
 
         // Filter to active connections only
         const active_connections = connections.filter(conn => 
-            conn.status === 'connected' && !conn.deleted_at
-        );
+            conn.status === 'connected' && !conn.deleted_at);
 
         if (active_connections.length === 0) {
             await this.logger.warning(this.logger_name, 'No active connection found', {
@@ -130,6 +129,7 @@ class ChannelService {
         });
 
         return active_connections[0];
-    }}
+    }
+}
 
 module.exports = ChannelService;

@@ -153,7 +153,7 @@ const visiblePages = computed(() => {
         // Calculate which pages to show
         const halfVisible = Math.floor(maxVisible / 2);
         let startPage = Math.max(1, current - halfVisible);
-        let endPage = Math.min(total, startPage + maxVisible - 1);
+        const endPage = Math.min(total, startPage + maxVisible - 1);
         
         // Adjust startPage if we're near the end
         if (endPage - startPage < maxVisible - 1) {

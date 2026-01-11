@@ -1,5 +1,4 @@
 <template>
-
     <AbstractGridTable
         :headers="headers"
         :items="channelItems"

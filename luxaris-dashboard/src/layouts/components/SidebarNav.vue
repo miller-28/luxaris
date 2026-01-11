@@ -1,6 +1,5 @@
 <template>
     <v-list density="compact" nav>
-
         <!-- Dashboard -->
         <v-list-item
             prepend-icon="mdi-view-dashboard"

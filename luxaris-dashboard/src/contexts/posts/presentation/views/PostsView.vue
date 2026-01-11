@@ -1,7 +1,6 @@
 <template>
     <DashboardLayout>
         <div class="page-content">
-
             <!-- Header -->
             <AbstractPageHeader
                 :title="$t('posts.title')"
@@ -103,8 +102,12 @@ const {
     unpublishPost
 } = usePosts();
 
-const clearError = () => { error.value = null; };
-const clearValidationErrors = () => { validationErrors.value = []; };
+const clearError = () => {
+    error.value = null; 
+};
+const clearValidationErrors = () => {
+    validationErrors.value = []; 
+};
 
 // Use store state directly instead of local refs for persistence
 const filters = computed({
@@ -322,7 +325,9 @@ const handleSubmit = async (formData) => {
 };
 
 const handleDelete = async () => {
-    if (!selectedPost.value) return;
+    if (!selectedPost.value) {
+        return;
+    }
     
     const result = await deletePost(selectedPost.value.id);
     

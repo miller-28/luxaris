@@ -25,9 +25,7 @@
             
             <!-- Post Content -->
             <v-card v-if="currentPost" class="post-content-card ml-4 mt-4 mr-4">
-
                 <v-card-text class="post-content-scrollable">
-                    
                     <div v-if="currentPost.description" class="text-body-1 mb-4" style="white-space: pre-wrap;">
                         {{ currentPost.description }}
                     </div>
@@ -380,7 +378,9 @@ const handleVariantSubmit = async (formData) => {
 };
 
 const handleDeleteVariant = async () => {
-    if (!selectedVariant.value) return;
+    if (!selectedVariant.value) {
+        return;
+    }
     
     const result = await deleteVariant(postId.value, selectedVariant.value.id);
     

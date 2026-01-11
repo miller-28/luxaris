@@ -1,139 +1,137 @@
 <template>
     <div class="">
         <div class="grid-wrapper d-flex">
-        <!-- Pagination Top -->
-        <AbstractGridPagination
-            v-if="totalRecords > 0 && !hidePagination"
-            class="d-none d-md-block"
-            :current-page="page"
-            :total-pages="Math.ceil(totalRecords / itemsPerPage)"
-            :total-records="totalRecords"
-            :items-per-page="itemsPerPage"
-            @page-change="handlePageChange"
-            @per-page-change="handlePerPageChange"
-        />
+            <!-- Pagination Top -->
+            <AbstractGridPagination
+                v-if="totalRecords > 0 && !hidePagination"
+                class="d-none d-md-block"
+                :current-page="page"
+                :total-pages="Math.ceil(totalRecords / itemsPerPage)"
+                :total-records="totalRecords"
+                :items-per-page="itemsPerPage"
+                @page-change="handlePageChange"
+                @per-page-change="handlePerPageChange"
+            />
         
-        <div class="grid-scroll-area">
-            <!-- Desktop Table View -->
-            <v-card class="d-none d-md-block table-card ml-4 mt-4 mr-4">
-                <v-data-table
-                    :headers="computedHeaders"
-                    :items="items"
-                    :loading="loading"
-                    :items-per-page="items.length"
-                    :sort-by="sortBy"
-                    hide-default-footer
-                    @click:row="handleRowClick"
-                    @update:sort-by="handleSortChange"
-                    hover
-                    :class="tableClass"
-                    :sort-asc-icon="'mdi-arrow-up'"
-                    :sort-desc-icon="'mdi-arrow-down'"
-                >
-                    <!-- Checkbox column header -->
-                    <template v-if="selectable" #header.checkbox>
-                        <v-checkbox-btn
-                            :model-value="isAllSelected"
-                            :indeterminate="isSomeSelected && !isAllSelected"
-                            @update:model-value="toggleSelectAll"
-                            hide-details
-                            density="compact"
-                        />
-                    </template>
-
-                    <!-- Checkbox column item -->
-                    <template v-if="selectable" #item.checkbox="{ item }">
-                        <div class="checkbox-cell-wrapper" @click.stop="toggleSelection(item)">
+            <div class="grid-scroll-area">
+                <!-- Desktop Table View -->
+                <v-card class="d-none d-md-block table-card ml-4 mt-4 mr-4">
+                    <v-data-table
+                        :headers="computedHeaders"
+                        :items="items"
+                        :loading="loading"
+                        :items-per-page="items.length"
+                        :sort-by="sortBy"
+                        hide-default-footer
+                        @click:row="handleRowClick"
+                        @update:sort-by="handleSortChange"
+                        hover
+                        :class="tableClass"
+                        :sort-asc-icon="'mdi-arrow-up'"
+                        :sort-desc-icon="'mdi-arrow-down'"
+                    >
+                        <!-- Checkbox column header -->
+                        <template v-if="selectable" #header.checkbox>
                             <v-checkbox-btn
-                                :model-value="isSelected(item)"
+                                :model-value="isAllSelected"
+                                :indeterminate="isSomeSelected && !isAllSelected"
+                                @update:model-value="toggleSelectAll"
                                 hide-details
                                 density="compact"
-                                @click.stop
                             />
-                        </div>
-                    </template>
-                    <!-- Pass through all slots to parent -->
-                    <template v-for="(_, name) in $slots" #[name]="slotData">
-                        <slot :name="name" v-bind="slotData" />
-                    </template>
+                        </template>
 
-                    <!-- Default no-data slot -->
-                    <template v-if="!$slots['no-data']" #no-data>
-                        <div class="text-center py-8">
-                            <v-icon :icon="emptyIcon" size="64" color="grey" class="mb-4" />
-                            <div class="text-h6 text-grey">{{ emptyTitle }}</div>
-                            <div class="text-body-2 text-grey mt-2">{{ emptyMessage }}</div>
-                            <v-btn 
-                                v-if="showEmptyAction"
-                                color="primary" 
-                                class="mt-4"
-                                @click="$emit('empty-action')"
-                            >
-                                {{ emptyActionText }}
-                            </v-btn>
-                        </div>
-                    </template>
-                </v-data-table>
-            </v-card>
-        
-            <!-- Mobile Card View -->
-            <div class="d-md-none">
+                        <!-- Checkbox column item -->
+                        <template v-if="selectable" #item.checkbox="{ item }">
+                            <div class="checkbox-cell-wrapper" @click.stop="toggleSelection(item)">
+                                <v-checkbox-btn
+                                    :model-value="isSelected(item)"
+                                    hide-details
+                                    density="compact"
+                                    @click.stop
+                                />
+                            </div>
+                        </template>
+                        <!-- Pass through all slots to parent -->
+                        <template v-for="(_, name) in $slots" #[name]="slotData">
+                            <slot :name="name" v-bind="slotData" />
+                        </template>
 
-                <v-card
-                    v-for="(item, index) in items"
-                    :key="index"
-                    class="ma-4"
-                    :class="{ 'mobile-card-odd': index % 2 === 0, 'mobile-card-even': index % 2 !== 0 }"
-                    @click="handleRowClick(null, { item })"
-                >
-                    <v-card-text class="pa-3">
-                        <v-row dense class="mobile-field-grid">
-                            <v-col
-                                v-for="header in visibleHeaders"
-                                :key="header.key"
-                                cols="6"
-                                class="mobile-field-item"
-                            >
-                                <div class="text-caption text-grey-darken-1 mb-1">{{ header.title }}</div>
-                                <div class="text-body-2">
-                                    <slot :name="`item.${header.key}`" :item="item">
-                                        {{ item[header.key] }}
-                                    </slot>
-                                </div>
-                            </v-col>
-                        </v-row>
-                    </v-card-text>
+                        <!-- Default no-data slot -->
+                        <template v-if="!$slots['no-data']" #no-data>
+                            <div class="text-center py-8">
+                                <v-icon :icon="emptyIcon" size="64" color="grey" class="mb-4" />
+                                <div class="text-h6 text-grey">{{ emptyTitle }}</div>
+                                <div class="text-body-2 text-grey mt-2">{{ emptyMessage }}</div>
+                                <v-btn 
+                                    v-if="showEmptyAction"
+                                    color="primary" 
+                                    class="mt-4"
+                                    @click="$emit('empty-action')"
+                                >
+                                    {{ emptyActionText }}
+                                </v-btn>
+                            </div>
+                        </template>
+                    </v-data-table>
                 </v-card>
-            
-                <!-- Empty state for mobile -->
-                <v-card v-if="items.length === 0 && !loading" class="text-center py-8">
-                    <v-icon :icon="emptyIcon" size="64" color="grey" class="mb-4" />
-                    <div class="text-h6 text-grey">{{ emptyTitle }}</div>
-                    <div class="text-body-2 text-grey mt-2">{{ emptyMessage }}</div>
-                    <v-btn 
-                        v-if="showEmptyAction"
-                        color="primary" 
-                        class="mt-4"
-                        @click="$emit('empty-action')"
+        
+                <!-- Mobile Card View -->
+                <div class="d-md-none">
+                    <v-card
+                        v-for="(item, index) in items"
+                        :key="index"
+                        class="ma-4"
+                        :class="{ 'mobile-card-odd': index % 2 === 0, 'mobile-card-even': index % 2 !== 0 }"
+                        @click="handleRowClick(null, { item })"
                     >
-                        {{ emptyActionText }}
-                    </v-btn>
-                </v-card>
-
+                        <v-card-text class="pa-3">
+                            <v-row dense class="mobile-field-grid">
+                                <v-col
+                                    v-for="header in visibleHeaders"
+                                    :key="header.key"
+                                    cols="6"
+                                    class="mobile-field-item"
+                                >
+                                    <div class="text-caption text-grey-darken-1 mb-1">{{ header.title }}</div>
+                                    <div class="text-body-2">
+                                        <slot :name="`item.${header.key}`" :item="item">
+                                            {{ item[header.key] }}
+                                        </slot>
+                                    </div>
+                                </v-col>
+                            </v-row>
+                        </v-card-text>
+                    </v-card>
+            
+                    <!-- Empty state for mobile -->
+                    <v-card v-if="items.length === 0 && !loading" class="text-center py-8">
+                        <v-icon :icon="emptyIcon" size="64" color="grey" class="mb-4" />
+                        <div class="text-h6 text-grey">{{ emptyTitle }}</div>
+                        <div class="text-body-2 text-grey mt-2">{{ emptyMessage }}</div>
+                        <v-btn 
+                            v-if="showEmptyAction"
+                            color="primary" 
+                            class="mt-4"
+                            @click="$emit('empty-action')"
+                        >
+                            {{ emptyActionText }}
+                        </v-btn>
+                    </v-card>
+                </div>
             </div>
-        </div>
         
-        <!-- Pagination Bottom -->
-        <AbstractGridPagination
-            class="mb-4"
-            v-if="totalRecords > 0 && !hidePagination"
-            :current-page="page"
-            :total-pages="Math.ceil(totalRecords / itemsPerPage)"
-            :total-records="totalRecords"
-            :items-per-page="itemsPerPage"
-            @page-change="handlePageChange"
-            @per-page-change="handlePerPageChange"
-        />
+            <!-- Pagination Bottom -->
+            <AbstractGridPagination
+                class="mb-4"
+                v-if="totalRecords > 0 && !hidePagination"
+                :current-page="page"
+                :total-pages="Math.ceil(totalRecords / itemsPerPage)"
+                :total-records="totalRecords"
+                :items-per-page="itemsPerPage"
+                @page-change="handlePageChange"
+                @per-page-change="handlePerPageChange"
+            />
         </div>
     </div>
 </template>
@@ -226,7 +224,9 @@ const localSortBy = ref([...props.sortBy]);
 
 // Add checkbox column if selectable
 const computedHeaders = computed(() => {
-    if (!props.selectable) return props.headers;
+    if (!props.selectable) {
+        return props.headers;
+    }
     
     const checkboxHeader = {
         key: 'checkbox',

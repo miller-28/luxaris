@@ -224,13 +224,13 @@ exports.down = async function(db_pool, execution_records = []) {
     const client = await db_pool.connect();
     
     try {
-        console.log(`[Seed] Removing mock posts...`);
+        console.log('[Seed] Removing mock posts...');
         
         let result;
         
         // If we have execution metadata with ID ranges, use precise deletion
         if (execution_records.length > 0 && execution_records[0].execution_metadata?.new_records_id_from) {
-            console.log(`[Seed] Using execution metadata for precise rollback...`);
+            console.log('[Seed] Using execution metadata for precise rollback...');
             
             // Delete using all ID ranges from execution records
             const id_ranges = execution_records
@@ -240,8 +240,7 @@ exports.down = async function(db_pool, execution_records = []) {
             if (id_ranges.length > 0) {
                 // Build WHERE clause for ID ranges
                 const conditions = id_ranges.map((_, idx) => 
-                    `(id BETWEEN $${idx * 2 + 1} AND $${idx * 2 + 2})`
-                ).join(' OR ');
+                    `(id BETWEEN $${idx * 2 + 1} AND $${idx * 2 + 2})`).join(' OR ');
                 
                 const params = id_ranges.flatMap(range => [
                     range.new_records_id_from, 
@@ -258,7 +257,7 @@ exports.down = async function(db_pool, execution_records = []) {
             }
         } else {
             // Fallback: use metadata marker (less precise, for older seeds)
-            console.log(`[Seed] No execution metadata found, using metadata marker fallback...`);
+            console.log('[Seed] No execution metadata found, using metadata marker fallback...');
             result = await client.query(`
                 DELETE FROM ${SCHEMA}.posts
                 WHERE metadata::jsonb @> '{"source": "seed", "batch": "mock_50k"}'::jsonb

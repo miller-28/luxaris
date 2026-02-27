@@ -164,7 +164,7 @@ const headers = computed(() => [
     { title: $t('templates.placeholdersDetected'), key: 'placeholders', sortable: false },
     { title: $t('templates.stats.characters'), key: 'character_count', sortable: false },
     { title: $t('common.createdAt'), key: 'created_at', sortable: true },
-    { title: $t('templates.actions.actions'), key: 'actions', sortable: false }
+    { title: $t('common.actions'), key: 'actions', sortable: false }
 ]);
 
 const handleRowClick = (event, { item }) => {
